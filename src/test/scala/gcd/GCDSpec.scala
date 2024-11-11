@@ -27,19 +27,16 @@ class GCDSpec extends AnyFreeSpec with Matchers {
       for ((a, b) <- testCases) {
         val expectedGCD = computeGCD(a, b)
 
-        // Load the values into the DUT
         dut.io.value1.poke(a.U)
         dut.io.value2.poke(b.U)
         dut.io.loadingValues.poke(true.B)
         dut.clock.step(1)
         dut.io.loadingValues.poke(false.B)
 
-        // Step through the calculation until output is valid
         while (!dut.io.outputValid.peek().litToBoolean) {
           dut.clock.step(1)
         }
 
-        // Check that the output matches the expected GCD
         dut.io.outputGCD.expect(expectedGCD.U)
       }
     }
