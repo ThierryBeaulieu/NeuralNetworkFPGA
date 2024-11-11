@@ -47,7 +47,7 @@ object Example extends App {
     new Example,
     args = Array(
       "--target-dir",
-      "generated/tp2/"
+      "generated/lab2/"
     ),
     firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info")
   )
