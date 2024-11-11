@@ -15,7 +15,6 @@ class Example extends Module {
   val mAxis = Wire(new AxiStreamMasterIf(8))
   IO(Flipped(new AxiStreamExternalIf(8))).suggestName("m_axis").connect(mAxis)
 
-  
   val evenCounter = RegInit(0.U(8.W))
   val transferCount = RegInit(false.B)
 
@@ -46,6 +45,10 @@ class Example extends Module {
 object Example extends App {
   ChiselStage.emitSystemVerilogFile(
     new Example,
+    args = Array(
+      "--target-dir",
+      "generated/tp2/"
+    ),
     firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info")
   )
 }

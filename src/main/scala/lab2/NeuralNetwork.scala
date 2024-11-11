@@ -81,7 +81,7 @@ object NeuralNetwork extends App {
     new NeuralNetwork,
     args = Array(
       "--target-dir",
-      "generated/"
+      "generated/tp2/"
     ),
     firtoolOpts = Array(
       "-disable-all-randomization",
