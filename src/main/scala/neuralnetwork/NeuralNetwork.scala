@@ -17,7 +17,7 @@ class NeuralNetwork extends Module {
   IO(Flipped(new AxiStreamExternalIf(16))).suggestName("m_axis").connect(mAxis)
 
   def readCSV(filePath: String): Array[Array[Int]] = {
-    val source = Source.fromFile(filePath)
+    val source = Source.fromResource(filePath)
     val data = source
       .getLines()
       .map { line =>
@@ -31,8 +31,10 @@ class NeuralNetwork extends Module {
   val LabelW = 10
   val InputW = 401
 
-  val rawData = readCSV("weights.csv") 
-  val weights = RegInit(VecInit.tabulate(LabelW, InputW){ (x, y) => rawData(x)(y).S(16.W) })
+  val rawData = readCSV("weights.csv")
+  val weights = RegInit(VecInit.tabulate(LabelW, InputW) { (x, y) =>
+    rawData(x)(y).S(16.W)
+  })
 
   val sending = RegInit(false.B)
   val output_data = RegInit(VecInit(Seq.fill(10)(0.S(16.W))))
@@ -47,7 +49,9 @@ class NeuralNetwork extends Module {
 
   when(sAxis.data.tvalid) {
     for (col <- 0 until 10) {
-      output_data(col) := output_data(col) + (weights(col)(row) * sAxis.data.tdata)
+      output_data(col) := output_data(col) + (weights(col)(
+        row
+      ) * sAxis.data.tdata)
     }
     row := row + 1.U
     when(sAxis.data.tlast) {
@@ -56,7 +60,7 @@ class NeuralNetwork extends Module {
   }
 
   when(sending && mAxis.tready) {
-    when (transferCount === output_data.length.U) {
+    when(transferCount === output_data.length.U) {
       mAxis.data.tlast := true.B
       mAxis.data.tvalid := false.B
       output_data := VecInit(Seq.fill(10)(0.S(16.W)))
@@ -75,6 +79,13 @@ class NeuralNetwork extends Module {
 object NeuralNetwork extends App {
   ChiselStage.emitSystemVerilogFile(
     new NeuralNetwork,
-    firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info")
+    args = Array(
+      "--target-dir",
+      "generated/"
+    ),
+    firtoolOpts = Array(
+      "-disable-all-randomization",
+      "-strip-debug-info"
+    )
   )
 }
