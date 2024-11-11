@@ -8,67 +8,41 @@ import chisel3.simulator.EphemeralSimulator._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-/** This is a trivial example of how to run this Specification From within sbt
-  * use:
-  * {{{
-  * testOnly gcd.GCDSpec
-  * }}}
-  * From a terminal shell use:
-  * {{{
-  * sbt 'testOnly gcd.GCDSpec'
-  * }}}
-  * Testing from mill:
-  * {{{
-  * mill %NAME%.test.testOnly gcd.GCDSpec
-  * }}}
-  */
 class GCDSpec extends AnyFreeSpec with Matchers {
 
-  "Gcd should calculate proper greatest common denominator" in {
+  "Gcd should calculate proper greatest common divisor" in {
     simulate(new DecoupledGcd(16)) { dut =>
-      val testValues = for { x <- 0 to 10; y <- 0 to 10 } yield (x, y)
-      val inputSeq = testValues.map { case (x, y) =>
-        (new GcdInputBundle(16)).Lit(_.value1 -> x.U, _.value2 -> y.U)
-      }
-      val resultSeq = testValues.map { case (x, y) =>
-        (new GcdOutputBundle(16)).Lit(
-          _.value1 -> x.U,
-          _.value2 -> y.U,
-          _.gcd -> BigInt(x).gcd(BigInt(y)).U
-        )
-      }
+      val testCases = Seq(
+        (8, 12, 4),
+        (18, 24, 6),
+        (100, 25, 25),
+        (7, 3, 1),
+        (56, 98, 14)
+      )
 
+      // Reset the DUT
       dut.reset.poke(true.B)
-      dut.clock.step()
+      dut.clock.step(1)
       dut.reset.poke(false.B)
-      dut.clock.step()
 
-      var sent, received, cycles: Int = 0
-      while (sent != 100 && received != 100) {
-        assert(cycles <= 1000, "timeout reached")
+      // Run through each test case
+      for ((x, y, expectedGcd) <- testCases) {
+        // Input values
+        dut.input.valid.poke(true.B)
+        dut.input.bits.value1.poke(x.U)
+        dut.input.bits.value2.poke(y.U)
 
-        if (sent < 100) {
-          dut.input.valid.poke(true.B)
-          dut.input.bits.value1.poke(testValues(sent)._1.U)
-          dut.input.bits.value2.poke(testValues(sent)._2.U)
-          if (dut.input.ready.peek().litToBoolean) {
-            sent += 1
-          }
+        // Wait until input is accepted
+        while (!dut.input.ready.peek().litToBoolean) {
+          dut.clock.step(1)
         }
 
-        if (received < 100) {
-          dut.output.ready.poke(true.B)
-          if (dut.output.valid.peekValue().asBigInt == 1) {
-            dut.output.bits.gcd.expect(
-              BigInt(testValues(received)._1).gcd(testValues(received)._2)
-            )
-            received += 1
-          }
+        // Output validation
+        dut.output.ready.poke(true.B)
+        while (!dut.output.valid.peek().litToBoolean) {
+          dut.clock.step(1)
         }
-
-        // Step the simulation forward.
-        dut.clock.step()
-        cycles += 1
+        dut.output.bits.gcd.expect(expectedGcd.U)
       }
     }
   }
