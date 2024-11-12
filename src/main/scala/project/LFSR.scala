@@ -17,11 +17,24 @@ class LFSR extends Module {
   val maxBit = RegInit(8.U(8.W))
   maxBit := io.inputSeed.getWidth.U
 
-  io.outputRandomNumber := 8.U
+  def nextBit(): UInt = {
+    var newBit = 0.U(8.W)
+    for (tap <- taps) {
+      newBit = newBit ^ (regSeed >> (tap - 1.U)) & 1.U
+    }
 
-  def nextBif(): Unit = {}
-
-  def next_number(bits: UInt): UInt = {
-    8.U
+    // Shift left and add the new bit to the LSB
+    regSeed := ((regSeed << 1.U) | newBit) & ((1.U << maxBit) - 1.U)
+    newBit
   }
+
+  def nextNumber(): UInt = {
+    var number = 0.U(8.W)
+    for (i <- 0 until 8) {
+      number = (number << 1.U) | nextBit()
+    }
+    number
+  }
+
+  io.outputRandomNumber := nextNumber()
 }
