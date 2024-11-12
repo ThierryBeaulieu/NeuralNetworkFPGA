@@ -13,12 +13,12 @@ class LFSR extends Module {
   val regSeed = RegInit(0.U(8.W))
   regSeed := io.inputSeed
 
-  val taps = RegInit(VecInit(7.U(8.W), 5.U(8.W), 3.U(8.W), 1.U(8.W)))
-  val maxBit = RegInit(8.U(8.W))
-  maxBit := io.inputSeed.getWidth.U
+  val taps = VecInit(7.U(8.W), 5.U(8.W), 3.U(8.W), 1.U(8.W))
+  val maxBit = io.inputSeed.getWidth.U
 
   def nextBit(): UInt = {
-    var newBit = 0.U(8.W)
+    var newBit = Wire(UInt(8.W))
+    newBit := 0.U
     for (tap <- taps) {
       newBit = newBit ^ (regSeed >> (tap - 1.U)) & 1.U
     }
@@ -29,7 +29,8 @@ class LFSR extends Module {
   }
 
   def nextNumber(): UInt = {
-    var number = 0.U(8.W)
+    var number = Wire(UInt(8.W))
+    number := 0.U
     for (i <- 0 until 8) {
       number = (number << 1.U) | nextBit()
     }

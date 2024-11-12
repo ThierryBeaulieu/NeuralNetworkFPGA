@@ -19,11 +19,10 @@ class LFSRSpec extends AnyFreeSpec with Matchers {
       // Input parameters
       dut.io.inputSeed.poke("b11001101".U)
 
-      dut.clock.step(1)
-      dut.io.outputRandomNumber.expect(0.U)
-      
-      dut.clock.step(1)
-      dut.io.outputRandomNumber.expect(0.U)
+      dut.io.outputRandomNumber.expect(123.U)
+
+      // val nextBitValue = dut.nextBit().peek()
+      // println(s"Next bit: $nextBitValue")
     }
   }
 }
