@@ -18,6 +18,21 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
 
       dut.weights.length.mustBe(10)
       dut.weights(0).length.mustBe(401)
+      // TODO: Find a way to test the registers
+    }
+  }
+
+  "NeuralNetwork should make proper calculations" in {
+    simulate(new NeuralNetwork) { dut =>
+      // Reset the DUT
+      dut.reset.poke(true.B)
+      dut.clock.step(1)
+      dut.reset.poke(false.B)
+
+      val imageCase = Seq(
+        (8, 12, 4),
+      )
+
     }
   }
 }

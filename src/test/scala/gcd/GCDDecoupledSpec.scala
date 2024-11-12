@@ -8,7 +8,7 @@ import org.scalatest.matchers.must.Matchers
 
 class GCDDecoupledSpec extends AnyFreeSpec with Matchers {
 
-  "Gcd decoupled should calculate proper greatest common divisor" in {
+  "GCD decoupled should calculate proper greatest common divisor" in {
     simulate(new DecoupledGcd(16)) { dut =>
       val testCases = Seq(
         (8, 12, 4),
