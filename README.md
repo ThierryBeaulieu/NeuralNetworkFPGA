@@ -1,6 +1,8 @@
 # NeuralNetworkFPGA
 
-<img src="Documentation/neural-network.png"
+<div style="display:flex;justify-content:center">
+    <img src="Documentation/neural-network.png" />
+</div>
 
 Deep neural networks are becoming more and more used though the years. Neural networks often have two implementations. The first one is build and trained on GPUs. The weights and the bias found can then be used on a model synthesized on FPGAs. Those neural network doesn't require a large amount of energy and are quite efficient.
 
