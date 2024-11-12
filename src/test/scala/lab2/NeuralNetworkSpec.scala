@@ -18,7 +18,6 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
 
       dut.weights.length.mustBe(10)
       dut.weights(0).length.mustBe(401)
-      // TODO: Find a way to test the registers
     }
   }
 
