@@ -10,15 +10,18 @@ class LFSR extends Module {
     val outputRandomNumber = Output(UInt(8.W))
   })
 
-// Exemple of regSeed = "b10101010".U
   val regSeed = RegInit(0.U(8.W))
   regSeed := io.inputSeed
 
   val taps = RegInit(VecInit(7.U(8.W), 5.U(8.W), 3.U(8.W), 1.U(8.W)))
-
   val maxBit = RegInit(8.U(8.W))
   maxBit := io.inputSeed.getWidth.U
 
   io.outputRandomNumber := 8.U
 
+  def nextBif(): Unit = {}
+
+  def next_number(bits: UInt): UInt = {
+    8.U
+  }
 }
