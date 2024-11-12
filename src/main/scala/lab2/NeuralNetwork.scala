@@ -11,10 +11,15 @@ import scala.io.Source
 class NeuralNetwork extends Module {
   // AXI-Stream Connection
   val sAxis = Wire(new AxiStreamSlaveIf(16))
-  IO(new AxiStreamExternalIf(16)).suggestName("s_axis").connect(sAxis)
+  val slaveIO =
+    IO(new AxiStreamExternalIf(16))
+  slaveIO.suggestName("s_axis").connect(sAxis)
 
   val mAxis = Wire(new AxiStreamMasterIf(16))
-  IO(Flipped(new AxiStreamExternalIf(16))).suggestName("m_axis").connect(mAxis)
+  val masterIO = IO(Flipped(new AxiStreamExternalIf(16)))
+  masterIO
+    .suggestName("m_axis")
+    .connect(mAxis)
 
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
