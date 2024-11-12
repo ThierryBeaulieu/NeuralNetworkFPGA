@@ -1,3 +1,4 @@
+# Linear-Feedback shift register
 class LFSR:
     def __init__(self, seed, taps):
         self.state = seed

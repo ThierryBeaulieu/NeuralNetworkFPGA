@@ -15,3 +15,8 @@ To run the tests, use the following command:
 ```
 sbt test
 ```
+
+If you would like to only run the tests of the project, feel free to use:
+```
+sbt testOnly project.LFSRSpec
+```

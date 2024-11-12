@@ -1,5 +1,7 @@
 package project
 
+import chisel3._
+
 // Binary to Stochastic
 class B2S extends Module {
 
