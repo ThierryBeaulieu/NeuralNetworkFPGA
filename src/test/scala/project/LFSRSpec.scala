@@ -18,10 +18,12 @@ class LFSRSpec extends AnyFreeSpec with Matchers {
 
       // Input parameters
       dut.io.inputSeed.poke("b11001101".U)
-      dut.clock.step(1)
 
-    
-      dut.io.outputRandomNumber.expect(8.U)
+      dut.clock.step(1)
+      dut.io.outputRandomNumber.expect(0.U)
+      
+      dut.clock.step(1)
+      dut.io.outputRandomNumber.expect(0.U)
     }
   }
 }

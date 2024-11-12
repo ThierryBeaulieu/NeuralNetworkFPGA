@@ -35,6 +35,5 @@ class LFSR extends Module {
     }
     number
   }
-
   io.outputRandomNumber := nextNumber()
 }
