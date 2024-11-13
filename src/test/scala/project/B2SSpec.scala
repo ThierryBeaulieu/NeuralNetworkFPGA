@@ -9,7 +9,7 @@ import project.B2S
 
 class B2SSpec extends AnyFreeSpec with Matchers {
 
-  "Binary 2 Stochastic should produce stochastic string" in {
+  "Should produce a random bit between 1 and 0" in {
     simulate(new B2S) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
