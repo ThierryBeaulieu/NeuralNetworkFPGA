@@ -21,11 +21,18 @@ class B2SWrapperSpec extends AnyFreeSpec with Matchers {
       while (!dut.io.outputValid.peek().litToBoolean) {
         dut.clock.step(1)
       }
-
+      var zeros: Int = 0
+      var ones: Int = 0
       for (i <- 0 until 1024) {
-        print(dut.io.outputStream(i).peek().litValue)
+        if (dut.io.outputStream(i).peek().litValue == 0) {
+          zeros = zeros + 1
+        } else {
+          ones = ones + 1
+        }
       }
 
+      assert(ones == 768, s"Expected 768 ones, but found $ones ones")
+      assert(zeros == 256, s"Expected 256 zeros, but found $zeros zeros")
     }
   }
 
