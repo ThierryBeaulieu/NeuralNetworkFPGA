@@ -1,12 +1,12 @@
 package project
-import project.LFSR
+import project.B2S
 
 import chisel3._
 import _root_.circt.stage.ChiselStage
 
 object StochasticNeuralNetwork extends App {
   ChiselStage.emitSystemVerilogFile(
-    new LFSR,
+    new B2S,
     args = Array(
       "--target-dir",
       "generated/project/"

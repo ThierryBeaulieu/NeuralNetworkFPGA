@@ -3,13 +3,23 @@ module LFSR(
   input        clock,
                reset,
   input  [7:0] io_inputSeed,
-               io_inputTap_0,
-               io_inputTap_1,
-               io_inputTap_2,
-               io_inputTap_3,
-  output [7:0] io_outputRandomNumber
+  output [7:0] io_outputRandomNumber,
+  output       io_outputValid
 );
 
-  assign io_outputRandomNumber = 8'h8;
+  reg       processing;
+  reg [7:0] res;
+  always @(posedge clock) begin
+    if (reset) begin
+      processing <= 1'h1;
+      res <= 8'h0;
+    end
+    else begin
+      processing <= 1'h0;
+      res <= res + 8'h1;
+    end
+  end // always @(posedge)
+  assign io_outputRandomNumber = res;
+  assign io_outputValid = processing;
 endmodule
 
