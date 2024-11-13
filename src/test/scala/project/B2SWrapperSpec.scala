@@ -5,23 +5,24 @@ import chisel3.experimental.BundleLiterals._
 import chisel3.simulator.EphemeralSimulator._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import project.B2S
+import project.B2SWrapper
 
-class B2SSpec extends AnyFreeSpec with Matchers {
+class BS2SWrapperSpec extends AnyFreeSpec with Matchers {
 
-  "Binary 2 Stochastic should produce stochastic string" in {
-    simulate(new B2S) { dut =>
+  "should produce a string a 1024 random bits" in {
+    simulate(new B2SWrapper) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
       dut.reset.poke(false.B)
       dut.clock.step(1)
 
-      dut.io.inputComparator.poke(512.U)
-      dut.clock.step(1)
-      dut.io.outputStream.expect(0.U)
-      dut.clock.step(1)
-      dut.io.outputStream.expect(0.U)
+      dut.io.inputComparator.poke(256.U)
+      while (!dut.io.outputValid.peek().litToBoolean) {
+        dut.clock.step(1)
+      }
+      dut.io.outputStream.expect(100.U)
     }
   }
+
 }
