@@ -17,11 +17,15 @@ class B2SWrapperSpec extends AnyFreeSpec with Matchers {
       dut.reset.poke(false.B)
       dut.clock.step(1)
 
-      dut.io.inputComparator.poke(256.U)
+      dut.io.inputComparator.poke(256.U) // 0 -> 1024 (E(512) = 0.5)
       while (!dut.io.outputValid.peek().litToBoolean) {
         dut.clock.step(1)
       }
-      // dut.io.outputStream.expect(100.U)
+
+      for (i <- 0 until 1024) {
+        print(dut.io.outputStream(i).peek().litValue)
+      }
+
     }
   }
 
