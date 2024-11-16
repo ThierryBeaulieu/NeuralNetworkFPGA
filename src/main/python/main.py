@@ -69,12 +69,26 @@ class B2ISBipolar(Module):
         return bit2 + bit1
 
 class Multiplier(Module):
-    def tick(self, bit, integralBit):
-        return bit & integralBit
+    def tick(self, integralValue: np.int8, bit):
+        """
+        Takes a value in the integral stream and returns
+        a 0 or the integral value according to the bit
+        Input : integralValue {0, 1,..,m} , bit {0, 1}
+        Output : {0, integralValue}
+        """
+        if bit:
+            return integralValue
+        return 0
     
 class Adder(Module):
-    def tick(self, integralBit1, integralBit2):
-        return integralBit1 + integralBit2
+    def tick(self, value1, value2):
+        """
+        Takes two values of the integral stream and 
+        adds them together.
+        Input : value1 {0, 1,..,m1}, value2 {0, 1,..,m2}
+        Output : {0, 1,..,m1+m2}
+        """
+        return value1 + value2
     
 class Neuron(Module):
     def __init__(self):
@@ -120,7 +134,8 @@ class CounterIntegralBipolar(Module):
         self.sum = self.sum + stochasticBit
         if self.nbTick >= 1024:
             self.nbTick = 0
-            res = self.sum / 8 - 128
+            m = 2
+            res = (self.sum / (4 * m)) - 128
             self.sum = 0
             return res
 
