@@ -91,16 +91,8 @@ class Adder(Module):
         return value1 + value2
     
 class Neuron(Module):
-    def __init__(self):
-        self.b2Is = B2IS()
-        self.b2s = B2S()
-        self.multiplier = Multiplier()
-
     def tick(self, weightValue, pixelValue):
         print("tick from the neurone")
-        integralBit = self.b2IS.tick(weightValue)
-        bit = self.b2s.tick(pixelValue)
-        multiplierResult = self.multiplier(bit, integralBit)
 
 class CounterBipolar(Module):
     def __init__(self):
@@ -157,33 +149,38 @@ class CounterUnipolar(Module):
             self.sum = 0
             return res
 
-clock_cycles = 1024
+class Test(Module):
+    def __init__(self):
+        self.clock_cycles = 1024
 
-upB2S = B2SUnipolar()
-upCounter = CounterUnipolar()
+        self.upB2S = B2SUnipolar()
+        self.upCounter = CounterUnipolar()
 
-bpB2S = B2SBipolar()
-bpCounter = CounterBipolar()
+        self.bpB2S = B2SBipolar()
+        self.bpCounter = CounterBipolar()
 
-bpB2IS = B2ISBipolar()
-bpiCounter = CounterIntegralBipolar()
+        self.bpB2IS = B2ISBipolar()
+        self.bpiCounter = CounterIntegralBipolar()
 
-for i in range(0, clock_cycles):
-    # clock cycle stuff
-    bpB2SOutput = bpB2S.tick(-127)
-    bpCounterOutput = bpCounter.tick(bpB2SOutput)
+    def execute(self):
+        for _ in range(0, self.clock_cycles):
+            bpB2SOutput = self.bpB2S.tick(-127)
+            bpCounterOutput = self.bpCounter.tick(bpB2SOutput)
 
-    if bpCounterOutput is not None:
-        print(f"bipolar {bpCounterOutput}")
+            if bpCounterOutput is not None:
+                print(f"bipolar {bpCounterOutput}")
 
-    upB2SOutput = upB2S.tick(128)
-    upCounterOutput = upCounter.tick(upB2SOutput)
+            upB2SOutput = self.upB2S.tick(128)
+            upCounterOutput = self.upCounter.tick(upB2SOutput)
 
-    if upCounterOutput is not None:
-        print(f"unipolar {upCounterOutput}")
+            if upCounterOutput is not None:
+                print(f"unipolar {upCounterOutput}")
 
-    bpB2ISOutput = bpB2IS.tick(-8)
-    bpiCounterOutput = bpiCounter.tick(bpB2ISOutput)
+            bpB2ISOutput = self.bpB2IS.tick(-8)
+            bpiCounterOutput = self.bpiCounter.tick(bpB2ISOutput)
 
-    if bpiCounterOutput is not None:
-        print(f"bipolar integral {bpiCounterOutput}")
+            if bpiCounterOutput is not None:
+                print(f"bipolar integral {bpiCounterOutput}")
+
+test = Test()
+test.execute()
