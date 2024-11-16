@@ -168,7 +168,14 @@ class Test(Module):
     def executeMultiplierAdderTest(self):
         print("# Multiplier Adder test")
         for _ in range(0, self.clock_cycles):
-            print("Test multiplier adder")
+            bpB2ISOutput1 = self.bpB2IS.tick(0)
+            bpB2ISOutput2 = self.bpB2IS.tick(0)
+
+            bpB2ISOutput = self.integralAdder.tick(bpB2ISOutput1, bpB2ISOutput2)
+            bpiCounterOutput = self.bpiCounter.tick(bpB2ISOutput)
+
+            if bpiCounterOutput is not None:
+                print(f"bipolar integral {bpiCounterOutput}")
 
     def executeConversionTest(self):
         print("# Conversion test")
