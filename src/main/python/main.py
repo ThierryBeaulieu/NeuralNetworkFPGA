@@ -124,10 +124,10 @@ class CounterIntegralBipolar(Module):
         """
         self.nbTick = self.nbTick + 1
         self.sum = self.sum + stochasticBit
-        if self.nbTick >= 1024:
+        if self.nbTick >= 512:
             self.nbTick = 0
-            m = 2
-            res = (self.sum / (4 * m)) - 128
+            
+            res = (self.sum / 4) - 128
             self.sum = 0
             return res
 
@@ -151,7 +151,7 @@ class CounterUnipolar(Module):
 
 class Test(Module):
     def __init__(self):
-        self.clock_cycles = 1024
+        self.clock_cycles = 512
 
         self.upB2S = B2SUnipolar()
         self.upCounter = CounterUnipolar()
@@ -200,3 +200,4 @@ class Test(Module):
 
 test = Test()
 test.executeMultiplierAdderTest()
+test.executeConversionTest()
