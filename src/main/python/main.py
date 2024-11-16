@@ -151,7 +151,6 @@ class CounterUnipolar(Module):
 
 class Test(Module):
     def __init__(self):
-        self.clock_cycles = 512
 
         self.upB2S = B2SUnipolar()
         self.upCounter = CounterUnipolar()
@@ -167,19 +166,21 @@ class Test(Module):
 
     def executeMultiplierAdderTest(self):
         print("# Multiplier Adder test")
-        for _ in range(0, self.clock_cycles):
-            bpB2ISOutput1 = self.bpB2IS.tick(0)
-            bpB2ISOutput2 = self.bpB2IS.tick(20)
+        clock_cycles = 512
+        for _ in range(0, clock_cycles):
+            stream1 = self.bpB2IS.tick(0)
+            stream2 = self.bpB2IS.tick(0)
 
-            bpB2ISOutput = self.integralAdder.tick(bpB2ISOutput1, bpB2ISOutput2)
-            bpiCounterOutput = self.bpiCounter.tick(bpB2ISOutput)
+            sum = self.integralAdder.tick(stream1, stream2)
+            res = self.bpiCounter.tick(sum)
+            if res is not None:
+                print(f"sum integral {res}")
 
-            if bpiCounterOutput is not None:
-                print(f"bipolar integral {bpiCounterOutput}")
 
     def executeConversionTest(self):
         print("# Conversion test")
-        for _ in range(0, self.clock_cycles):
+        clock_cycles = 1024
+        for _ in range(0, clock_cycles):
             bpB2SOutput = self.bpB2S.tick(-127)
             bpCounterOutput = self.bpCounter.tick(bpB2SOutput)
 
@@ -192,12 +193,6 @@ class Test(Module):
             if upCounterOutput is not None:
                 print(f"unipolar {upCounterOutput}")
 
-            bpB2ISOutput = self.bpB2IS.tick(-8)
-            bpiCounterOutput = self.bpiCounter.tick(bpB2ISOutput)
-
-            if bpiCounterOutput is not None:
-                print(f"bipolar integral {bpiCounterOutput}")
-
 test = Test()
+#test.executeConversionTest()
 test.executeMultiplierAdderTest()
-test.executeConversionTest()
