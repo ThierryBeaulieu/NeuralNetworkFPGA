@@ -68,7 +68,7 @@ class B2ISBipolar(Module):
         bit2 = self.bpB2S2.tick(weightValue)
         return bit2 + bit1
 
-class Multiplier(Module):
+class IntegralMultiplier(Module):
     def tick(self, integralValue: np.int8, bit):
         """
         Takes a value in the integral stream and returns
@@ -80,7 +80,7 @@ class Multiplier(Module):
             return integralValue
         return 0
     
-class Adder(Module):
+class IntegralAdder(Module):
     def tick(self, value1, value2):
         """
         Takes two values of the integral stream and 
@@ -162,7 +162,16 @@ class Test(Module):
         self.bpB2IS = B2ISBipolar()
         self.bpiCounter = CounterIntegralBipolar()
 
-    def execute(self):
+        self.integralAdder = IntegralAdder()
+        self.integralMultiplier = IntegralMultiplier()
+
+    def executeMultiplierAdderTest(self):
+        print("# Multiplier Adder test")
+        for _ in range(0, self.clock_cycles):
+            print("Test multiplier adder")
+
+    def executeConversionTest(self):
+        print("# Conversion test")
         for _ in range(0, self.clock_cycles):
             bpB2SOutput = self.bpB2S.tick(-127)
             bpCounterOutput = self.bpCounter.tick(bpB2SOutput)
@@ -183,4 +192,4 @@ class Test(Module):
                 print(f"bipolar integral {bpiCounterOutput}")
 
 test = Test()
-test.execute()
+test.executeMultiplierAdderTest()
