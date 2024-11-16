@@ -31,14 +31,14 @@ class B2SBipolar(Module):
         self.taps = [7, 5, 3, 1]
         self.lfsr = LFSR(self.seed, self.taps)
 
-    def tick(self, pixelValue: np.uint8):
+    def tick(self, pixelValue: np.int8):
         """
         Converts a binary into a probability.
         Pixel is int8 [-128, 127]
         """
-        pixelValue = np.uint8(pixelValue)
+        pixelValue = np.int8(pixelValue)
         generatedBits = self.lfsr.next_number(self.seed.bit_length())
-        #generatedBits = self.twos(generatedBits)
+        generatedBits = self.twos(generatedBits)
         return int(pixelValue > generatedBits)
 
     def twos(self, bits):
@@ -109,18 +109,21 @@ class CounterUnipolar(Module):
 
 clock_cycles = 1024
 b2Is = B2ISUnipolar()
-bipolarCounter = CounterBipolar()
+bpCounter = CounterBipolar()
 
-b2s = B2SUnipolar()
-unipolarCounter = CounterUnipolar()
+upB2s = B2SUnipolar()
+bpB2s = B2SBipolar()
+upCounter = CounterUnipolar()
 for i in range(0, clock_cycles):
     # clock cycle stuff
-    b2sOutput = b2s.tick(255)
-    bipolarCounterOutput = bipolarCounter.tick(b2sOutput)
-    unipolarCounterOutput = unipolarCounter.tick(b2sOutput)
+    bpB2sOutput = bpB2s.tick(-127)
+    bpCounterOutput = bpCounter.tick(bpB2sOutput)
 
-    if bipolarCounterOutput is not None:
-        print(f"bipolar {bipolarCounterOutput}")
+    upB2sOutput = upB2s.tick(128)
+    upCounterOutput = upCounter.tick(upB2sOutput)
 
-    if unipolarCounterOutput is not None:
-        print(f"unipolar {unipolarCounterOutput}")
+    if bpCounterOutput is not None:
+        print(f"bipolar {bpCounterOutput}")
+
+    if upCounterOutput is not None:
+        print(f"unipolar {upCounterOutput}")
