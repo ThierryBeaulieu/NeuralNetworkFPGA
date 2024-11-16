@@ -1,11 +1,13 @@
-# Linear-Feedback shift register
+import random
 class LFSR:
     def __init__(self, seed, taps):
+        "Linear-Feedback shift register"
         self.state = seed
         self.taps = taps
         self.max_bits = seed.bit_length()  # Determine the bit length of the initial seed
 
     def next_bit(self):
+        "Generate a random bit based on the seed and the taps"
         # XOR the tapped bits to get the new bit
         new_bit = 0
         for tap in self.taps:
@@ -16,18 +18,16 @@ class LFSR:
         return new_bit
 
     def next_number(self, bits=8):
-        # Generate a number with the specified number of bits
-        number = 0
-        for _ in range(bits):
-            number = (number << 1) | self.next_bit()
-        return number
+        "Generate a number with the specified number of bits. Range [0, 255]"
+        return random.randint(0, 255)
+
 
 # Example usage
-seed = 0b101  # A seed with at least one bit set
-taps = [7, 5, 3, 1]  # Tap positions (for example, a 7-bit LFSR)
-lfsr = LFSR(seed, taps)
-
-# Generate a random number with 8 bits
-for i in range(0, 100):
-    random_number = lfsr.next_number(seed.bit_length())
-    print(f"Random 8-bit number: {random_number}")
+# seed = 0b101  # A seed with at least one bit set
+# taps = [7, 5, 3, 1]  # Tap positions (for example, a 7-bit LFSR)
+# lfsr = LFSR(seed, taps)
+# 
+# # Generate a random number with 8 bits
+# for i in range(0, 100):
+#     random_number = lfsr.next_number(seed.bit_length())
+#     print(f"Random 8-bit number: {random_number & 1}")

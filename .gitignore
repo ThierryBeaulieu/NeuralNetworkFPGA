@@ -342,3 +342,9 @@ hs_err_pid*
 .metals/
 .vscode/
 .bloop/
+
+# Mac files
+.DS_Store
+
+# Python 
+__pycache__/
