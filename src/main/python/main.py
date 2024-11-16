@@ -17,7 +17,10 @@ class B2S(Module):
         self.max = 0
 
     def tick(self, pixelValue: np.int8):
-        "Converts a binary into a probability"
+        """
+        Converts a binary into a probability.
+        Pixel is int8 [-128, 127]
+        """
         pixelValue = np.int8(pixelValue)
         generatedBits = self.lfsr.next_number(self.seed.bit_length())
         generatedBits = self.twos(generatedBits)
@@ -59,6 +62,10 @@ class Counter(Module):
         self.sum = 0
 
     def tick(self, stochasticBit):
+        """
+        Accumulate incoming stochastic bit.
+        Generates a int8
+        """
         self.nbTick = self.nbTick + 1
         self.sum = self.sum + stochasticBit
         if self.nbTick >= 1024:
