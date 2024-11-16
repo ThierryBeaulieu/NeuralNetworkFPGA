@@ -169,7 +169,7 @@ class Test(Module):
         print("# Multiplier Adder test")
         for _ in range(0, self.clock_cycles):
             bpB2ISOutput1 = self.bpB2IS.tick(0)
-            bpB2ISOutput2 = self.bpB2IS.tick(0)
+            bpB2ISOutput2 = self.bpB2IS.tick(20)
 
             bpB2ISOutput = self.integralAdder.tick(bpB2ISOutput1, bpB2ISOutput2)
             bpiCounterOutput = self.bpiCounter.tick(bpB2ISOutput)
