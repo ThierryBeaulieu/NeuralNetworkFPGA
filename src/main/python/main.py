@@ -18,8 +18,9 @@ class B2S(Module):
 
     def tick(self, pixelValue: np.int8):
         "Converts a binary into a probability"
+        pixelValue = np.int8(pixelValue)
         generatedBits = self.lfsr.next_number(self.seed.bit_length())
-        #generatedBits = self.twos(generatedBits)
+        generatedBits = self.twos(generatedBits)
         return int(pixelValue > generatedBits)
 
     def twos(self, bits):
@@ -57,11 +58,14 @@ class Counter(Module):
         self.nbTick = 0
         self.sum = 0
 
-    def tick(self, unipolarStochasticBit):
+    def tick(self, stochasticBit):
         self.nbTick = self.nbTick + 1
+        self.sum = self.sum + stochasticBit
         if self.nbTick >= 1024:
-            return self.sum / 4
-        self.sum = self.sum + unipolarStochasticBit
+            self.nbTick = 0
+            res = self.sum / 4
+            self.sum = 0
+            return res
 
 clock_cycles = 1024
 b2s = B2S()
@@ -69,7 +73,7 @@ b2Is = B2IS()
 counter = Counter()
 for i in range(0, clock_cycles):
     # clock cycle stuff
-    b2sOutput = b2s.tick(np.int8(127))
+    b2sOutput = b2s.tick(127)
     counterOutput = counter.tick(b2sOutput)
     if counterOutput is not None:
         print(counterOutput)
