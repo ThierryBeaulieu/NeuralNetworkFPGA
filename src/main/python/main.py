@@ -8,22 +8,37 @@ class Module:
     def tick(self):
         pass
 
-class B2S(Module):
+class B2SUnipolar(Module):
     def __init__(self):
-        "Binary 2 stochastic converter"
+        "Binary 2 stochastic converter in unipolar format"
         self.seed = 0b11110111
         self.taps = [7, 5, 3, 1]
         self.lfsr = LFSR(self.seed, self.taps)
-        self.max = 0
 
-    def tick(self, pixelValue: np.int8):
+    def tick(self, pixelValue: np.uint8):
+        """
+        Converts a binary into a probability.
+        Pixel is uint8 [0, 255]
+        """
+        pixelValue = np.uint8(pixelValue)
+        generatedBits = self.lfsr.next_number(self.seed.bit_length())
+        return int(pixelValue > generatedBits)
+
+class B2SBipolar(Module):
+    def __init__(self):
+        "Binary 2 stochastic converter in bipolar format"
+        self.seed = 0b11110111
+        self.taps = [7, 5, 3, 1]
+        self.lfsr = LFSR(self.seed, self.taps)
+
+    def tick(self, pixelValue: np.uint8):
         """
         Converts a binary into a probability.
         Pixel is int8 [-128, 127]
         """
-        pixelValue = np.int8(pixelValue)
+        pixelValue = np.uint8(pixelValue)
         generatedBits = self.lfsr.next_number(self.seed.bit_length())
-        generatedBits = self.twos(generatedBits)
+        #generatedBits = self.twos(generatedBits)
         return int(pixelValue > generatedBits)
 
     def twos(self, bits):
@@ -31,7 +46,7 @@ class B2S(Module):
         return bits - 128
 
 
-class B2IS(Module):
+class B2ISUnipolar(Module):
     def tick(self, weightValue):
         number = random.choice([0, 1, 2])
         return number
@@ -56,15 +71,33 @@ class Neuron(Module):
         bit = self.b2s.tick(pixelValue)
         multiplierResult = self.multiplier(bit, integralBit)
 
-class Counter(Module):
+class CounterBipolar(Module):
     def __init__(self):
         self.nbTick = 0
         self.sum = 0
 
     def tick(self, stochasticBit):
         """
-        Accumulate incoming stochastic bit.
-        Generates a int8
+        Accumulate incoming binary stochastic stream.
+        Generates a int8 [-128, 127]
+        """
+        self.nbTick = self.nbTick + 1
+        self.sum = self.sum + stochasticBit
+        if self.nbTick >= 1024:
+            self.nbTick = 0
+            res = self.sum / 4 - 128
+            self.sum = 0
+            return res
+
+class CounterUnipolar(Module):
+    def __init__(self):
+        self.nbTick = 0
+        self.sum = 0
+
+    def tick(self, stochasticBit):
+        """
+        Accumulate incoming binary stochastic stream.
+        Generates a uint8 [0, 255]
         """
         self.nbTick = self.nbTick + 1
         self.sum = self.sum + stochasticBit
@@ -75,12 +108,19 @@ class Counter(Module):
             return res
 
 clock_cycles = 1024
-b2s = B2S()
-b2Is = B2IS()
-counter = Counter()
+b2Is = B2ISUnipolar()
+bipolarCounter = CounterBipolar()
+
+b2s = B2SUnipolar()
+unipolarCounter = CounterUnipolar()
 for i in range(0, clock_cycles):
     # clock cycle stuff
-    b2sOutput = b2s.tick(127)
-    counterOutput = counter.tick(b2sOutput)
-    if counterOutput is not None:
-        print(counterOutput)
+    b2sOutput = b2s.tick(255)
+    bipolarCounterOutput = bipolarCounter.tick(b2sOutput)
+    unipolarCounterOutput = unipolarCounter.tick(b2sOutput)
+
+    if bipolarCounterOutput is not None:
+        print(f"bipolar {bipolarCounterOutput}")
+
+    if unipolarCounterOutput is not None:
+        print(f"unipolar {unipolarCounterOutput}")
