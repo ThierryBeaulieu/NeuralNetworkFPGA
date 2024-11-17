@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 from LFSR import LFSR
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.typing import NDArray
+
+enablePlot = False
 
 class Module:
     @abstractmethod
@@ -75,7 +78,7 @@ class IntegralMultiplier(Module):
         Takes a value in the integral stream and returns
         a 0 or the integral value according to the bit
 
-        Input : 
+        Input : integralValue {-m,...,m} bit {0, 1}
         Output : {0, integralValue}
         """
         if bit:
@@ -92,11 +95,6 @@ class IntegralAdder(Module):
         Output : {-(m1+m2), 1,..,m1+m2}
         """
         return value1 + value2
-    
-class Neuron(Module):
-    def tick(self, weightValue, pixelValue):
-        print("tick from the neurone")
-
 class CounterBipolar(Module):
     def __init__(self):
         self.nbTick = 0
@@ -123,9 +121,14 @@ class CounterIntegralBipolar(Module):
     def tick(self, stochasticBit):
         """
         Accumulate incoming integral stochastic stream.
-        Generates a int8 [-128, 127]
+
+        Input: stochasticBit {-m,...,m}
+        Output: uint8 [-128, 128]
         """
         # todo fix that issue
+        # todo, counter for integral and bipolar should not be 
+        # implemented by the hardware because they require
+        # floating point calculus
         self.nbTick = self.nbTick + 1
         self.sum = self.sum + stochasticBit
         if self.nbTick >= 512:
@@ -143,7 +146,9 @@ class CounterUnipolar(Module):
     def tick(self, stochasticBit):
         """
         Accumulate incoming binary stochastic stream.
-        Generates a uint8 [0, 255]
+        
+        Input: stochasticBit {0, 1}
+        Output: uint8 [0, 255]
         """
         self.nbTick = self.nbTick + 1
         self.sum = self.sum + stochasticBit
@@ -172,6 +177,22 @@ class NStanh(Module):
             return 1
         else:
             return 0
+        
+class Neuron(Module):
+    def tick(self, weights: NDArray[np.int8], pixels: NDArray[np.int8]):
+        """
+        Neuron. Takes i=401 W1, W2,...,Wi weights and v1, v2,...,vi pixels.
+        The pixels are an array of int8 and the weights too.
+
+        Input: weights int8, pixels int8
+        Output: {-(m1+m2+..+mi), +(m1+m2+...+mi)}
+        """
+        print("tick from the neurone")
+        # todo fix the issue with have a pixel that has a value of int8
+
+# étant donné que je n'ai pas les données, ce que je vais faire c'est que je vais passer 401 values en paramètre avec 401 pixels
+# randoms et ensuite, je vais comparer avec et sans calculs stochastiques.
+
 
 
 class Test(Module):
@@ -189,30 +210,34 @@ class Test(Module):
         self.integralAdder = IntegralAdder()
         self.integralMultiplier = IntegralMultiplier()
 
-        
 
     def executeNStanhTest(self):
         print("# NStanh test")
-        input = np.arange(-128, 127.1, 0.1)
+        counterUnipolar = CounterUnipolar()
         nstanh = NStanh()
+        x = np.arange(-128.0, 127.5, 0.5)
+        y = []
         m = 1
         n = 4
-        res = []
         value = []
+        clock_cycle = 1024
 
-        for i in range(0, len(input)):
-            si = self.bpB2IS.tick(input[i], m)
-            value.append(si)
-            tanVal = 2 * nstanh.tick(si, n * m) - 1
-            res.append(tanVal)
+        for i in range(0, len(x)):
+            for _ in range(0, clock_cycle):
+                si = self.bpB2IS.tick(x[i], m)
+                value.append(si)
+                tanVal = 2 * nstanh.tick(si, n * m) - 1
+                res = counterUnipolar.tick(tanVal)
+            y.append(res)
 
         theorical_input = np.arange(-1.0, 1.10, 0.1)
         theoretical_output = np.tanh(theorical_input)
 
-        # plot a graphic here
-        plt.plot(theorical_input, theoretical_output, marker="o")
-        plt.plot(value, res, marker='o')
-        plt.show()
+        #plot a graphic here
+        if enablePlot:
+            plt.plot(theorical_input, theoretical_output, marker="o")
+            plt.plot(x, y, marker='o')
+            plt.show()
 
 
     def executeMultiplierAdderTest(self):
@@ -243,8 +268,14 @@ class Test(Module):
 
             if upCounterOutput is not None:
                 print(f"unipolar {upCounterOutput}")
+    
+    def neuronTest(self):
+        print("# Neuron test")
+
 
 test = Test()
 # test.executeConversionTest()
 # test.executeMultiplierAdderTest()
 test.executeNStanhTest()
+
+# todo fix the NSthan
