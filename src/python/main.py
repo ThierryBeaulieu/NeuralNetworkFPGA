@@ -142,9 +142,9 @@ class CounterUnipolar(Module):
             return res
         
 class NStanh(Module):
-    def __init__(self):
+    def __init__(self, offset):
         self.counter = 0
-        self.offset = 2
+        self.offset = offset
 
     def tick(self, Si, mn):
         """
@@ -277,27 +277,31 @@ class Test(Module):
     def NeuronTest(self):
         print("### Neuron test")
         neuron = Neuron()
-        unipolarCounter = CounterUnipolar()
-
-        image = np.load("test_data/test_pixels_1.npy")
-        weights = np.load("test_data/test_weight_1.npy")
-        stream = []
-        for _ in range(0, 1024):
-            res = neuron.tick(weights, image)
-            stream.append(res)
-
+    
+        bipolar = B2ISBipolar()
+        bipolar2 = B2ISBipolar()
+        bipolar3 = B2ISBipolar()
+        bipolar4 = B2ISBipolar()
+        nstanh = NStanh(1)
         sum = 0
-        for element in stream:
-            sum = sum + element
-        sum = sum / len(stream)
-        print(f"practical {sum}")
 
-        theorical_value = (np.dot(image.astype(np.int16), weights.T.astype(np.int16)) >>
-        8).astype(np.int8)
-        print(f"theorical {theorical_value / 255}")
+        for _ in range(0, 1024):
+            bit1 = bipolar.tick(0)
+            bit2 = bipolar2.tick(0)
+            bit3 = bipolar3.tick(0)
+            bit4 = bipolar4.tick(0)
+            bit = bit1 + bit2 + bit3 + bit4
+
+            val = nstanh.tick(bit, 4)
+            sum = sum + val
+
+        sum = sum / 1024
+
+        print(f"values : {sum}")
+
 
     def NStanhTest(self):
-        nStanh = NStanh()
+        nStanh = NStanh(2)
         bipolar = B2ISBipolar()
         output = []
         input = np.arange(-128, 127, 1)
@@ -347,6 +351,5 @@ test = Test()
 # test.B2STest()
 # test.BitwiseANDTest()
 # test.UnipolarCounterTest()
-test.NStanhTest()
-# test.NeuronTest()
-# TODO: Fix NStanh
+# test.NStanhTest()
+test.NeuronTest()
