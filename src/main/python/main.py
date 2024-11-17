@@ -17,6 +17,7 @@ class B2SUnipolar(Module):
     def tick(self, value: np.uint8):
         """
         Converts a binary into a probability.
+
         Input : value [0, 255]
         Output : {0, 1}
         """
@@ -34,6 +35,7 @@ class B2SBipolar(Module):
     def tick(self, value: np.int8):
         """
         Converts a binary into a probability.
+
         Input : value [-128, 127]
         Output : {0, 1}
         """
@@ -53,27 +55,27 @@ class B2ISBipolar(Module):
         """
         Binary to integral stochastic convertor
         """
-        self.bpB2S1 = B2SBipolar()
-        self.bpB2S2 = B2SBipolar()
+        self.bpB2S = B2SBipolar()
         
 
     def tick(self, weightValue):
         """
         Takes a weight [-128, 127] and converts it
-        to an integral stochastic stream using m=2 B2S
+        to an integral stochastic stream using m=1 B2S.
+
         Input : weightValue [-127, 128], m {1, 2, 4, 8}
-        Output : {0, 1, ..., m}
+        Output : {-m, m}
         """
-        bit1 = self.bpB2S1.tick(weightValue)
-        bit2 = self.bpB2S2.tick(weightValue)
-        return bit2 + bit1
+        m = 1
+        return self.bpB2S.tick(weightValue) * 2 - m
 
 class IntegralMultiplier(Module):
-    def tick(self, integralValue: np.int8, bit):
+    def tick(self, integralValue, bit):
         """
         Takes a value in the integral stream and returns
         a 0 or the integral value according to the bit
-        Input : integralValue {0, 1,..,m} , bit {0, 1}
+
+        Input : 
         Output : {0, integralValue}
         """
         if bit:
@@ -85,8 +87,9 @@ class IntegralAdder(Module):
         """
         Takes two values of the integral stream and 
         adds them together.
-        Input : value1 {0, 1,..,m1}, value2 {0, 1,..,m2}
-        Output : {0, 1,..,m1+m2}
+
+        Input : value1 {-m1, m1}, value2 {-m2, m2}
+        Output : {-(m1+m2), 1,..,m1+m2}
         """
         return value1 + value2
     
@@ -151,16 +154,16 @@ class CounterUnipolar(Module):
             return res
         
 class NStanh(Module):
-    def tick(self, Si):
+    def tick(self, Si, m):
         """
         NStanh function. Takes a two's complement as a parameter
-        and  
-        Input: Si {-m,...,m}
+        and
+
+        Input: Si {-m,...,m}, m {1,2,4...}
         Output: {0, 1}
         """
         counter = 0
         n = 1024
-        m = 2 # Depends
         offset = 0
 
         counter = counter + Si
@@ -189,16 +192,21 @@ class Test(Module):
         self.integralAdder = IntegralAdder()
         self.integralMultiplier = IntegralMultiplier()
 
+        self.NStanh = NStanh()
+
     def executeNStanhTest(self):
         print("# NStanh test")
-        clock_cycles = 512
-        for _ in range(0, clock_cycles):
-            stream1 = self.bpB2IS.tick(128)
-            # Il me semble que ça n'a pas de sens, ça dit qu'ils 
-            # s'attendent à ce que le input soit un signed?
-            # comment est-ce que ça peut être un signed si c'est une addition
-            # de nombre e {0, 1, 2}?
-
+        clock_cycles = 1024
+        m = 1
+        sum = 0
+        for i in range(0, clock_cycles):
+            si = self.bpB2IS.tick(127)
+            print(si)
+            sum = sum + self.NStanh.tick(si, m)
+        
+        E = sum / 1024
+        tanh = 2 * E - 1
+        print(tanh)       
 
 
     def executeMultiplierAdderTest(self):
@@ -231,5 +239,6 @@ class Test(Module):
                 print(f"unipolar {upCounterOutput}")
 
 test = Test()
-#test.executeConversionTest()
-test.executeMultiplierAdderTest()
+# test.executeConversionTest()
+# test.executeMultiplierAdderTest()
+test.executeNStanhTest()
