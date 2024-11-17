@@ -126,6 +126,9 @@ class CounterUnipolar(Module):
     def tick(self, stochasticBit):
         """
         Accumulate incoming binary stochastic stream.
+        WARNING: This isn't synthesizable in FPGA. This
+        should be done using python by using incoming data
+        from FPGA
         
         Input: stochasticBit {0, 1}
         Output: uint8 [0, 255]
@@ -134,7 +137,7 @@ class CounterUnipolar(Module):
         self.sum = self.sum + stochasticBit
         if self.nbTick >= 1024:
             self.nbTick = 0
-            res = self.sum / 4
+            res = self.sum / 4 # floating point
             self.sum = 0
             return res
         
@@ -269,10 +272,10 @@ class Test(Module):
                     result = res
             print(f"Pixel {pixels[i]} result {result}")
 
-
     def NeuronTest(self):
         print("### Neuron test")
         neuron = Neuron()
+        unipolarCounter = CounterUnipolar()
 
         image = np.load("test_data/test_pixels_1.npy")
         weights = np.load("test_data/test_weight_1.npy")
@@ -282,20 +285,20 @@ class Test(Module):
             stream.append(res)
 
         sum = 0
-        for i in range(0, len(stream)):
-            sum = sum + stream[i]
-        #sum = sum / len(stream)
-        print(f"sum {sum}")
+        for element in stream:
+            sum = sum + element
+        sum = sum / len(stream)
+        print(f"practical {sum}")
 
         theorical_value = (np.dot(image.astype(np.int16), weights.T.astype(np.int16)) >>
         8).astype(np.int8)
-        print(f"theorical {theorical_value}")
+        print(f"theorical {theorical_value / 255}")
 
 
 test = Test()
 # test.B2ISTest()
 # test.B2STest()
 # test.BitwiseANDTest()
-test.UnipolarCounterTest()
-# test.NeuronTest()
+# test.UnipolarCounterTest()
+test.NeuronTest()
 # TODO: Fix NStanh
