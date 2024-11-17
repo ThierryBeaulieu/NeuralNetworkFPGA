@@ -117,49 +117,7 @@ class IntegralAdder(Module):
         Output : {-(m1+m2), 1,..,m1+m2}
         """
         return value1 + value2
-class CounterBipolar(Module):
-    def __init__(self):
-        self.nbTick = 0
-        self.sum = 0
-
-    def tick(self, stochasticBit):
-        """
-        Accumulate incoming binary stochastic stream.
-        Generates a int8 [-128, 127]
-        """
-        self.nbTick = self.nbTick + 1
-        self.sum = self.sum + stochasticBit
-        if self.nbTick >= 1024:
-            self.nbTick = 0
-            res = self.sum / 4 - 128
-            self.sum = 0
-            return res
-        
-class CounterIntegralBipolar(Module):
-    def __init__(self):
-        self.nbTick = 0
-        self.sum = 0
-
-    def tick(self, stochasticBit):
-        """
-        Accumulate incoming integral stochastic stream.
-
-        Input: stochasticBit {-m,...,m}
-        Output: uint8 [-128, 128]
-        """
-        # todo fix that issue
-        # todo, counter for integral and bipolar should not be 
-        # implemented by the hardware because they require
-        # floating point calculus
-        self.nbTick = self.nbTick + 1
-        self.sum = self.sum + stochasticBit
-        if self.nbTick >= 512:
-            self.nbTick = 0
-            
-            res = (self.sum / 4) - 128
-            self.sum = 0
-            return res
-
+    
 class CounterUnipolar(Module):
     def __init__(self):
         self.nbTick = 0
@@ -247,7 +205,7 @@ class Test(Module):
         print("# Neuron Test")
         neuron = Neuron()
         # Single array of 401 int8 to represent neurons
-        weights = np.loadtxt("weights.csv", delimiter=",").astype(np.int8)[0]
+        # weights = np.loadtxt("weights.csv", delimiter=",").astype(np.int8)[0]
         
         pixels = np.ones(401, dtype=np.uint8)
         neuron.tick(weights, pixels)
@@ -265,10 +223,11 @@ class Test(Module):
         clock_cycle = 1024
 
         for i in range(0, len(x)):
+            bpB2IS = B2ISBipolar()
             for _ in range(0, clock_cycle):
-                si = self.bpB2IS.tick(x[i], m)
+                si = bpB2IS.tick(x[i])
                 value.append(si)
-                tanVal = 2 * nstanh.tick(si, n * m) - 1
+                tanVal = 2 * nstanh.tick(si, n) - 1
                 res = counterUnipolar.tick(tanVal)
             y.append(res)
 
@@ -281,43 +240,36 @@ class Test(Module):
             plt.plot(x, y, marker='o')
             plt.show()
 
-
-    def executeMultiplierAdderTest(self):
-        print("# Multiplier Adder test")
-        clock_cycles = 512
-        for _ in range(0, clock_cycles):
-            stream1 = self.bpB2IS.tick(0)
-            stream2 = self.bpB2IS.tick(0)
-
-            sum = self.integralAdder.tick(stream1, stream2)
-            res = self.bpiCounter.tick(sum)
-            if res is not None:
-                print(f"sum integral {res}")
-
-
     def executeConversionTest(self):
         print("# Conversion test")
         clock_cycles = 1024
+
+        bpB2S = B2SBipolar()
+
+        upB2S = B2SUnipolar()
+        upCounter = CounterUnipolar()
+
         for _ in range(0, clock_cycles):
-            bpB2SOutput = self.bpB2S.tick(-127)
-            bpCounterOutput = self.bpCounter.tick(bpB2SOutput)
-
-            if bpCounterOutput is not None:
-                print(f"bipolar {bpCounterOutput}")
-
-            upB2SOutput = self.upB2S.tick(128)
-            upCounterOutput = self.upCounter.tick(upB2SOutput)
+            upB2SOutput = upB2S.tick(128)
+            upCounterOutput = upCounter.tick(upB2SOutput)
 
             if upCounterOutput is not None:
                 print(f"unipolar {upCounterOutput}")
     
-
-
+    def B2ISTest(self):
+        print("B2IS Test")
+        B2IS = B2ISBipolar()
+        weights = np.array([-128, -64, 0, 64, 127], dtype=np.int8)
+        for i in range(0, len(weights)):
+            print(f"weights {weights[i]}")
+            stream = []
+            for j in range(0, 16):
+                stream.append(B2IS.tick(weights[i]))
+            print(stream)
 
 test = Test()
-test.executeConversionTest()
-test.executeMultiplierAdderTest()
-test.executeNStanhTest()
-test.exectueNeuronTest()
-
+# test.executeConversionTest()
+# test.executeNStanhTest()
+# test.exectueNeuronTest()
+test.B2ISTest()
 # todo fix the NSthan
