@@ -103,7 +103,7 @@ class BitwiseOperatorAND(Module):
         Input : integralValue {-m,...,m} bit {0, 1}
         Output : {0, integralValue}
         """
-        if bit:
+        if bit >= 1:
             return integralValue
         return 0
     
@@ -169,14 +169,14 @@ class Neuron(Module):
         """
         Single Neuron from a neural network
         """
-        self.pixelConverters = np.array([B2SUnipolar() for _ in range(401)])
-        self.weightConverters = np.array([B2ISBipolar() for _ in range(401)])
-        self.adders = np.array([BitwiseOperatorAND() for _ in range(401)])
-        # self.NSthan = NStanh()
+        self.pixelConverters = np.array([B2SUnipolar() for _ in range(4)])
+        self.weightConverters = np.array([B2ISBipolar() for _ in range(4)])
+        self.bitwiseAND = np.array([BitwiseOperatorAND() for _ in range(4)])
+        self.NSthan = NStanh(1)
 
     def tick(self, weights: NDArray[np.int8], pixels: NDArray[np.uint8]):
         """
-        Neuron. Takes i=401 W1, W2,...,Wi weights and v1, v2,...,vi pixels.
+        Neuron. Takes i=4 W1, W2,...,Wi weights and v1, v2,...,vi pixels.
         The pixels are an array of int8 and the weights too.
 
         Input: weights int8, pixels int8
@@ -193,15 +193,14 @@ class Neuron(Module):
             bipolarWeightsConverted.append(integer)
 
         bitwiseResults = []
-        for i in range(0, len(self.adders)):
-            bitwiseResult = self.adders[i].tick(bipolarWeightsConverted[i], unipolarPixelsConverted[i])
+        for i in range(0, len(self.bitwiseAND)):
+            bitwiseResult = self.bitwiseAND[i].tick(bipolarWeightsConverted[i], unipolarPixelsConverted[i])
             bitwiseResults.append(bitwiseResult)
-
-        si = 0
+        
+        treeAdderRes = 0
         for i in range(0, len(bitwiseResults)):
-            si = si + bitwiseResults[i]
-        return si
-        return self.NSthan.tick(si, 4)
+            treeAdderRes = treeAdderRes + bitwiseResults[i]
+        return self.NSthan.tick(treeAdderRes, 4)
         
 
 class Test(Module):
@@ -277,27 +276,32 @@ class Test(Module):
     def NeuronTest(self):
         print("### Neuron test")
         neuron = Neuron()
-    
-        bipolar = B2ISBipolar()
-        bipolar2 = B2ISBipolar()
-        bipolar3 = B2ISBipolar()
-        bipolar4 = B2ISBipolar()
-        nstanh = NStanh(1)
-        sum = 0
 
+        # pratical values
+        weights = np.array([127, 0, 0, -128])
+        pixels = np.array([255, 255, 255, 255])
+
+        stream = []
         for _ in range(0, 1024):
-            bit1 = bipolar.tick(0)
-            bit2 = bipolar2.tick(0)
-            bit3 = bipolar3.tick(0)
-            bit4 = bipolar4.tick(0)
-            bit = bit1 + bit2 + bit3 + bit4
+            res = neuron.tick(weights, pixels)
+            stream.append(res)
 
-            val = nstanh.tick(bit, 4)
-            sum = sum + val
+        sum = 0
+        for i in range(0, len(stream)):
+            sum = sum + stream[i]
 
-        sum = sum / 1024
+        sum = sum / len(stream)
+        print(f"sum {sum}")
 
-        print(f"values : {sum}")
+        # theorical values
+        weights = [255, 255, 255, 255]
+        pixels = [1.0, 1.0, 1.0, 1.0]
+
+        th_sum = 0
+        for i in range(0, len(weights)):
+            th_sum = th_sum + weights[i] * pixels[i]
+        th_res = np.tanh(th_sum)
+        print(f"th result {th_res}")
 
 
     def NStanhTest(self):
