@@ -308,7 +308,7 @@ class Test(Module):
             for _ in range(0, 1024):
                 si = bipolar.tick(input[i])
                 bipolarValues.append(si)
-                stream.append(2 * nStanh.tick(si, 32) - 1)
+                stream.append(2 * nStanh.tick(si, 4) - 1)
                 bipolarValues.append(si)
 
             sum = 0
