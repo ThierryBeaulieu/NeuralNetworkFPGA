@@ -300,7 +300,7 @@ class Test(Module):
         nStanh = NStanh()
         bipolar = B2ISBipolar()
         output = []
-        input = np.arange(-128.0, 127.1, 0.1)
+        input = np.arange(-128, 127, 1)
         for i in range(0, len(input)):
             stream = []
             for _ in range(0, 1024):
