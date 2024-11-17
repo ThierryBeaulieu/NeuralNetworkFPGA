@@ -210,7 +210,7 @@ class Test(Module):
 
         # plot a graphic here
         #plt.plot(theorical_input, theoretical_output)
-        plt.plot(value, res)
+        plt.plot(value, res, marker='o')
         plt.show()
 
 
