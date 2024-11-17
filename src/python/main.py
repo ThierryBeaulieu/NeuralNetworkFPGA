@@ -231,8 +231,32 @@ class Test(Module):
                     zeros = zeros +1
             print(f"Pixel {pixels[i]} approx : {(ones / (ones + zeros)) * 256}")
 
-    
+    def BitwiseANDTest(self):
+        print("### Bitwise Adder")
+        B2S = B2SUnipolar()
+        B2IS = B2ISBipolar()
+        bitwiseAND = BitwiseOperatorAND()
+
+        weights = np.array([-128, 0, 127], dtype=np.int8)
+        pixels = np.array([0, 16, 32, 64, 128, 255], dtype=np.uint8)
+
+        for i in range(0, len(pixels)):
+            weight = weights[2]
+            stream = []
+            for _ in range(0, 1024):
+                sBinary = B2S.tick(pixels[i])
+                sInteger = B2IS.tick(weight)
+                res = bitwiseAND.tick(sInteger, sBinary)
+                stream.append(res)
+
+            sum = 0
+            for element in stream:
+                sum = sum + element
+            # Equivalent of W * x
+            multiplicationResult = sum / len(stream)
+            print(f"Pixel {pixels[i]} weight {weight} mul {multiplicationResult}")
 
 test = Test()
-test.B2ISTest()
-test.B2STest()
+# test.B2ISTest()
+# test.B2STest()
+test.BitwiseANDTest()
