@@ -348,3 +348,5 @@ hs_err_pid*
 
 # Python 
 __pycache__/
+.venv
+venv

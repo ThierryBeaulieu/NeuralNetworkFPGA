@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from LFSR import LFSR
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Module:
     @abstractmethod
@@ -58,7 +59,7 @@ class B2ISBipolar(Module):
         self.bpB2S = B2SBipolar()
         
 
-    def tick(self, weightValue):
+    def tick(self, weightValue, m):
         """
         Takes a weight [-128, 127] and converts it
         to an integral stochastic stream using m=1 B2S.
@@ -66,7 +67,6 @@ class B2ISBipolar(Module):
         Input : weightValue [-127, 128], m {1, 2, 4, 8}
         Output : {-m, m}
         """
-        m = 1
         return self.bpB2S.tick(weightValue) * 2 - m
 
 class IntegralMultiplier(Module):
@@ -163,7 +163,7 @@ class NStanh(Module):
         Output: {0, 1}
         """
         counter = 0
-        n = 1024
+        n = 512
         offset = 0
 
         counter = counter + Si
@@ -192,21 +192,29 @@ class Test(Module):
         self.integralAdder = IntegralAdder()
         self.integralMultiplier = IntegralMultiplier()
 
-        self.NStanh = NStanh()
+        
 
     def executeNStanhTest(self):
         print("# NStanh test")
-        clock_cycles = 1024
-        m = 1
-        sum = 0
-        for i in range(0, clock_cycles):
-            si = self.bpB2IS.tick(127)
-            print(si)
-            sum = sum + self.NStanh.tick(si, m)
-        
-        E = sum / 1024
-        tanh = 2 * E - 1
-        print(tanh)       
+        res = []
+        input = np.arange(-128, 127.1, 0.1)
+        for i in range(0, len(input)):
+            clock_cycles = 1024
+            m = 1
+            sum = 0
+            nstanh = NStanh()
+
+            for _ in range(0, clock_cycles):
+                si = self.bpB2IS.tick(input[i], m)
+                sum = sum + nstanh.tick(si, m)
+            
+            E = sum / 1024
+            tanh = 2 * E - 1
+            res.append(tanh)
+
+        # plot a graphic here
+        plt.plot(input, res)
+        plt.show()
 
 
     def executeMultiplierAdderTest(self):
