@@ -455,11 +455,26 @@ class Test(Module):
         np.save("results/weights_sampled.npy", y)
 
 class DataHandling():
-    def analyse():
+    def analyse(self):
         stochastic = np.load("results/stochastic_limit.npy")
         floating = np.load("results/floating_limit.npy")
+        percentage = []
+        for row in range(0, len(stochastic)):
+            for col in range(0, len(stochastic[row])):
+                stochastic_value = stochastic[row][col]
+                floating_value = floating[row][col]
+                difference = abs(stochastic_value - floating_value)
+                percentage.append(difference * 100)
+        
+        mean = np.mean(percentage)
+        print(f"mean {mean}")
+
+
+dataHandler = DataHandling()
+dataHandler.analyse()
 
 test = Test()
+
 # test.B2ISTest()
 # test.B2STest()
 # test.BitwiseANDTest()
