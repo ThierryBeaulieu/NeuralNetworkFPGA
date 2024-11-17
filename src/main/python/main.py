@@ -62,17 +62,17 @@ class B2ISBipolar(Module):
         self.bpB2S = B2SBipolar()
         
 
-    def tick(self, weightValue, m):
+    def tick(self, weightValue):
         """
         Takes a weight [-128, 127] and converts it
         to an integral stochastic stream using m=1 B2S.
 
-        Input : weightValue [-127, 128], m {1, 2, 4, 8}
-        Output : {-m, m}
+        Input : weightValue [-127, 128]
+        Output : {-1, 1}
         """
-        return self.bpB2S.tick(weightValue) * 2 - m
+        return self.bpB2S.tick(weightValue) * 2 - 1
 
-class IntegralMultiplier(Module):
+class BitwiseOperatorAND(Module):
     def tick(self, integralValue, bit):
         """
         Takes a value in the integral stream and returns
@@ -179,7 +179,16 @@ class NStanh(Module):
             return 0
         
 class Neuron(Module):
-    def tick(self, weights: NDArray[np.int8], pixels: NDArray[np.int8]):
+
+    def __init__(self):
+        """
+        Single Neuron from a neural network
+        """
+        self.pixelConverters = np.array([B2SUnipolar() for _ in range(401)])
+        self.weightConverters = np.array([B2ISBipolar() for _ in range(401)])
+        self.adders = np.array([BitwiseOperatorAND() for _ in range(401)])
+
+    def tick(self, weights: NDArray[np.int8], pixels: NDArray[np.uint8]):
         """
         Neuron. Takes i=401 W1, W2,...,Wi weights and v1, v2,...,vi pixels.
         The pixels are an array of int8 and the weights too.
@@ -188,12 +197,27 @@ class Neuron(Module):
         Output: {-(m1+m2+..+mi), +(m1+m2+...+mi)}
         """
         print("tick from the neurone")
-        # todo fix the issue with have a pixel that has a value of int8
+        unipolarPixelsConverted = []
+        for i in range(0, len(self.pixelConverters)):
+            bit = self.pixelConverters[i].tick(pixels[i])
+            unipolarPixelsConverted.append(bit)
 
-# étant donné que je n'ai pas les données, ce que je vais faire c'est que je vais passer 401 values en paramètre avec 401 pixels
-# randoms et ensuite, je vais comparer avec et sans calculs stochastiques.
+        bipolarWeightsConverted = []
+        for i in range(0, len(self.weightConverters)):
+            integer = self.weightConverters[i].tick(weights[i])
+            bipolarWeightsConverted.append(integer)
 
+        bitwiseResults = []
+        for i in range(0, len(self.adders)):
+            bitwiseResult = self.adders[i].tick(bipolarWeightsConverted[i], unipolarPixelsConverted[i])
+            bitwiseResults.append(bitwiseResult)
 
+        treeAdderRes = 0
+        for i in range(0, len(bitwiseResults)):
+            treeAdderRes = treeAdderRes + bitwiseResults[i]
+
+        return treeAdderRes
+        
 
 class Test(Module):
     def __init__(self):
@@ -208,7 +232,13 @@ class Test(Module):
         self.bpiCounter = CounterIntegralBipolar()
 
         self.integralAdder = IntegralAdder()
-        self.integralMultiplier = IntegralMultiplier()
+        
+    def exectueNeuronTest(self):
+        print("# Neuron Test")
+        neuron = Neuron()
+        weights = np.zeros(401, dtype=np.int8)
+        pixels = np.ones(401, dtype=np.uint8)
+        neuron.tick(weights, pixels)
 
 
     def executeNStanhTest(self):
@@ -269,13 +299,13 @@ class Test(Module):
             if upCounterOutput is not None:
                 print(f"unipolar {upCounterOutput}")
     
-    def neuronTest(self):
-        print("# Neuron test")
+
 
 
 test = Test()
 # test.executeConversionTest()
 # test.executeMultiplierAdderTest()
-test.executeNStanhTest()
+# test.executeNStanhTest()
+test.exectueNeuronTest()
 
 # todo fix the NSthan
