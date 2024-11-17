@@ -144,7 +144,7 @@ class CounterUnipolar(Module):
 class NStanh(Module):
     def __init__(self):
         self.counter = 0
-        self.offset = 1
+        self.offset = 2
 
     def tick(self, Si, mn):
         """
@@ -307,9 +307,12 @@ class Test(Module):
             stream = []
             bipolarValues = []
             for _ in range(0, 1024):
-                si = bipolar.tick(input[i])
+                si1 = bipolar.tick(input[i])
+                si2 = bipolar.tick(input[i])
+                si = si1 + si2
+                m = 2
                 bipolarValues.append(si)
-                stream.append(2 * nStanh.tick(si, 4) - 1)
+                stream.append(2 * nStanh.tick(si, 3 * m) - 1)
                 bipolarValues.append(si)
 
             sum = 0
@@ -335,7 +338,7 @@ class Test(Module):
             plt.plot(th_input, th_ouput)
             plt.xlabel('s')
             plt.ylabel('ouput')
-            plt.title('NStanh approximation')
+            plt.title('NStanh approximation with m = 2, offset = 2')
             plt.show()
 
 
