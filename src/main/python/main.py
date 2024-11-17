@@ -205,7 +205,7 @@ class Test(Module):
             tanVal = 2 * nstanh.tick(si, 4 * m) - 1
             res.append(tanVal)
 
-        theorical_input = np.arange(-1.0, 1.01, 0.01)
+        theorical_input = np.arange(-1.0, 1.10, 0.1)
         theoretical_output = np.tanh(theorical_input)
 
         # plot a graphic here
