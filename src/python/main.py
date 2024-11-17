@@ -278,8 +278,8 @@ class Test(Module):
         neuron = Neuron()
 
         # pratical values
-        weights = np.array([127, 0, 0, -128])
-        pixels = np.array([255, 255, 255, 255])
+        weights = np.array([127, 0, 32, -32])
+        pixels = np.array([64, 127, 32, 32])
 
         stream = []
         for _ in range(0, 1024):
@@ -290,18 +290,11 @@ class Test(Module):
         for i in range(0, len(stream)):
             sum = sum + stream[i]
 
-        sum = sum / len(stream)
-        print(f"sum {sum}")
+        res = sum / len(stream)
+        print(f"sum {sum / 4}")
+        print(f"p {res}")
 
-        # theorical values
-        weights = [255, 255, 255, 255]
-        pixels = [1.0, 1.0, 1.0, 1.0]
-
-        th_sum = 0
-        for i in range(0, len(weights)):
-            th_sum = th_sum + weights[i] * pixels[i]
-        th_res = np.tanh(th_sum)
-        print(f"th result {th_res}")
+        # how do I compare the neuron with a probability
 
 
     def NStanhTest(self):
