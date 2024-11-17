@@ -241,7 +241,7 @@ class Test(Module):
         pixels = np.array([0, 16, 32, 64, 128, 255], dtype=np.uint8)
 
         for i in range(0, len(pixels)):
-            weight = weights[2]
+            weight = weights[1]
             stream = []
             for _ in range(0, 1024):
                 sBinary = B2S.tick(pixels[i])
@@ -255,6 +255,10 @@ class Test(Module):
             # Equivalent of W * x
             multiplicationResult = sum / len(stream)
             print(f"Pixel {pixels[i]} weight {weight} mul {multiplicationResult}")
+
+    def NSthanTest(self):
+        print("### NSthan test")
+        nstanh = NStanh()
 
 test = Test()
 # test.B2ISTest()
