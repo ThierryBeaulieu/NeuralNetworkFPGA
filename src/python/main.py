@@ -301,24 +301,34 @@ class Test(Module):
         bipolar = B2ISBipolar()
         output = []
         input = np.arange(-128, 127, 1)
+        s = []
         for i in range(0, len(input)):
             stream = []
+            bipolarValues = []
             for _ in range(0, 1024):
-                s = bipolar.tick(input[i])
-                stream.append(nStanh.tick(s, 32))
+                si = bipolar.tick(input[i])
+                bipolarValues.append(si)
+                stream.append(2 * nStanh.tick(si, 32) - 1)
+                bipolarValues.append(si)
 
             sum = 0
             for j in range(0, len(stream)):
                 sum = sum + stream[j]
 
+            probability = 0
+            for j in range(0, len(bipolarValues)):
+                probability = probability + bipolarValues[j]
+
             sum = sum / len(stream)
+            probability = probability / len(bipolarValues)
+            s.append(probability)
             output.append(sum)
 
         print(f"NStanh {sum}")
 
         enablePlot = True
         if enablePlot:
-            plt.plot(input, output, marker='o')
+            plt.plot(s, output, marker='o')
             plt.xlabel('s')
             plt.ylabel('ouput')
             plt.title('NStanh approximation')
