@@ -243,19 +243,6 @@ class Neuron(Module):
         
 
 class Test(Module):
-    def __init__(self):
-
-        self.upB2S = B2SUnipolar()
-        self.upCounter = CounterUnipolar()
-
-        self.bpB2S = B2SBipolar()
-        self.bpCounter = CounterBipolar()
-
-        self.bpB2IS = B2ISBipolar()
-        self.bpiCounter = CounterIntegralBipolar()
-
-        self.integralAdder = IntegralAdder()
-        
     def exectueNeuronTest(self):
         print("# Neuron Test")
         neuron = Neuron()
@@ -328,9 +315,9 @@ class Test(Module):
 
 
 test = Test()
-# test.executeConversionTest()
-# test.executeMultiplierAdderTest()
-# test.executeNStanhTest()
+test.executeConversionTest()
+test.executeMultiplierAdderTest()
+test.executeNStanhTest()
 test.exectueNeuronTest()
 
 # todo fix the NSthan
