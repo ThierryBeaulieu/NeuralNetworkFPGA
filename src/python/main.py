@@ -142,21 +142,23 @@ class CounterUnipolar(Module):
             return res
         
 class NStanh(Module):
+    def __init__(self):
+        self.counter = 0
+        self.offset = 0
+
     def tick(self, Si, mn):
         """
         NStanh function. Using a FSM, we simulate NStanh
 
-        Input: Si {-m,...,m}, m {1,2,4...}
+        Input: Si {-m,...,m}, mn {1*n,2*n,4*n...}
         Output: {0, 1}
         """
-        counter = 0
-        offset = 0
-        counter = counter + Si
-        if counter > mn - 1:
-            counter = mn - 1
-        if counter < 0:
-            counter = 0
-        if counter > offset:
+        self.counter = self.counter + Si
+        if self.counter > (mn - 1):
+            self.counter = mn - 1
+        if self.counter < 0:
+            self.counter = 0
+        if self.counter > self.offset:
             return 1
         else:
             return 0
@@ -294,11 +296,40 @@ class Test(Module):
         8).astype(np.int8)
         print(f"theorical {theorical_value / 255}")
 
+    def NStanhTest(self):
+        nStanh = NStanh()
+        bipolar = B2ISBipolar()
+        output = []
+        input = np.arange(-128.0, 127.1, 0.1)
+        for i in range(0, len(input)):
+            stream = []
+            for _ in range(0, 1024):
+                s = bipolar.tick(input[i])
+                stream.append(nStanh.tick(s, 32))
+
+            sum = 0
+            for j in range(0, len(stream)):
+                sum = sum + stream[j]
+
+            sum = sum / len(stream)
+            output.append(sum)
+
+        print(f"NStanh {sum}")
+
+        enablePlot = True
+        if enablePlot:
+            plt.plot(input, output, marker='o')
+            plt.xlabel('s')
+            plt.ylabel('ouput')
+            plt.title('NStanh approximation')
+            plt.show()
+
 
 test = Test()
 # test.B2ISTest()
 # test.B2STest()
 # test.BitwiseANDTest()
 # test.UnipolarCounterTest()
-test.NeuronTest()
+test.NStanhTest()
+# test.NeuronTest()
 # TODO: Fix NStanh
