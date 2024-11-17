@@ -144,7 +144,7 @@ class CounterUnipolar(Module):
 class NStanh(Module):
     def __init__(self):
         self.counter = 0
-        self.offset = 0
+        self.offset = 1
 
     def tick(self, Si, mn):
         """
@@ -302,6 +302,7 @@ class Test(Module):
         output = []
         input = np.arange(-128, 127, 1)
         s = []
+        # practical model
         for i in range(0, len(input)):
             stream = []
             bipolarValues = []
@@ -324,11 +325,14 @@ class Test(Module):
             s.append(probability)
             output.append(sum)
 
-        print(f"NStanh {sum}")
+        # theorical model
+        th_input = np.arange(-2.0, 2.1, 0.1)
+        th_ouput = np.tanh(4 * th_input / 2)
 
         enablePlot = True
         if enablePlot:
             plt.plot(s, output, marker='o')
+            plt.plot(th_input, th_ouput)
             plt.xlabel('s')
             plt.ylabel('ouput')
             plt.title('NStanh approximation')
