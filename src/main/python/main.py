@@ -209,7 +209,7 @@ class Test(Module):
         theoretical_output = np.tanh(theorical_input)
 
         # plot a graphic here
-        #plt.plot(theorical_input, theoretical_output)
+        plt.plot(theorical_input, theoretical_output, marker="o")
         plt.plot(value, res, marker='o')
         plt.show()
 
