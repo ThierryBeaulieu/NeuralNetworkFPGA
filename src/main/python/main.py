@@ -156,15 +156,13 @@ class CounterUnipolar(Module):
 class NStanh(Module):
     def tick(self, Si, mn):
         """
-        NStanh function. Takes a two's complement as a parameter
-        and
+        NStanh function. Using a FSM, we simulate NStanh
 
         Input: Si {-m,...,m}, m {1,2,4...}
         Output: {0, 1}
         """
         counter = 0
         offset = 0
-
         counter = counter + Si
         if counter > mn - 1:
             counter = mn - 1
@@ -205,10 +203,13 @@ class Test(Module):
             si = self.bpB2IS.tick(input[i], m)
             value.append(si)
             tanVal = 2 * nstanh.tick(si, 4 * m) - 1
-            print(tanVal)
             res.append(tanVal)
 
+        theorical_input = np.arange(-1.0, 1.01, 0.01)
+        theoretical_output = np.tanh(theorical_input)
+
         # plot a graphic here
+        #plt.plot(theorical_input, theoretical_output)
         plt.plot(value, res)
         plt.show()
 
