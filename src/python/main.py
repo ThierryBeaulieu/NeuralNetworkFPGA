@@ -255,6 +255,20 @@ class Test(Module):
             multiplicationResult = sum / len(stream)
             print(f"Pixel {pixels[i]} weight {weight} mul {multiplicationResult}")
 
+    def UnipolarCounterTest(self):
+        print("### Unipolar Counter test")
+        B2S = B2SUnipolar()
+        unipolarCounter = CounterUnipolar()
+
+        pixels = np.array([0, 16, 32, 64, 128, 255], dtype=np.uint8)
+        for i in range(0, len(pixels)):
+            result = 0
+            for _ in range(0, 1024):
+                res = unipolarCounter.tick(B2S.tick(pixels[i]))
+                if res is not None:
+                    result = res
+            print(f"Pixel {pixels[i]} result {result}")
+
 
     def NeuronTest(self):
         print("### Neuron test")
@@ -282,5 +296,6 @@ test = Test()
 # test.B2ISTest()
 # test.B2STest()
 # test.BitwiseANDTest()
-test.NeuronTest()
+test.UnipolarCounterTest()
+# test.NeuronTest()
 # TODO: Fix NStanh
