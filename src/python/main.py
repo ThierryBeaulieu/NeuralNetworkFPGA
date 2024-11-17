@@ -278,8 +278,8 @@ class Test(Module):
         neuron = Neuron()
 
         # pratical values
-        weights = np.array([127, 0, 32, -32])
-        pixels = np.array([64, 127, 32, 32])
+        weights = np.array([10, -64, -32, 64])
+        pixels = np.array([64, 32, 64, 32])
 
         stream = []
         for _ in range(0, 1024):
@@ -287,7 +287,7 @@ class Test(Module):
             stream.append(res)
 
         sum = 0
-        for i in range(0, len(stream)):
+        for i in range(0, len(stream)): 
             sum = sum + stream[i]
 
         res = sum / len(stream)
@@ -295,6 +295,64 @@ class Test(Module):
         print(f"p {res}")
 
         # how do I compare the neuron with a probability
+        unormalized = np.dot(weights, pixels)
+        normalized = (unormalized >> 8) / 256
+        print(f"res {normalized}")
+
+    def TheoricalComparison(self):
+        print("### Theorical Comparison")
+        neuron = Neuron()
+
+        weights_data = [[-128, -128, -128, -128], [-64, -64, -64, -64], [0, 0, 0, 0], [64, 64, 64, 64], [127, 127, 127, 127]]
+        pixels_data = [[0, 0, 0, 0], [32, 32, 32, 32], [64, 64, 64, 64], [128, 128, 128, 128], [255, 255, 255, 255]]
+        pixels_data_real = [[1, 2, 5, 0], [127, 1, 9, 32], [128, 64, 0, 5], [12, 0, 0, 3], [10, 29, 20, 30]]
+
+        stochastic = []
+        floating = []
+
+        for i in range(0, len(weights_data)):
+            weight = weights_data[i]
+
+            # theorical model
+            theorical_results = []
+            for j in range(0, len(pixels_data)):
+                pixel = pixels_data[j]
+                product = np.dot(weight, pixel)
+                product = (product >> 8) / 256
+                res = np.tanh(product)
+                theorical_results.append(float((res + 1) / 2))
+                # print(f"weight {weight} pixel {pixel}")
+
+            # print(f"theorical res {theorical_results}")
+            floating.append(theorical_results)
+
+            # practical model
+            neuron = Neuron()
+            practical_results = []
+            for j in range(0, len(pixels_data)):
+                pixel = pixels_data[j]
+                bitstream = []
+                for _ in range(0, 1024):
+                    bit = neuron.tick(weight, pixel)
+                    bitstream.append(bit)
+                sum = 0
+                for bit in bitstream:
+                    sum = sum + bit
+                sum = sum / len(bitstream)
+                practical_results.append(sum)
+                # print(f"weight {weight} pixel {pixel}")
+
+            # print(f"practical res {practical_results}")
+            stochastic.append(practical_results)
+
+        # print("STOCHASTIC")
+        # print(stochastic)
+        np.save("stochastic.npy", stochastic)
+        # print("FLOAT")
+        # print(floating)
+        np.save("floating.npy", floating)
+
+
 
 
     def NStanhTest(self):
@@ -349,4 +407,5 @@ test = Test()
 # test.BitwiseANDTest()
 # test.UnipolarCounterTest()
 # test.NStanhTest()
-test.NeuronTest()
+# test.NeuronTest()
+test.TheoricalComparison()
