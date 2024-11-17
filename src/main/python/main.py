@@ -154,7 +154,7 @@ class CounterUnipolar(Module):
             return res
         
 class NStanh(Module):
-    def tick(self, Si, m):
+    def tick(self, Si, mn):
         """
         NStanh function. Takes a two's complement as a parameter
         and
@@ -163,12 +163,11 @@ class NStanh(Module):
         Output: {0, 1}
         """
         counter = 0
-        n = 512
         offset = 0
 
         counter = counter + Si
-        if counter > (n * m) - 1:
-            counter = (n * m) - 1
+        if counter > mn - 1:
+            counter = mn - 1
         if counter < 0:
             counter = 0
         if counter > offset:
@@ -196,24 +195,21 @@ class Test(Module):
 
     def executeNStanhTest(self):
         print("# NStanh test")
-        res = []
         input = np.arange(-128, 127.1, 0.1)
-        for i in range(0, len(input)):
-            clock_cycles = 1024
-            m = 1
-            sum = 0
-            nstanh = NStanh()
+        nstanh = NStanh()
+        m = 1
+        res = []
+        value = []
 
-            for _ in range(0, clock_cycles):
-                si = self.bpB2IS.tick(input[i], m)
-                sum = sum + nstanh.tick(si, m)
-            
-            E = sum / 1024
-            tanh = 2 * E - 1
-            res.append(tanh)
+        for i in range(0, len(input)):
+            si = self.bpB2IS.tick(input[i], m)
+            value.append(si)
+            tanVal = 2 * nstanh.tick(si, 4 * m) - 1
+            print(tanVal)
+            res.append(tanVal)
 
         # plot a graphic here
-        plt.plot(input, res)
+        plt.plot(value, res)
         plt.show()
 
 
