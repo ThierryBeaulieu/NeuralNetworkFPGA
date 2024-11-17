@@ -167,7 +167,7 @@ class Neuron(Module):
         self.pixelConverters = np.array([B2SUnipolar() for _ in range(401)])
         self.weightConverters = np.array([B2ISBipolar() for _ in range(401)])
         self.adders = np.array([BitwiseOperatorAND() for _ in range(401)])
-        self.NSthan = NStanh()
+        # self.NSthan = NStanh()
 
     def tick(self, weights: NDArray[np.int8], pixels: NDArray[np.uint8]):
         """
@@ -177,7 +177,6 @@ class Neuron(Module):
         Input: weights int8, pixels int8
         Output: {-(m1+m2+..+mi), +(m1+m2+...+mi)}
         """
-        print("tick from the neurone")
         unipolarPixelsConverted = []
         for i in range(0, len(self.pixelConverters)):
             bit = self.pixelConverters[i].tick(pixels[i])
@@ -196,7 +195,7 @@ class Neuron(Module):
         si = 0
         for i in range(0, len(bitwiseResults)):
             si = si + bitwiseResults[i]
-
+        return si
         return self.NSthan.tick(si, 4)
         
 
@@ -256,11 +255,32 @@ class Test(Module):
             multiplicationResult = sum / len(stream)
             print(f"Pixel {pixels[i]} weight {weight} mul {multiplicationResult}")
 
-    def NSthanTest(self):
-        print("### NSthan test")
-        nstanh = NStanh()
+
+    def NeuronTest(self):
+        print("### Neuron test")
+        neuron = Neuron()
+
+        image = np.load("test_data/test_pixels_1.npy")
+        weights = np.load("test_data/test_weight_1.npy")
+        stream = []
+        for _ in range(0, 1024):
+            res = neuron.tick(weights, image)
+            stream.append(res)
+
+        sum = 0
+        for i in range(0, len(stream)):
+            sum = sum + stream[i]
+        #sum = sum / len(stream)
+        print(f"sum {sum}")
+
+        theorical_value = (np.dot(image.astype(np.int16), weights.T.astype(np.int16)) >>
+        8).astype(np.int8)
+        print(f"theorical {theorical_value}")
+
 
 test = Test()
 # test.B2ISTest()
 # test.B2STest()
-test.BitwiseANDTest()
+# test.BitwiseANDTest()
+test.NeuronTest()
+# TODO: Fix NStanh
