@@ -196,13 +196,14 @@ class Test(Module):
         input = np.arange(-128, 127.1, 0.1)
         nstanh = NStanh()
         m = 1
+        n = 4
         res = []
         value = []
 
         for i in range(0, len(input)):
             si = self.bpB2IS.tick(input[i], m)
             value.append(si)
-            tanVal = 2 * nstanh.tick(si, 4 * m) - 1
+            tanVal = 2 * nstanh.tick(si, n * m) - 1
             res.append(tanVal)
 
         theorical_input = np.arange(-1.0, 1.10, 0.1)
