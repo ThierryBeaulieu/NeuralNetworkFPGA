@@ -122,6 +122,7 @@ class CounterIntegralBipolar(Module):
         Accumulate incoming integral stochastic stream.
         Generates a int8 [-128, 127]
         """
+        # todo fix that issue
         self.nbTick = self.nbTick + 1
         self.sum = self.sum + stochasticBit
         if self.nbTick >= 512:
@@ -148,6 +149,30 @@ class CounterUnipolar(Module):
             res = self.sum / 4
             self.sum = 0
             return res
+        
+class NStanh(Module):
+    def tick(self, Si):
+        """
+        NStanh function. Takes a two's complement as a parameter
+        and  
+        Input: Si {-m,...,m}
+        Output: {0, 1}
+        """
+        counter = 0
+        n = 1024
+        m = 2 # Depends
+        offset = 0
+
+        counter = counter + Si
+        if counter > (n * m) - 1:
+            counter = (n * m) - 1
+        if counter < 0:
+            counter = 0
+        if counter > offset:
+            return 1
+        else:
+            return 0
+
 
 class Test(Module):
     def __init__(self):
@@ -163,6 +188,18 @@ class Test(Module):
 
         self.integralAdder = IntegralAdder()
         self.integralMultiplier = IntegralMultiplier()
+
+    def executeNStanhTest(self):
+        print("# NStanh test")
+        clock_cycles = 512
+        for _ in range(0, clock_cycles):
+            stream1 = self.bpB2IS.tick(128)
+            # Il me semble que ça n'a pas de sens, ça dit qu'ils 
+            # s'attendent à ce que le input soit un signed?
+            # comment est-ce que ça peut être un signed si c'est une addition
+            # de nombre e {0, 1, 2}?
+
+
 
     def executeMultiplierAdderTest(self):
         print("# Multiplier Adder test")
