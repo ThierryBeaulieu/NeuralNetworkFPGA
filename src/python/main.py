@@ -202,27 +202,37 @@ class Neuron(Module):
 
 class Test(Module):
     def B2ISTest(self):
-        print("B2IS Test")
+        print("### B2SITest")
         B2IS = B2ISBipolar()
-        weights = np.array([-128, -64, 0, 64, 127], dtype=np.int8)
+        weights = np.array([-128, -64, -32, -16, 0, 16, 32, 64, 127], dtype=np.int8)
         for i in range(0, len(weights)):
-            print(f"weights {weights[i]}")
             stream = []
-            for _ in range(0, 16):
+            for _ in range(0, 1024):
                 stream.append(B2IS.tick(weights[i]))
-            print(stream)
+            sum = 0
+            for element in stream:
+                sum = sum + element
+            print(f"Weight {weights[i]} approx : {((sum / (len(stream))) + 1) / 2}")
 
     def B2STest(self):
-        print("B2STest")
+        print("### B2STest")
         B2S = B2SUnipolar()
         pixels = np.array([0, 16, 32, 64, 128, 255], dtype=np.uint8)
         for i in range(0, len(pixels)):
-            print(f"pixel {pixels[i]}")
             stream = []
-            for _ in range(0, 32):
+            for _ in range(0, 1024):
                 stream.append(B2S.tick(pixels[i]))
-            print(stream)
+            ones = 0
+            zeros = 0
+            for element in stream:
+                if element == 1:
+                    ones = ones + 1
+                else:
+                    zeros = zeros +1
+            print(f"Pixel {pixels[i]} approx : {(ones / (ones + zeros)) * 256}")
+
+    
 
 test = Test()
-# test.B2ISTest()
+test.B2ISTest()
 test.B2STest()
