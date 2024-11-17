@@ -187,6 +187,7 @@ class Neuron(Module):
         self.pixelConverters = np.array([B2SUnipolar() for _ in range(401)])
         self.weightConverters = np.array([B2ISBipolar() for _ in range(401)])
         self.adders = np.array([BitwiseOperatorAND() for _ in range(401)])
+        self.NSthan = NStanh()
 
     def tick(self, weights: NDArray[np.int8], pixels: NDArray[np.uint8]):
         """
@@ -212,11 +213,11 @@ class Neuron(Module):
             bitwiseResult = self.adders[i].tick(bipolarWeightsConverted[i], unipolarPixelsConverted[i])
             bitwiseResults.append(bitwiseResult)
 
-        treeAdderRes = 0
+        Si = 0
         for i in range(0, len(bitwiseResults)):
-            treeAdderRes = treeAdderRes + bitwiseResults[i]
+            Si = Si + bitwiseResults[i]
 
-        return treeAdderRes
+        return self.NSthan(Si, 4)
         
 
 class Test(Module):
