@@ -201,61 +201,6 @@ class Neuron(Module):
         
 
 class Test(Module):
-    def exectueNeuronTest(self):
-        print("# Neuron Test")
-        neuron = Neuron()
-        # Single array of 401 int8 to represent neurons
-        # weights = np.loadtxt("weights.csv", delimiter=",").astype(np.int8)[0]
-        
-        pixels = np.ones(401, dtype=np.uint8)
-        neuron.tick(weights, pixels)
-
-
-    def executeNStanhTest(self):
-        print("# NStanh test")
-        counterUnipolar = CounterUnipolar()
-        nstanh = NStanh()
-        x = np.arange(-128.0, 127.5, 0.5)
-        y = []
-        m = 1
-        n = 4
-        value = []
-        clock_cycle = 1024
-
-        for i in range(0, len(x)):
-            bpB2IS = B2ISBipolar()
-            for _ in range(0, clock_cycle):
-                si = bpB2IS.tick(x[i])
-                value.append(si)
-                tanVal = 2 * nstanh.tick(si, n) - 1
-                res = counterUnipolar.tick(tanVal)
-            y.append(res)
-
-        theorical_input = np.arange(-1.0, 1.10, 0.1)
-        theoretical_output = np.tanh(theorical_input)
-
-        #plot a graphic here
-        if enablePlot:
-            plt.plot(theorical_input, theoretical_output, marker="o")
-            plt.plot(x, y, marker='o')
-            plt.show()
-
-    def executeConversionTest(self):
-        print("# Conversion test")
-        clock_cycles = 1024
-
-        bpB2S = B2SBipolar()
-
-        upB2S = B2SUnipolar()
-        upCounter = CounterUnipolar()
-
-        for _ in range(0, clock_cycles):
-            upB2SOutput = upB2S.tick(128)
-            upCounterOutput = upCounter.tick(upB2SOutput)
-
-            if upCounterOutput is not None:
-                print(f"unipolar {upCounterOutput}")
-    
     def B2ISTest(self):
         print("B2IS Test")
         B2IS = B2ISBipolar()
@@ -263,13 +208,21 @@ class Test(Module):
         for i in range(0, len(weights)):
             print(f"weights {weights[i]}")
             stream = []
-            for j in range(0, 16):
+            for _ in range(0, 16):
                 stream.append(B2IS.tick(weights[i]))
             print(stream)
 
+    def B2STest(self):
+        print("B2STest")
+        B2S = B2SUnipolar()
+        pixels = np.array([0, 16, 32, 64, 128, 255], dtype=np.uint8)
+        for i in range(0, len(pixels)):
+            print(f"pixel {pixels[i]}")
+            stream = []
+            for _ in range(0, 32):
+                stream.append(B2S.tick(pixels[i]))
+            print(stream)
+
 test = Test()
-# test.executeConversionTest()
-# test.executeNStanhTest()
-# test.exectueNeuronTest()
-test.B2ISTest()
-# todo fix the NSthan
+# test.B2ISTest()
+test.B2STest()
