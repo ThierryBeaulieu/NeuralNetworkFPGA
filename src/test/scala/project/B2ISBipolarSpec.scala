@@ -20,23 +20,24 @@ class B2ISBipolarSpec extends AnyFreeSpec with Matchers {
 
       val expectedUnipolarStream =
         Seq(
-          1.U(1.W),
-          1.U(1.W),
-          1.U(1.W),
-          1.U(1.W),
-          1.U(1.W),
-          1.U(1.W),
-          1.U(1.W),
-          1.U(1.W),
-          1.U(1.W),
-          1.U(1.W)
+          1.S(1.W),
+          1.S(1.W),
+          1.S(1.W),
+          1.S(1.W),
+          1.S(1.W),
+          1.S(1.W),
+          1.S(1.W),
+          1.S(1.W),
+          1.S(1.W),
+          1.S(1.W)
         )
 
-      dut.io.inputWeight.poke(127.U)
+      dut.io.inputWeight.poke(127.S)
       dut.clock.step(1)
 
       for (i <- 0 until expectedUnipolarStream.length) {
         dut.io.outputStream.expect(expectedUnipolarStream(i))
+        // print(dut.io.outputStream.peek().litValue)
         dut.clock.step(1)
       }
     }

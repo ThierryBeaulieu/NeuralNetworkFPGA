@@ -11,14 +11,14 @@ import chisel3.util.random.LFSR
   */
 class B2ISBipolar extends Module {
   val io = IO(new Bundle {
-    val inputWeight = Input(UInt(8.W))
-    val outputStream = Output(UInt(2.W))
+    val inputWeight = Input(SInt(8.W))
+    val outputStream = Output(SInt(2.W))
   })
-  val randomNumber: UInt = LFSR(8, true.B, Some(34)) - 128.U
+  val randomNumber: SInt = LFSR(8, true.B, Some(34)).asSInt - 128.S
 
-  when(randomNumber > io.inputWeight) {
-    io.outputStream := 1.U
+  when(randomNumber < io.inputWeight) {
+    io.outputStream := 1.S
   }.otherwise {
-    io.outputStream := -1.U
+    io.outputStream := -1.S
   }
 }
