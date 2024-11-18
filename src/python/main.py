@@ -553,7 +553,7 @@ class Test(Module):
     def NeuronTest2(self):
         print("something")
         th_weight = [[-128, -128], [-64, -64], [-32, -32], [32, -32], [32, -64], [0, 0], [32, 32], [64, 64], [127, 127]]
-        th_weight = [[0, 0]]
+        th_weight = [[32, -32]]
         b2is1 = B2ISBipolar()
         s = []
         y = []
@@ -563,7 +563,7 @@ class Test(Module):
             stream2 = []
             stream1 = []    
             stream_combined = []
-            for _ in range(0, 10):
+            for _ in range(0, 20):
                 val1 = b2is1.tick(th_weight[j][0])
                 stream1.append(val1)
 
