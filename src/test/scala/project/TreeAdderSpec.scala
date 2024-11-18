@@ -11,7 +11,7 @@ import org.scalatest.matchers.must.Matchers
 class TreeAdderSpec extends AnyFreeSpec with Matchers {
 
   "Should produce a bipolar stochastic stream between {-2, 2}" in {
-    simulate(new TreeAdder) { dut =>
+    simulate(new TreeAdder(nbStream = 4)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
