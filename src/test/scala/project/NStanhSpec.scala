@@ -10,7 +10,7 @@ import org.scalatest.matchers.must.Matchers
 
 class NStanhSpec extends AnyFreeSpec with Matchers {
 
-  "Should produce return an approximation of tanh" in {
+  "Should produce return an approximation of tanh for two stream combined" in {
     simulate(new NStanh(2.S, 6.S)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
@@ -20,14 +20,14 @@ class NStanhSpec extends AnyFreeSpec with Matchers {
 
       // Equivalent of Weight [-128, -128] and Pixel [255, 255]
       val inputBipolarStream = Seq(
-        -4.S(3.W),
-        -4.S(3.W),
-        -4.S(3.W),
-        -4.S(3.W),
-        -4.S(3.W),
-        -4.S(3.W),
-        -4.S(3.W),
-        -4.S(3.W)
+        -2.S(3.W),
+        -2.S(3.W),
+        -2.S(3.W),
+        -2.S(3.W),
+        -2.S(3.W),
+        -2.S(3.W),
+        -2.S(3.W),
+        -2.S(3.W)
       )
 
       val expectedUnipolarStream =
