@@ -18,26 +18,34 @@ class NStanhSpec extends AnyFreeSpec with Matchers {
       dut.reset.poke(false.B)
       dut.clock.step(1)
 
-      val expectedUnipolarStream =
-        Seq(
-          0.U(2.W),
-          0.U(2.W),
-          0.U(2.W),
-          0.U(2.W)
-        )
+      // Equivalent of Weight [-128, -128] and Pixel [255, 255]
       val inputBipolarStream = Seq(
+        -4.S(3.W),
+        -4.S(3.W),
+        -4.S(3.W),
+        -4.S(3.W),
         -4.S(3.W),
         -4.S(3.W),
         -4.S(3.W),
         -4.S(3.W)
       )
 
-      val cycle = 1024
+      val expectedUnipolarStream =
+        Seq(
+          0.U(2.W),
+          0.U(2.W),
+          0.U(2.W),
+          0.U(2.W),
+          0.U(2.W),
+          0.U(2.W),
+          0.U(2.W),
+          0.U(2.W)
+        )
 
-      for (i <- 0 until cycle) {
+      for (i <- 0 until expectedUnipolarStream.length) {
         dut.io.inputSi.poke(inputBipolarStream(i))
         dut.clock.step(1)
-        print(dut.io.outputStream.peek().litValue)
+        // print(dut.io.outputStream.peek().litValue)
         dut.io.outputStream.expect(expectedUnipolarStream(i))
       }
     }
