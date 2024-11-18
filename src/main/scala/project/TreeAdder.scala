@@ -12,10 +12,10 @@ import chisel3.Vec._
   * @param outputStream
   *   stochastic stream {-(m1+...+m4), +(m1+...+m4)}
   */
-class TreeAdder extends Module {
+class TreeAdder() extends Module {
   val io = IO(new Bundle {
-    val inputStream = Input(Vec(4, UInt(2.W)))
-    val outputStream = Output(UInt(4.W))
+    val inputStream = Input(Vec(4, SInt(2.W)))
+    val outputStream = Output(SInt(4.W))
   })
 
   io.outputStream := io.inputStream.reduceTree((a, b) => (a +& b))
