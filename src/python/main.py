@@ -165,14 +165,15 @@ class NStanh(Module):
         
 class Neuron(Module):
 
-    def __init__(self):
+    def __init__(self, offset, m):
         """
         Single Neuron from a neural network
         """
-        self.pixelConverters = np.array([B2SUnipolar() for _ in range(4)])
-        self.weightConverters = np.array([B2ISBipolar() for _ in range(4)])
-        self.bitwiseAND = np.array([BitwiseOperatorAND() for _ in range(4)])
-        self.NSthan = NStanh(2)
+        self.m = m
+        self.pixelConverters = np.array([B2SUnipolar() for _ in range(m)])
+        self.weightConverters = np.array([B2ISBipolar() for _ in range(m)])
+        self.bitwiseAND = np.array([BitwiseOperatorAND() for _ in range(m)])
+        self.NSthan = NStanh(offset)
 
     def tick(self, weights: NDArray[np.int8], pixels: NDArray[np.uint8]):
         """
@@ -200,7 +201,7 @@ class Neuron(Module):
         treeAdderRes = 0
         for i in range(0, len(bitwiseResults)):
             treeAdderRes = treeAdderRes + bitwiseResults[i]
-        return self.NSthan.tick(treeAdderRes, 4)
+        return self.NSthan.tick(treeAdderRes, 4 * self.m)
         
 
 class Test(Module):
@@ -275,7 +276,7 @@ class Test(Module):
 
     def NeuronTest(self):
         print("### Neuron test")
-        neuron = Neuron()
+        neuron = Neuron(offset=1, m=1)
 
         # pratical values
         weights = np.array([10, -64, -32, 64])
@@ -390,9 +391,58 @@ class Test(Module):
                 plt.title('Approximation de NStanh avec m = 1 et offset = 0.5')
                 plt.show()
 
+    def NStanhTest3(self):
+        nStanh = NStanh(8)
+        bipolar = B2ISBipolar()
+        output = []
+        input = np.arange(-128, 127, 1)
+        s = []
+        # practical model
+        for i in range(0, len(input)):
+            stream = []
+            bipolarValues = []
+            for _ in range(0, 1024):
+                si1 = bipolar.tick(input[i])
+                si2 = bipolar.tick(input[i])
+                si3 = bipolar.tick(input[i])
+                si4 = bipolar.tick(input[i])
+                si = si1 + si2 + si3 + si4
+                m = 4
+                bipolarValues.append(si)
+                stream.append(2 * nStanh.tick(si, 4 * m) - 1)
+                bipolarValues.append(si)
+
+            sum = 0
+            for j in range(0, len(stream)):
+                sum = sum + stream[j]
+
+            probability = 0
+            for j in range(0, len(bipolarValues)):
+                probability = probability + bipolarValues[j]
+
+            sum = sum / len(stream)
+            probability = probability / len(bipolarValues)
+            s.append(probability)
+            output.append(sum)
+
+        # theorical model
+        th_input = np.arange(-4.0, 4.1, 0.1)
+        th_ouput = np.tanh(4 * th_input / 2)
+
+        enablePlot = True
+        if enablePlot:
+            plt.scatter(s, output, marker='o', label='NStanh(s)')
+            plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
+            plt.xlabel('s')
+            plt.ylabel('ouput')
+            plt.legend()
+            plt.title('Approximation de NStanh avec m = 4 et offset = 8')
+            plt.show()
+
+
     def TheoricalComparison(self):
         print("### Theorical Comparison")
-        neuron = Neuron()
+        neuron = Neuron(offset=4, m=4)
 
         weights_data = [[-128, -128, -128, -128], [-64, -64, -64, -64], [0, 0, 0, 0], [64, 64, 64, 64], [127, 127, 127, 127]]
         pixels_data = [[0, 0, 0, 0], [32, 32, 32, 32], [64, 64, 64, 64], [128, 128, 128, 128], [255, 255, 255, 255]]
@@ -445,7 +495,7 @@ class Test(Module):
 
     def testLimits(self):
         print("### Limits")
-        neuron = Neuron()
+        neuron = Neuron(offset=4, m=4)
 
         weights_data = np.load("results/weights_sampled.npy")
         pixels_data = np.load("results/pixels_sampled.npy")
@@ -500,6 +550,51 @@ class Test(Module):
         np.save("results/pixels_sampled.npy", x)
         np.save("results/weights_sampled.npy", y)
 
+    def NeuronTest2(self):
+        print("something")
+        th_weight = [[-128, -128], [-64, -64], [-32, -32], [32, -32], [32, -64], [0, 0], [32, 32], [64, 64], [127, 127]]
+        b2is1 = B2ISBipolar()
+        s = []
+        y = []
+        print("### Practical")
+        for j in range(0, len(th_weight)):
+            stream2 = []
+            stream1 = []    
+            stream_combined = []
+            for _ in range(0, 1024):
+                val1 = b2is1.tick(th_weight[j][0])
+                stream1.append(val1)
+
+                val2 = b2is1.tick(th_weight[j][1])
+                stream2.append(val2)
+
+                val3 = val1 + val2
+                stream_combined.append(val3)
+            
+            nStanh = NStanh(offset=2)
+            m = 2
+            result_after_stanh = []
+            for i in range(0, len(stream_combined)):
+                val = nStanh.tick(Si=stream_combined[i], mn=3*m)
+                result_after_stanh.append(val)
+
+            sum = 0
+            for i in range(0, len(result_after_stanh)):
+                sum = sum + result_after_stanh[i]
+
+            stanh_average = sum / len(result_after_stanh)
+            print(f"weight {th_weight[j]} result {stanh_average}")
+        
+        print("### Theoretical")
+        pixels = [255, 255]
+        for j in range(0, len(th_weight)):
+            product = np.dot(th_weight[j], pixels)
+            product = product / 65532
+            res = (np.tanh(4 * product ) + 1) / 2
+            print(f"weight {th_weight[j]} result {res}")            
+
+
+
 class DataHandling():
     def analyse(self):
         stochastic = np.load("results/stochastic_limit.npy")
@@ -517,16 +612,19 @@ class DataHandling():
 
 
 data = DataHandling()
-data.analyse()
-test = Test()
+# data.analyse()
 
+test = Test()
 # test.B2ISTest()
 # test.B2STest()
 # test.BitwiseANDTest()
 # test.UnipolarCounterTest()
 # test.NStanhTest1()
 # test.NStanhTest2()
+# test.NStanhTest3()
 # test.NeuronTest()
-# test.TheoricalComparison()
-# test.testLimits()
+test.NeuronTest2()
+#test.TheoricalComparison()
+#test.testLimits()
 # test.dataHandling()
+
