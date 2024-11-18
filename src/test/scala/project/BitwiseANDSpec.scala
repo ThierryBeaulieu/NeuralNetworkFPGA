@@ -28,18 +28,18 @@ class BitwiseANDSpec extends AnyFreeSpec with Matchers {
         1.U(1.W),
         1.U(1.W)
       )
-      val expectedUnipolarStream =
+      val expectedBipolarStream =
         Seq(
           1.S(2.W),
           0.S(2.W),
           -1.S(2.W)
         )
 
-      for (i <- 0 until expectedUnipolarStream.length) {
+      for (i <- 0 until expectedBipolarStream.length) {
         dut.io.inputInteger.poke(inputIntegers(i))
         dut.io.inputBit.poke(inputBit(i))
         dut.clock.step(1)
-        dut.io.outputStream.expect(expectedUnipolarStream(i))
+        dut.io.outputStream.expect(expectedBipolarStream(i))
       }
     }
   }
@@ -62,18 +62,18 @@ class BitwiseANDSpec extends AnyFreeSpec with Matchers {
         0.U(1.W),
         0.U(1.W)
       )
-      val expectedUnipolarStream =
+      val expectedBipolarStream =
         Seq(
           0.S(2.W),
           0.S(2.W),
           0.S(2.W)
         )
 
-      for (i <- 0 until expectedUnipolarStream.length) {
+      for (i <- 0 until expectedBipolarStream.length) {
         dut.io.inputInteger.poke(inputIntegers(i))
         dut.io.inputBit.poke(inputBit(i))
         dut.clock.step(1)
-        dut.io.outputStream.expect(expectedUnipolarStream(i))
+        dut.io.outputStream.expect(expectedBipolarStream(i))
       }
     }
   }
@@ -102,7 +102,7 @@ class BitwiseANDSpec extends AnyFreeSpec with Matchers {
         1.U(1.W),
         1.U(1.W)
       )
-      val expectedUnipolarStream =
+      val expectedBipolarStream =
         Seq(
           0.S(2.W),
           0.S(2.W),
@@ -112,11 +112,11 @@ class BitwiseANDSpec extends AnyFreeSpec with Matchers {
           -1.S(2.W)
         )
 
-      for (i <- 0 until expectedUnipolarStream.length) {
+      for (i <- 0 until expectedBipolarStream.length) {
         dut.io.inputInteger.poke(inputIntegers(i))
         dut.io.inputBit.poke(inputBit(i))
         dut.clock.step(1)
-        dut.io.outputStream.expect(expectedUnipolarStream(i))
+        dut.io.outputStream.expect(expectedBipolarStream(i))
       }
     }
   }
