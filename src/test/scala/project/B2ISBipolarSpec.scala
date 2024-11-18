@@ -55,6 +55,16 @@ class B2ISBipolarSpec extends AnyFreeSpec with Matchers {
         Seq(
           -1.S(1.W),
           -1.S(1.W),
+          -1.S(1.W),
+          -1.S(1.W),
+          -1.S(1.W),
+          -1.S(1.W),
+          -1.S(1.W),
+          -1.S(1.W),
+          -1.S(1.W),
+          -1.S(1.W),
+          -1.S(1.W),
+          -1.S(1.W),
           -1.S(1.W)
         )
 
@@ -63,9 +73,9 @@ class B2ISBipolarSpec extends AnyFreeSpec with Matchers {
 
       val clock_cycle = 1024
 
-      for (i <- 0 until clock_cycle) {
-        // dut.io.outputStream.expect(expectedUnipolarStream(i))
-        print(dut.io.outputStream.peek().litValue)
+      for (i <- 0 until expectedUnipolarStream.length) {
+        dut.io.outputStream.expect(expectedUnipolarStream(i))
+        // print(dut.io.outputStream.peek().litValue)
         dut.clock.step(1)
       }
     }
