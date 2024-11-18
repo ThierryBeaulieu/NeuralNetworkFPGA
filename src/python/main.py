@@ -42,7 +42,7 @@ class B2SUnipolar(Module):
 
     def tick(self, value: np.uint8):
         """
-        Converts a binary into a probability.
+        Converts a binary into a unipolar probability.
 
         Input : value [0, 255]
         Output : {0, 1}
@@ -629,8 +629,8 @@ data = DataHandling()
 # data.analyse()
 
 test = Test()
-# test.B2ISTest()
-# test.B2STest()
+test.B2ISTest()
+test.B2STest()
 # test.BitwiseANDTest()
 # test.UnipolarCounterTest()
 # test.NStanhTest1()
