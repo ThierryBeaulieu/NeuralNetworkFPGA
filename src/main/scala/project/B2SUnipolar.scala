@@ -11,12 +11,12 @@ import chisel3.util.random.LFSR
   */
 class B2SUnipolar extends Module {
   val io = IO(new Bundle {
-    val inputComparator = Input(UInt(8.W))
+    val inputPixel = Input(UInt(8.W))
     val outputStream = Output(UInt(1.W))
   })
   val randomNumber: UInt = LFSR(8, true.B, Some(34))
 
-  when(randomNumber > io.inputComparator) {
+  when(randomNumber < io.inputPixel) {
     io.outputStream := 1.U
   }.otherwise {
     io.outputStream := 0.U
