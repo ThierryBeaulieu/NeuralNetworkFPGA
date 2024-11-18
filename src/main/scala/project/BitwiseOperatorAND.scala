@@ -1,7 +1,6 @@
 package project
 
 import chisel3._
-import chisel3.util.random.LFSR
 
 /** Takes a value in the integral stream and returns a 0 or the integral value
   * according to the bit
@@ -11,7 +10,7 @@ import chisel3.util.random.LFSR
   * @param inputBit
   *   a bit {0, 1}
   * @param outputStream
-  *   the unipolar value {-m, 0, m}
+  *   stochastic stream {-m, 0, m}
   */
 class BitwiseOperatorAND extends Module {
   val io = IO(new Bundle {
