@@ -18,5 +18,5 @@ class TreeAdder extends Module {
     val outputStream = Output(UInt(4.W))
   })
 
-  io.outputStream := io.inputStream.reduceTree((a, b) => (a + b))
+  io.outputStream := io.inputStream.reduceTree((a, b) => (a +& b))
 }
