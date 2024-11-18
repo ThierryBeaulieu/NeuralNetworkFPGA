@@ -172,7 +172,7 @@ class Neuron(Module):
         self.pixelConverters = np.array([B2SUnipolar() for _ in range(4)])
         self.weightConverters = np.array([B2ISBipolar() for _ in range(4)])
         self.bitwiseAND = np.array([BitwiseOperatorAND() for _ in range(4)])
-        self.NSthan = NStanh(1)
+        self.NSthan = NStanh(2)
 
     def tick(self, weights: NDArray[np.int8], pixels: NDArray[np.uint8]):
         """
@@ -470,8 +470,6 @@ class DataHandling():
         print(f"mean {mean}")
 
 
-dataHandler = DataHandling()
-dataHandler.analyse()
 
 test = Test()
 
@@ -482,5 +480,6 @@ test = Test()
 # test.NStanhTest()
 # test.NeuronTest()
 # test.TheoricalComparison()
-# test.testLimits()
+test.testLimits()
 # test.dataHandling()
+
