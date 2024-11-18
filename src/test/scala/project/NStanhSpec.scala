@@ -68,11 +68,15 @@ class NStanhSpec extends AnyFreeSpec with Matchers {
         2.S(3.W),
         2.S(3.W),
         2.S(3.W),
+        2.S(3.W),
+        2.S(3.W),
         2.S(3.W)
       )
 
       val expectedUnipolarStream =
         Seq(
+          0.U(2.W),
+          1.U(2.W),
           1.U(2.W),
           1.U(2.W),
           1.U(2.W),
