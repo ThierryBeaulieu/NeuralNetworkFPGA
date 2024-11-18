@@ -42,7 +42,7 @@ class B2SUnipolarSpec extends AnyFreeSpec with Matchers {
     }
   }
 
-  "Should procude a unipolar stream of 0 when using a pixel of 0" in {
+  "Should produce a unipolar stream of 0 when using a pixel of 0" in {
     simulate(new B2SUnipolar) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
@@ -69,6 +69,38 @@ class B2SUnipolarSpec extends AnyFreeSpec with Matchers {
 
       for (i <- 0 until expectedUnipolarStream.length) {
         dut.io.outputStream.expect(expectedUnipolarStream(i))
+        dut.clock.step(1)
+      }
+    }
+  }
+
+  "Should produce a unipolar stream of 0 and 1 when using a pixel of 128" in {
+    simulate(new B2SUnipolar) { dut =>
+      // Reset the DUT
+      dut.reset.poke(true.B)
+      dut.clock.step(1)
+      dut.reset.poke(false.B)
+      dut.clock.step(1)
+
+      val expectedUnipolarStream = Seq(
+        0.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        0.U(1.W),
+        1.U(1.W),
+        0.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        0.U(1.W)
+      )
+      // send pixel value
+      dut.io.inputPixel.poke(128.U)
+      dut.clock.step(1)
+
+      for (i <- 0 until expectedUnipolarStream.length) {
+        dut.io.outputStream.expect(expectedUnipolarStream(i))
+        print(dut.io.outputStream.peek().litValue) // todo
         dut.clock.step(1)
       }
     }
