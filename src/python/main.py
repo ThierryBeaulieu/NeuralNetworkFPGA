@@ -556,6 +556,7 @@ class Test(Module):
         b2is1 = B2ISBipolar()
         s = []
         y = []
+        pr_res = []
         print("### Practical")
         for j in range(0, len(th_weight)):
             stream2 = []
@@ -583,16 +584,30 @@ class Test(Module):
                 sum = sum + result_after_stanh[i]
 
             stanh_average = sum / len(result_after_stanh)
+            pr_res.append(stanh_average)
             print(f"weight {th_weight[j]} result {stanh_average}")
         
         print("### Theoretical")
         pixels = [255, 255]
+        th_res = []
         for j in range(0, len(th_weight)):
             product = np.dot(th_weight[j], pixels)
             product = product / 65532
             res = (np.tanh(4 * product ) + 1) / 2
+            th_res.append(res)
             print(f"weight {th_weight[j]} result {res}")            
-
+        
+        print("### Analyse")
+        relative_difference = []
+        for i in range(0, len(th_res)):
+            abs_diff = abs(th_res[i] - pr_res[i])
+            print(abs_diff)
+            relative_difference.append(abs_diff * 100)
+        
+        average_difference = np.average(relative_difference)
+        print(f"Average difference (%) : {average_difference}")
+        print(f"Base on {relative_difference}")
+        
 
 
 class DataHandling():
