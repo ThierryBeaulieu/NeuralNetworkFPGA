@@ -553,7 +553,7 @@ class Test(Module):
     def NeuronTest2(self):
         print("something")
         th_weight = [[-128, -128], [-64, -64], [-32, -32], [32, -32], [32, -64], [0, 0], [32, 32], [64, 64], [127, 127]]
-        th_weight = [[127, 127]]
+        th_weight = [[0, 0]]
         b2is1 = B2ISBipolar()
         s = []
         y = []
