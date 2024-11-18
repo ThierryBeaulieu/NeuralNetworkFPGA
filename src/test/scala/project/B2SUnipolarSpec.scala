@@ -100,7 +100,7 @@ class B2SUnipolarSpec extends AnyFreeSpec with Matchers {
 
       for (i <- 0 until expectedUnipolarStream.length) {
         dut.io.outputStream.expect(expectedUnipolarStream(i))
-        print(dut.io.outputStream.peek().litValue) // todo
+        print(dut.io.outputStream.peek().litValue)
         dut.clock.step(1)
       }
     }
