@@ -637,7 +637,7 @@ test.B2STest()
 # test.NStanhTest2()
 # test.NStanhTest3()
 # test.NeuronTest()
-test.NeuronTest2()
+test.NeuronTest2() # the only one that worked
 #test.TheoricalComparison()
 #test.testLimits()
 # test.dataHandling()

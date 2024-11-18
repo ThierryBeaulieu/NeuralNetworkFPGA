@@ -11,22 +11,22 @@ import chisel3._
   * @param outputStream
   *   the unipolar value {0, 1}
   */
-class NStanh(offset: UInt) extends Module {
+class NStanh(offset: SInt, mn: SInt) extends Module {
   private val m_offset = RegInit(offset)
-  private val m_counter = RegInit(0.U(10.W))
+  private val m_MN = RegInit(mn)
+  private val m_counter = RegInit(0.S(10.W))
 
   val io = IO(new Bundle {
-    val inputSi = Input(UInt(4.W))
-    val inputMN = Input(UInt(4.W))
+    val inputSi = Input(SInt(4.W))
     val outputStream = Output(UInt(1.W))
   })
 
   m_counter := m_counter + io.inputSi
-  when(m_counter > (io.inputMN - 1.U)) {
-    m_counter := io.inputMN - 1.U
+  when(m_counter > (m_MN - 1.S)) {
+    m_counter := m_MN - 1.S
   }
-  when(m_counter < 0.U) {
-    m_counter := 0.U
+  when(m_counter < 0.S) {
+    m_counter := 0.S
   }
   when(m_counter > m_offset) {
     io.outputStream := 1.U

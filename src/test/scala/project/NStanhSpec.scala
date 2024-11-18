@@ -11,7 +11,7 @@ import org.scalatest.matchers.must.Matchers
 class NStanhSpec extends AnyFreeSpec with Matchers {
 
   "Should produce return an approximation of tanh" in {
-    simulate(new NStanh(2.U)) { dut =>
+    simulate(new NStanh(2.S, 6.S)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -20,18 +20,25 @@ class NStanhSpec extends AnyFreeSpec with Matchers {
 
       val expectedUnipolarStream =
         Seq(
-          1.U(2.W),
           0.U(2.W),
-          1.U(2.W)
+          0.U(2.W),
+          0.U(2.W),
+          0.U(2.W)
         )
+      val inputBipolarStream = Seq(
+        -4.S(3.W),
+        -4.S(3.W),
+        -4.S(3.W),
+        -4.S(3.W)
+      )
 
-      dut.io.inputInteger.poke(inputIntegers(i))
-      dut.io.inputBit.poke(inputBit(i))
-      dut.clock.step(1)
+      val cycle = 1024
 
-      for (i <- 0 until expectedUnipolarStream.length) {
-        dut.io.outputStream.expect(expectedUnipolarStream(i))
+      for (i <- 0 until cycle) {
+        dut.io.inputSi.poke(inputBipolarStream(i))
         dut.clock.step(1)
+        print(dut.io.outputStream.peek().litValue)
+        dut.io.outputStream.expect(expectedUnipolarStream(i))
       }
     }
   }
