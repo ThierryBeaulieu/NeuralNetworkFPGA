@@ -12,7 +12,7 @@ import chisel3.util.random.LFSR
 class B2ISBipolar extends Module {
   val io = IO(new Bundle {
     val inputComparator = Input(UInt(8.W))
-    val outputStream = Output(UInt(1.W))
+    val outputStream = Output(UInt(2.W))
   })
   val randomNumber: UInt = LFSR(8, true.B, Some(34)) - 128.U
 

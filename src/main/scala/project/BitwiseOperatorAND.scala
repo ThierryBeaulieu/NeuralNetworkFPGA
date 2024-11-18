@@ -6,7 +6,7 @@ import chisel3._
   * according to the bit
   *
   * @param inputStream
-  *   the pixel {-m, m}
+  *   bipolar stochastic stream {-m, m}
   * @param inputBit
   *   a bit {0, 1}
   * @param outputStream
@@ -16,7 +16,7 @@ class BitwiseOperatorAND extends Module {
   val io = IO(new Bundle {
     val inputInteger = Input(UInt(8.W))
     val inputBit = Input(UInt(1.W))
-    val outputStream = Output(UInt(8.W))
+    val outputStream = Output(UInt(2.W))
   })
 
   // Using a Mux

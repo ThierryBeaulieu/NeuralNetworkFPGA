@@ -5,7 +5,7 @@ import chisel3._
 /** NStanh function. Using a FSM, we simulate NStanh
   *
   * @param inputSi
-  *   the bipolar stochastic stream Si {-m, m}. 8 bits + log2(weights)
+  *   the bipolar stochastic stream Si {-m, m}. 2 bits + log2(weights)
   * @param inputMN
   *   m*n {1*n, 2*n, 3*n}
   * @param outputStream
@@ -16,7 +16,7 @@ class NStanh(offset: UInt) extends Module {
   private val m_counter = RegInit(0.U(10.W))
 
   val io = IO(new Bundle {
-    val inputSi = Input(UInt(10.W))
+    val inputSi = Input(UInt(4.W))
     val inputMN = Input(UInt(4.W))
     val outputStream = Output(UInt(1.W))
   })
