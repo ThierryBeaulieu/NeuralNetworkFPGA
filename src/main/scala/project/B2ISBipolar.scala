@@ -1,7 +1,7 @@
 package project
 
 import chisel3._
-import project.B2SUnipolar
+import chisel3.util.random.LFSR
 
 /** Converts a binary into a probability.
   * @param inputStream
@@ -11,10 +11,14 @@ import project.B2SUnipolar
   */
 class B2ISBipolar extends Module {
   val io = IO(new Bundle {
-    val inputStream = Input(UInt(10.W))
+    val inputComparator = Input(UInt(8.W))
     val outputStream = Output(UInt(1.W))
   })
+  val randomNumber: UInt = LFSR(8, true.B, Some(34)) - 128.U
 
-  val b2S: B2SUnipolar = new B2SUnipolar()
-
+  when(randomNumber > io.inputComparator) {
+    io.outputStream := 1.U
+  }.otherwise {
+    io.outputStream := -1.U
+  }
 }
