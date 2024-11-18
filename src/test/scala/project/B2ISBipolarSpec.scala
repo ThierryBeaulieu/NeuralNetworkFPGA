@@ -18,7 +18,7 @@ class B2ISBipolarSpec extends AnyFreeSpec with Matchers {
       dut.reset.poke(false.B)
       dut.clock.step(1)
 
-      val expectedUnipolarStream =
+      val expectedBipolarStream =
         Seq(
           1.S(1.W),
           1.S(1.W),
@@ -35,8 +35,8 @@ class B2ISBipolarSpec extends AnyFreeSpec with Matchers {
       dut.io.inputWeight.poke(127.S)
       dut.clock.step(1)
 
-      for (i <- 0 until expectedUnipolarStream.length) {
-        dut.io.outputStream.expect(expectedUnipolarStream(i))
+      for (i <- 0 until expectedBipolarStream.length) {
+        dut.io.outputStream.expect(expectedBipolarStream(i))
         // print(dut.io.outputStream.peek().litValue)
         dut.clock.step(1)
       }
@@ -51,7 +51,7 @@ class B2ISBipolarSpec extends AnyFreeSpec with Matchers {
       dut.reset.poke(false.B)
       dut.clock.step(1)
 
-      val expectedUnipolarStream =
+      val expectedBipolarStream =
         Seq(
           -1.S(1.W),
           -1.S(1.W),
@@ -73,8 +73,45 @@ class B2ISBipolarSpec extends AnyFreeSpec with Matchers {
 
       val clock_cycle = 1024
 
-      for (i <- 0 until expectedUnipolarStream.length) {
-        dut.io.outputStream.expect(expectedUnipolarStream(i))
+      for (i <- 0 until expectedBipolarStream.length) {
+        dut.io.outputStream.expect(expectedBipolarStream(i))
+        // print(dut.io.outputStream.peek().litValue)
+        dut.clock.step(1)
+      }
+    }
+  }
+
+  "Should produce a bipolar stream of -1 and 1 when using a weight of 0" in {
+    simulate(new B2ISBipolar) { dut =>
+      // Reset the DUT
+      dut.reset.poke(true.B)
+      dut.clock.step(1)
+      dut.reset.poke(false.B)
+      dut.clock.step(1)
+
+      val expectedBipolarStream =
+        Seq(
+          -1.S(1.W),
+          1.S(1.W),
+          1.S(1.W),
+          1.S(1.W),
+          -1.S(1.W),
+          1.S(1.W),
+          -1.S(1.W),
+          1.S(1.W),
+          1.S(1.W),
+          -1.S(1.W),
+          1.S(1.W),
+          -1.S(1.W)
+        )
+
+      dut.io.inputWeight.poke(0.S)
+      dut.clock.step(1)
+
+      val clock_cycle = 1024
+
+      for (i <- 0 until expectedBipolarStream.length) {
+        dut.io.outputStream.expect(expectedBipolarStream(i))
         // print(dut.io.outputStream.peek().litValue)
         dut.clock.step(1)
       }
