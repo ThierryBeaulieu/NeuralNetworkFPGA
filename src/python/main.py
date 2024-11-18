@@ -606,7 +606,6 @@ class Test(Module):
         
         average_difference = np.average(relative_difference)
         print(f"Average difference (%) : {average_difference}")
-        print(f"Base on {relative_difference}")
         
 
 
