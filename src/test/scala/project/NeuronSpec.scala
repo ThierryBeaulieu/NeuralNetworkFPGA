@@ -331,6 +331,41 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
     }
   }
 
+  "Neuron should have the TreeAdder work for only one stream" in {
+    simulate(new Neuron(nbData = 1)) { dut =>
+      // Reset the DUT
+      dut.reset.poke(true.B)
+      dut.clock.step(1)
+      dut.reset.poke(false.B)
+      dut.clock.step(1)
+
+      // incoming bipolar stochastic stream
+      dut.io.inputPixels(0).poke(220.U)
+      dut.io.inputWeights(0).poke(0.S)
+
+      val expectedStream = Seq(
+        0.S(2.W),
+        1.S(2.W),
+        -1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        -1.S(2.W),
+        1.S(2.W),
+        -1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        -1.S(2.W)
+      )
+
+      for (i <- 0 until expectedStream.length) {
+        dut.clock.step(1)
+        // print(dut.io.outputTreeAdder.peek().litValue)
+        dut.io.outputTreeAdder.expect(expectedStream(i))
+      }
+    }
+  }
+
   "Neuron should have the TreeAdder reduce a set of streams" in {
     simulate(new Neuron(nbData = 4)) { dut =>
       // Reset the DUT

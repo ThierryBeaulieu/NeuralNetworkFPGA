@@ -15,7 +15,7 @@ import chisel3.Vec._
 class TreeAdder(nbStream: Int) extends Module {
   val io = IO(new Bundle {
     val inputStream = Input(Vec(nbStream, SInt(2.W)))
-    val outputStream = Output(SInt(nbStream.W))
+    val outputStream = Output(SInt((1 + nbStream).W))
   })
 
   io.outputStream := io.inputStream.reduceTree((a, b) => (a +& b))

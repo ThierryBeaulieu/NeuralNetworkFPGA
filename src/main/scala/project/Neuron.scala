@@ -32,7 +32,7 @@ class Neuron(nbData: Int) extends Module {
     val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
     val outputB2ISValues = Output(Vec(nbData, SInt(2.W)))
     val outputANDValues = Output(Vec(nbData, SInt(2.W)))
-    val outputTreeAdder = Output(SInt(nbData.W))
+    val outputTreeAdder = Output(SInt((nbData + 1).W))
     val outputStream = Output(Vec(nbData, UInt(1.W)))
   })
 
