@@ -275,6 +275,11 @@ class Test(Module):
             print(f"Pixel {pixels[i]} result {result}")
 
     def NStanhTest1(self):
+        """
+        m = 2
+        offset = 2
+        n = 3
+        """
         nStanh = NStanh(2)
         bipolar = B2ISBipolar()
         output = []
@@ -322,55 +327,66 @@ class Test(Module):
 
 
     def NStanhTest2(self):
-            nStanh = NStanh(0.5)
-            bipolar = B2ISBipolar()
-            output = []
-            input = np.arange(-128, 127, 1)
-            s = []
-            # practical model
-            for i in range(0, len(input)):
-                stream = []
-                bipolarValues = []
-                for _ in range(0, 1024):
-                    si1 = bipolar.tick(input[i])
-                    si = si1
-                    m = 1
-                    bipolarValues.append(si)
-                    stream.append(2 * nStanh.tick(si, 2 * m) - 1)
-
-                sum = 0
-                for j in range(0, len(stream)):
-                    sum = sum + stream[j]
-
-                probability = 0
-                for j in range(0, len(bipolarValues)):
-                    probability = probability + bipolarValues[j]
-
-                sum = sum / len(stream)
-                probability = probability / len(bipolarValues)
-                s.append(probability)
-                output.append(sum)
-
-            # theorical model
-            th_input = np.arange(-2.0, 2.1, 0.1)
-            th_ouput = np.tanh(2 * th_input / 2)
-
-            enablePlot = True
-            if enablePlot:
-                plt.scatter(s, output, marker='o', label='NStanh(s)')
-                plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
-                plt.xlabel('s')
-                plt.ylabel('ouput')
-                plt.legend()
-                plt.title('Approximation de NStanh avec m = 1 et offset = 0.5')
-                plt.show()
-
-    def NStanhTest3(self):
-        nStanh = NStanh(8)
+        """
+        m = 1
+        offset = 0.5
+        n = 2
+        """
+        nStanh = NStanh(0.5)
         bipolar = B2ISBipolar()
         output = []
         input = np.arange(-128, 127, 1)
         s = []
+        # practical model
+        for i in range(0, len(input)):
+            stream = []
+            bipolarValues = []
+            for _ in range(0, 1024):
+                si1 = bipolar.tick(input[i])
+                si = si1
+                m = 1
+                bipolarValues.append(si)
+                stream.append(2 * nStanh.tick(si, 2 * m) - 1)
+
+            sum = 0
+            for j in range(0, len(stream)):
+                sum = sum + stream[j]
+
+            probability = 0
+            for j in range(0, len(bipolarValues)):
+                probability = probability + bipolarValues[j]
+
+            sum = sum / len(stream)
+            probability = probability / len(bipolarValues)
+            s.append(probability)
+            output.append(sum)
+
+        # theorical model
+        th_input = np.arange(-2.0, 2.1, 0.1)
+        th_ouput = np.tanh(2 * th_input / 2)
+
+        enablePlot = True
+        if enablePlot:
+            plt.scatter(s, output, marker='o', label='NStanh(s)')
+            plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
+            plt.xlabel('s')
+            plt.ylabel('ouput')
+            plt.legend()
+            plt.title('Approximation de NStanh avec m = 1 et offset = 0.5')
+            plt.show()
+
+    def NStanhTest3(self):
+        """
+        m = 4
+        offset = 16
+        n = 8
+        """
+        nStanh = NStanh(16)
+        bipolar = B2ISBipolar()
+        output = []
+        input = np.arange(-128, 127, 1)
+        s = []
+        n = 8
         # practical model
         for i in range(0, len(input)):
             stream = []
@@ -383,7 +399,7 @@ class Test(Module):
                 si = si1 + si2 + si3 + si4
                 m = 4
                 bipolarValues.append(si)
-                stream.append(2 * nStanh.tick(si, 4 * m) - 1)
+                stream.append(2 * nStanh.tick(si, n * m) - 1)
                 bipolarValues.append(si)
 
             sum = 0
@@ -401,7 +417,7 @@ class Test(Module):
 
         # theorical model
         th_input = np.arange(-4.0, 4.1, 0.1)
-        th_ouput = np.tanh(4 * th_input / 2)
+        th_ouput = np.tanh(n * th_input / 2)
 
         enablePlot = True
         if enablePlot:
@@ -412,6 +428,66 @@ class Test(Module):
             plt.legend()
             plt.title('Approximation de NStanh avec m = 4 et offset = 8')
             plt.show()
+
+    def NStanhTest4(self):
+            """
+            La valeur du offset est toujours (m * n) / 2
+            n peut varier, mais par expérience, on obtien de bon résultats avec m = 4 
+            m = 8
+            offset = 16
+            n = 4
+            """
+            nStanh = NStanh(16)
+            bipolar = B2ISBipolar()
+            output = []
+            input = np.arange(-128, 127, 1)
+            s = []
+            n = 4
+            # practical model
+            for i in range(0, len(input)):
+                stream = []
+                bipolarValues = []
+                for _ in range(0, 1024):
+                    si1 = bipolar.tick(input[i])
+                    si2 = bipolar.tick(input[i])
+                    si3 = bipolar.tick(input[i])
+                    si4 = bipolar.tick(input[i])
+                    si5 = bipolar.tick(input[i])
+                    si6 = bipolar.tick(input[i])
+                    si7 = bipolar.tick(input[i])
+                    si8 = bipolar.tick(input[i])
+                    si = si1 + si2 + si3 + si4 + si5 + si6 + si7 + si8
+                    m = 8
+                    bipolarValues.append(si)
+                    stream.append(2 * nStanh.tick(si, n * m) - 1)
+                    bipolarValues.append(si)
+
+                sum = 0
+                for j in range(0, len(stream)):
+                    sum = sum + stream[j]
+
+                probability = 0
+                for j in range(0, len(bipolarValues)):
+                    probability = probability + bipolarValues[j]
+
+                sum = sum / len(stream)
+                probability = probability / len(bipolarValues)
+                s.append(probability)
+                output.append(sum)
+
+            # theorical model
+            th_input = np.arange(-4.0, 4.1, 0.1)
+            th_ouput = np.tanh(n * th_input / 2)
+
+            enablePlot = True
+            if enablePlot:
+                plt.scatter(s, output, marker='o', label='NStanh(s)')
+                plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
+                plt.xlabel('s')
+                plt.ylabel('ouput')
+                plt.legend()
+                plt.title('Approximation de NStanh avec m = 8 et offset = 16')
+                plt.show()
 
 
     def NeuronTest1(self):
@@ -480,6 +556,6 @@ test = Test()
 # test.UnipolarCounterTest()
 # test.NStanhTest1()
 # test.NStanhTest2()
-# test.NStanhTest3()
-test.NeuronTest1()
-
+test.NStanhTest3()
+# test.NStanhTest4()
+# test.NeuronTest1()
