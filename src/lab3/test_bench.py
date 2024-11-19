@@ -1,7 +1,5 @@
 import numpy as np
 
-# test weights 16
-
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
@@ -75,19 +73,18 @@ for imgIndex in range(0, 5000):
     image_fp = np.zeros_like(xp)
 
     for i in range(xp.shape[0]):
-        image_fp[i] = convert_float_to_fix_point(xp[i], 0, 0, 4)
+        # pixel [0, 1.0]
+        image_fp[i] = convert_float_to_fix_point(xp[i], 0, 0, 8)
 
     ## Step 3. Convert Weight Precision Into Fixed Point Precision
-    # {4, 4} [-1.463356, 1.00899]
+    # weight [-1.463356, 1.00899]
     theta_0_fp = np.zeros_like(theta_0)
     for i in range(theta_0.shape[0]): # 25
         for j in range(theta_0.shape[1]): # 401
-            theta_0_fp[i][j] = convert_float_to_fix_point(theta_0[i][j], 1, 1, 14)
+            theta_0_fp[i][j] = convert_float_to_fix_point(theta_0[i][j], 1, 1, 2)
 
 
     ## Step 4. Make The First Hidden Layer Multiplication X*W 
-    # {4, 4} [-3.78125, 4.796875]
-    # {8, 4} [-3.9677734375, 5.0673828125]
     hiddenLayer_fp = np.zeros(theta_0.shape[0])
     for i in range(0, len(theta_0_fp)): # [0, 24]
         row = theta_0_fp[i]
@@ -109,15 +106,12 @@ for imgIndex in range(0, 5000):
 
     ## Step 6. Convert Weight of Second Layer Precision Into Fixed Point Precision
     # weight [-4.0308, 3.2115848]
-    # 4 bits [1 signed, 3 integer, 0 fractional]
     theta_1_fp = np.zeros_like(theta_1)
     for i in range(theta_1.shape[0]): # 10
         for j in range(theta_1.shape[1]): # 26
-            theta_1_fp[i][j] = convert_float_to_fix_point(theta_1[i][j], 1, 3, 12)
+            theta_1_fp[i][j] = convert_float_to_fix_point(theta_1[i][j], 1, 3, 0)
 
     ## Step 7. Make The Second Hidden Layer Multiplication X*W 
-    # Result [-6.9375, 0.3125]
-    # 4 bits [1 signed, 3 integer]
     hiddenLayer2_fp = np.zeros(theta_1_fp.shape[0])
 
     for i in range(0, len(theta_1_fp)): # [0, 9]
@@ -137,11 +131,11 @@ for imgIndex in range(0, 5000):
         # Range of a sigmoid is always [0, 1]
         sigmoid2_fp[i] = tmp
 
-    # Calculer dans le notebook
+    ## Step 9. Get the percentage
     pred = sigmoid2_fp.argmax()
     if pred == y[imgIndex]:
         sum += 1
 
-# Get precentage
+## Step 10. Display the result
 average = (sum / 5000) * 100
-print(f"8, 16 is {average}%")
+print(f"8, 4 is {average}%")
