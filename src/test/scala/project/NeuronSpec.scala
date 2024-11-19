@@ -429,12 +429,12 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
         0.U(1.W),
         0.U(1.W),
         0.U(1.W),
-        1.U(1.W),
-        1.U(1.W),
-        1.U(1.W),
-        1.U(1.W),
-        1.U(1.W),
-        1.U(1.W),
+        0.U(1.W),
+        0.U(1.W),
+        0.U(1.W),
+        0.U(1.W),
+        0.U(1.W),
+        0.U(1.W),
         1.U(1.W),
         1.U(1.W),
         1.U(1.W),
@@ -445,8 +445,8 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
 
       for (i <- 0 until expectedStream.length) {
         dut.clock.step(1)
-        print(dut.io.outputStream.peek().litValue)
-        // dut.io.outputStream.expect(expectedStream(i))
+        // print(dut.io.outputStream.peek().litValue)
+        dut.io.outputStream.expect(expectedStream(i))
       }
     }
   }
