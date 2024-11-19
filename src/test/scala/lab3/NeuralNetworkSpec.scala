@@ -6,6 +6,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import lab3.NeuralNetwork
 
+// testOnly lab3.NeuralNetworkSpec
+
 class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
 
   "NeuralNetwork should initialize an array of weights" in {
