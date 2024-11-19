@@ -19,12 +19,27 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
       dut.clock.step(1)
 
       // incoming bipolar stochastic stream
-      dut.io.inputPixels(0).poke(255.U)
+      dut.io.inputPixels(0).poke(127.U)
       dut.io.inputWeights(0).poke(127.S)
-      dut.clock.step(1)
 
-      for (i <- 0 until 1024) {
-        print(dut.io.outputStream(0).peek().litValue)
+      val expectedUnipolarStream = Seq(
+        1.U(1.W),
+        0.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        0.U(1.W),
+        1.U(1.W),
+        0.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        0.U(1.W),
+        1.U(1.W)
+      )
+      for (i <- 0 until expectedUnipolarStream.length) {
+        dut.clock.step(1)
+        // print(dut.io.outputB2SValues(0).peek().litValue)
+        dut.io.outputB2SValues(0).expect(expectedUnipolarStream(i))
       }
     }
   }

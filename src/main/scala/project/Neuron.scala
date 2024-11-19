@@ -8,6 +8,8 @@ import chisel3._
   *   pixel with a value of [0, 255]
   * @param inputWeights
   *   weight with a value of [-128, 127]
+  * @param outputB2SValues
+  *   bipolar stream {0, 1}
   * @param outputStream
   *   bipolar stream {0, 1}
   */
@@ -20,6 +22,7 @@ class Neuron(nbData: Int) extends Module {
   val io = IO(new Bundle {
     val inputPixels = Input(Vec(nbData, UInt(8.W)))
     val inputWeights = Input(Vec(nbData, SInt(8.W)))
+    val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
     val outputStream = Output(Vec(nbData, UInt(1.W)))
   })
 
@@ -27,6 +30,7 @@ class Neuron(nbData: Int) extends Module {
   val regStochastic = RegInit(VecInit(Seq.fill(nbData)(0.U(1.W))))
   b2SUnipolar.io.inputPixel := io.inputPixels(0)
   regStochastic(0) := b2SUnipolar.io.outputStream
+  io.outputB2SValues(0) := regStochastic(0)
   io.outputStream(0) := regStochastic(0)
 
   // Step 2. Weight Bipolar Conversion
