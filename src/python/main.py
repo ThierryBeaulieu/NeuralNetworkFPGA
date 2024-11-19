@@ -274,32 +274,6 @@ class Test(Module):
                     result = res
             print(f"Pixel {pixels[i]} result {result}")
 
-    def NeuronTest(self):
-        print("### Neuron test")
-        neuron = Neuron(offset=1, m=1)
-
-        # pratical values
-        weights = np.array([10, -64, -32, 64])
-        pixels = np.array([64, 32, 64, 32])
-
-        stream = []
-        for _ in range(0, 1024):
-            res = neuron.tick(weights, pixels)
-            stream.append(res)
-
-        sum = 0
-        for i in range(0, len(stream)): 
-            sum = sum + stream[i]
-
-        res = sum / len(stream)
-        print(f"sum {sum / 4}")
-        print(f"p {res}")
-
-        # how do I compare the neuron with a probability
-        unormalized = np.dot(weights, pixels)
-        normalized = (unormalized >> 8) / 256
-        print(f"res {normalized}")
-
     def NStanhTest1(self):
         nStanh = NStanh(2)
         bipolar = B2ISBipolar()
@@ -440,117 +414,7 @@ class Test(Module):
             plt.show()
 
 
-    def TheoricalComparison(self):
-        print("### Theorical Comparison")
-        neuron = Neuron(offset=4, m=4)
-
-        weights_data = [[-128, -128, -128, -128], [-64, -64, -64, -64], [0, 0, 0, 0], [64, 64, 64, 64], [127, 127, 127, 127]]
-        pixels_data = [[0, 0, 0, 0], [32, 32, 32, 32], [64, 64, 64, 64], [128, 128, 128, 128], [255, 255, 255, 255]]
-
-        stochastic = []
-        floating = []
-
-        for i in range(0, len(weights_data)):
-            weight = weights_data[i]
-
-            # theorical model
-            theorical_results = []
-            for j in range(0, len(pixels_data)):
-                pixel = pixels_data[j]
-                product = np.dot(weight, pixel)
-                product = (product >> 8) / 256
-                res = np.tanh(product)
-                theorical_results.append(float((res + 1) / 2))
-                # print(f"weight {weight} pixel {pixel}")
-
-            # print(f"theorical res {theorical_results}")
-            floating.append(theorical_results)
-
-            # practical model
-            neuron = Neuron()
-            practical_results = []
-            for j in range(0, len(pixels_data)):
-                pixel = pixels_data[j]
-                bitstream = []
-                for _ in range(0, 1024):
-                    bit = neuron.tick(weight, pixel)
-                    bitstream.append(bit)
-                sum = 0
-                for bit in bitstream:
-                    sum = sum + bit
-                sum = sum / len(bitstream)
-                practical_results.append(sum)
-                # print(f"weight {weight} pixel {pixel}")
-
-            # print(f"practical res {practical_results}")
-            stochastic.append(practical_results)
-        
-        # print("STOCHASTIC")
-        # print(stochastic)
-        np.save("results/stochastic.npy", stochastic)
-        # print("FLOAT")
-        # print(floating)
-        np.save("results/floating.npy", floating)
-
-
-    def testLimits(self):
-        print("### Limits")
-        neuron = Neuron(offset=4, m=4)
-
-        weights_data = np.load("results/weights_sampled.npy")
-        pixels_data = np.load("results/pixels_sampled.npy")
-
-        stochastic = []
-        floating = []
-
-        for i in range(0, len(weights_data)):
-            weight = weights_data[i]
-            print(i)
-
-            # theorical model
-            theorical_results = []
-            for j in range(0, len(pixels_data)):
-                pixel = pixels_data[j]
-                product = np.dot(weight, pixel)
-                product = (product >> 8) / 256
-                res = np.tanh(product)
-                theorical_results.append(float((res + 1) / 2))
-                # print(f"weight {weight} pixel {pixel}")
-
-            # print(f"theorical res {theorical_results}")
-            floating.append(theorical_results)
-
-            # practical model
-            neuron = Neuron()
-            practical_results = []
-            for j in range(0, len(pixels_data)):
-                pixel = pixels_data[j]
-                bitstream = []
-                for _ in range(0, 1024):
-                    bit = neuron.tick(weight, pixel)
-                    bitstream.append(bit)
-                sum = 0
-                for bit in bitstream:
-                    sum = sum + bit
-                sum = sum / len(bitstream)
-                practical_results.append(sum)
-                # print(f"weight {weight} pixel {pixel}")
-
-            # print(f"practical res {practical_results}")
-            stochastic.append(practical_results)
-        
-        np.save("results/stochastic_limit.npy", stochastic)
-        np.save("results/floating_limit.npy", floating)
-
-    def dataHandling(self):
-        x = np.load("limit_pixels.npy")
-        y = np.load("limit_weights.npy")
-        x = x[::3]
-        y = y[::3]
-        np.save("results/pixels_sampled.npy", x)
-        np.save("results/weights_sampled.npy", y)
-
-    def NeuronTest2(self):
+    def NeuronTest1(self):
         print("something")
         th_weight = [[-128, -128], [-64, -64], [-32, -32], [32, -32], [32, -64], [0, 0], [32, 32], [64, 64], [127, 127]]
         th_weight = [[32, -32]]
@@ -609,38 +473,13 @@ class Test(Module):
         average_difference = np.average(relative_difference)
         print(f"Average difference (%) : {average_difference}")
         
-
-
-class DataHandling():
-    def analyse(self):
-        stochastic = np.load("results/stochastic_limit.npy")
-        floating = np.load("results/floating_limit.npy")
-        percentage = []
-        for row in range(0, len(stochastic)):
-            for col in range(0, len(stochastic[row])):
-                stochastic_value = stochastic[row][col]
-                floating_value = floating[row][col]
-                difference = abs(stochastic_value - floating_value)
-                percentage.append(difference * 100)
-        
-        mean = np.mean(percentage)
-        print(f"mean {mean}")
-
-
-data = DataHandling()
-# data.analyse()
-
 test = Test()
-test.B2ISTest()
-test.B2STest()
+# test.B2ISTest()
+# test.B2STest()
 # test.BitwiseANDTest()
 # test.UnipolarCounterTest()
 # test.NStanhTest1()
 # test.NStanhTest2()
 # test.NStanhTest3()
-# test.NeuronTest()
-test.NeuronTest2() # the only one that worked
-#test.TheoricalComparison()
-#test.testLimits()
-# test.dataHandling()
+test.NeuronTest1()
 
