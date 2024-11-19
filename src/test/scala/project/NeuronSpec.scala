@@ -221,7 +221,40 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
     }
   }
 
-  "Neuron should apply the Bitwise AND operator on the streams" in {
+  "Neuron should apply the Bitwise AND operator on a single pair of streams" in {
+    simulate(new Neuron(nbData = 1)) { dut =>
+      // Reset the DUT
+      dut.reset.poke(true.B)
+      dut.clock.step(1)
+      dut.reset.poke(false.B)
+      dut.clock.step(1)
+
+      // incoming bipolar stochastic stream
+      dut.io.inputPixels(0).poke(127.U)
+      dut.io.inputWeights(0).poke(-32.S)
+
+      val expectedBipolarStream1 = Seq(
+        0.S(2.W),
+        1.S(2.W),
+        0.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        0.S(2.W),
+        1.S(2.W),
+        0.S(2.W),
+        1.S(2.W)
+      )
+
+      for (i <- 0 until expectedBipolarStream1.length) {
+        dut.clock.step(1)
+        // print(dut.io.outputANDValues(0).peek().litValue)
+        dut.io.outputANDValues(0).expect(expectedBipolarStream1(i))
+      }
+    }
+  }
+
+  "Neuron should apply the Bitwise AND operator on a multiple pair of streams" in {
     simulate(new Neuron(nbData = 3)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
