@@ -42,7 +42,7 @@ class B2SUnipolar(Module):
 
     def tick(self, value: np.uint8):
         """
-        Converts a binary into a probability.
+        Converts a binary into a unipolar probability.
 
         Input : value [0, 255]
         Output : {0, 1}
@@ -274,38 +274,18 @@ class Test(Module):
                     result = res
             print(f"Pixel {pixels[i]} result {result}")
 
-    def NeuronTest(self):
-        print("### Neuron test")
-        neuron = Neuron(offset=1, m=1)
-
-        # pratical values
-        weights = np.array([10, -64, -32, 64])
-        pixels = np.array([64, 32, 64, 32])
-
-        stream = []
-        for _ in range(0, 1024):
-            res = neuron.tick(weights, pixels)
-            stream.append(res)
-
-        sum = 0
-        for i in range(0, len(stream)): 
-            sum = sum + stream[i]
-
-        res = sum / len(stream)
-        print(f"sum {sum / 4}")
-        print(f"p {res}")
-
-        # how do I compare the neuron with a probability
-        unormalized = np.dot(weights, pixels)
-        normalized = (unormalized >> 8) / 256
-        print(f"res {normalized}")
-
     def NStanhTest1(self):
-        nStanh = NStanh(2)
+        """
+        m = 2
+        offset = 4
+        n = 4
+        """
+        nStanh = NStanh(8)
         bipolar = B2ISBipolar()
         output = []
         input = np.arange(-128, 127, 1)
         s = []
+        n = 8
         # practical model
         for i in range(0, len(input)):
             stream = []
@@ -316,7 +296,7 @@ class Test(Module):
                 si = si1 + si2
                 m = 2
                 bipolarValues.append(si)
-                stream.append(2 * nStanh.tick(si, 3 * m) - 1)
+                stream.append(2 * nStanh.tick(si, n * m) - 1)
                 bipolarValues.append(si)
 
             sum = 0
@@ -334,7 +314,7 @@ class Test(Module):
 
         # theorical model
         th_input = np.arange(-2.0, 2.1, 0.1)
-        th_ouput = np.tanh(4 * th_input / 2)
+        th_ouput = np.tanh(n * th_input / 2)
 
         enablePlot = True
         if enablePlot:
@@ -348,55 +328,66 @@ class Test(Module):
 
 
     def NStanhTest2(self):
-            nStanh = NStanh(0.5)
-            bipolar = B2ISBipolar()
-            output = []
-            input = np.arange(-128, 127, 1)
-            s = []
-            # practical model
-            for i in range(0, len(input)):
-                stream = []
-                bipolarValues = []
-                for _ in range(0, 1024):
-                    si1 = bipolar.tick(input[i])
-                    si = si1
-                    m = 1
-                    bipolarValues.append(si)
-                    stream.append(2 * nStanh.tick(si, 2 * m) - 1)
-
-                sum = 0
-                for j in range(0, len(stream)):
-                    sum = sum + stream[j]
-
-                probability = 0
-                for j in range(0, len(bipolarValues)):
-                    probability = probability + bipolarValues[j]
-
-                sum = sum / len(stream)
-                probability = probability / len(bipolarValues)
-                s.append(probability)
-                output.append(sum)
-
-            # theorical model
-            th_input = np.arange(-2.0, 2.1, 0.1)
-            th_ouput = np.tanh(2 * th_input / 2)
-
-            enablePlot = True
-            if enablePlot:
-                plt.scatter(s, output, marker='o', label='NStanh(s)')
-                plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
-                plt.xlabel('s')
-                plt.ylabel('ouput')
-                plt.legend()
-                plt.title('Approximation de NStanh avec m = 1 et offset = 0.5')
-                plt.show()
-
-    def NStanhTest3(self):
-        nStanh = NStanh(8)
+        """
+        m = 1
+        offset = 0.5
+        n = 2
+        """
+        nStanh = NStanh(0.5)
         bipolar = B2ISBipolar()
         output = []
         input = np.arange(-128, 127, 1)
         s = []
+        # practical model
+        for i in range(0, len(input)):
+            stream = []
+            bipolarValues = []
+            for _ in range(0, 1024):
+                si1 = bipolar.tick(input[i])
+                si = si1
+                m = 1
+                bipolarValues.append(si)
+                stream.append(2 * nStanh.tick(si, 2 * m) - 1)
+
+            sum = 0
+            for j in range(0, len(stream)):
+                sum = sum + stream[j]
+
+            probability = 0
+            for j in range(0, len(bipolarValues)):
+                probability = probability + bipolarValues[j]
+
+            sum = sum / len(stream)
+            probability = probability / len(bipolarValues)
+            s.append(probability)
+            output.append(sum)
+
+        # theorical model
+        th_input = np.arange(-2.0, 2.1, 0.1)
+        th_ouput = np.tanh(2 * th_input / 2)
+
+        enablePlot = True
+        if enablePlot:
+            plt.scatter(s, output, marker='o', label='NStanh(s)')
+            plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
+            plt.xlabel('s')
+            plt.ylabel('ouput')
+            plt.legend()
+            plt.title('Approximation de NStanh avec m = 1 et offset = 0.5')
+            plt.show()
+
+    def NStanhTest3(self):
+        """
+        m = 4
+        offset = 16
+        n = 8
+        """
+        nStanh = NStanh(16)
+        bipolar = B2ISBipolar()
+        output = []
+        input = np.arange(-128, 127, 1)
+        s = []
+        n = 8
         # practical model
         for i in range(0, len(input)):
             stream = []
@@ -409,7 +400,7 @@ class Test(Module):
                 si = si1 + si2 + si3 + si4
                 m = 4
                 bipolarValues.append(si)
-                stream.append(2 * nStanh.tick(si, 4 * m) - 1)
+                stream.append(2 * nStanh.tick(si, n * m) - 1)
                 bipolarValues.append(si)
 
             sum = 0
@@ -427,7 +418,7 @@ class Test(Module):
 
         # theorical model
         th_input = np.arange(-4.0, 4.1, 0.1)
-        th_ouput = np.tanh(4 * th_input / 2)
+        th_ouput = np.tanh(n * th_input / 2)
 
         enablePlot = True
         if enablePlot:
@@ -439,120 +430,71 @@ class Test(Module):
             plt.title('Approximation de NStanh avec m = 4 et offset = 8')
             plt.show()
 
+    def NStanhTest4(self):
+            """
+            La valeur du offset est toujours (m * n) / 2
+            n peut varier, mais par expérience, on obtien de bon résultats avec m = 4 
+            m = 8
+            offset = 16
+            n = 4
+            """
+            nStanh = NStanh(16)
+            bipolar = B2ISBipolar()
+            output = []
+            input = np.arange(-128, 127, 1)
+            s = []
+            n = 4
+            # practical model
+            for i in range(0, len(input)):
+                stream = []
+                bipolarValues = []
+                for _ in range(0, 1024):
+                    si1 = bipolar.tick(input[i])
+                    si2 = bipolar.tick(input[i])
+                    si3 = bipolar.tick(input[i])
+                    si4 = bipolar.tick(input[i])
+                    si5 = bipolar.tick(input[i])
+                    si6 = bipolar.tick(input[i])
+                    si7 = bipolar.tick(input[i])
+                    si8 = bipolar.tick(input[i])
+                    si = si1 + si2 + si3 + si4 + si5 + si6 + si7 + si8
+                    m = 8
+                    bipolarValues.append(si)
+                    stream.append(2 * nStanh.tick(si, n * m) - 1)
+                    bipolarValues.append(si)
 
-    def TheoricalComparison(self):
-        print("### Theorical Comparison")
-        neuron = Neuron(offset=4, m=4)
+                sum = 0
+                for j in range(0, len(stream)):
+                    sum = sum + stream[j]
 
-        weights_data = [[-128, -128, -128, -128], [-64, -64, -64, -64], [0, 0, 0, 0], [64, 64, 64, 64], [127, 127, 127, 127]]
-        pixels_data = [[0, 0, 0, 0], [32, 32, 32, 32], [64, 64, 64, 64], [128, 128, 128, 128], [255, 255, 255, 255]]
+                probability = 0
+                for j in range(0, len(bipolarValues)):
+                    probability = probability + bipolarValues[j]
 
-        stochastic = []
-        floating = []
-
-        for i in range(0, len(weights_data)):
-            weight = weights_data[i]
+                sum = sum / len(stream)
+                probability = probability / len(bipolarValues)
+                s.append(probability)
+                output.append(sum)
 
             # theorical model
-            theorical_results = []
-            for j in range(0, len(pixels_data)):
-                pixel = pixels_data[j]
-                product = np.dot(weight, pixel)
-                product = (product >> 8) / 256
-                res = np.tanh(product)
-                theorical_results.append(float((res + 1) / 2))
-                # print(f"weight {weight} pixel {pixel}")
+            th_input = np.arange(-4.0, 4.1, 0.1)
+            th_ouput = np.tanh(n * th_input / 2)
 
-            # print(f"theorical res {theorical_results}")
-            floating.append(theorical_results)
-
-            # practical model
-            neuron = Neuron()
-            practical_results = []
-            for j in range(0, len(pixels_data)):
-                pixel = pixels_data[j]
-                bitstream = []
-                for _ in range(0, 1024):
-                    bit = neuron.tick(weight, pixel)
-                    bitstream.append(bit)
-                sum = 0
-                for bit in bitstream:
-                    sum = sum + bit
-                sum = sum / len(bitstream)
-                practical_results.append(sum)
-                # print(f"weight {weight} pixel {pixel}")
-
-            # print(f"practical res {practical_results}")
-            stochastic.append(practical_results)
-        
-        # print("STOCHASTIC")
-        # print(stochastic)
-        np.save("results/stochastic.npy", stochastic)
-        # print("FLOAT")
-        # print(floating)
-        np.save("results/floating.npy", floating)
+            enablePlot = True
+            if enablePlot:
+                plt.scatter(s, output, marker='o', label='NStanh(s)')
+                plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
+                plt.xlabel('s')
+                plt.ylabel('ouput')
+                plt.legend()
+                plt.title('Approximation de NStanh avec m = 8 et offset = 16')
+                plt.show()
 
 
-    def testLimits(self):
-        print("### Limits")
-        neuron = Neuron(offset=4, m=4)
-
-        weights_data = np.load("results/weights_sampled.npy")
-        pixels_data = np.load("results/pixels_sampled.npy")
-
-        stochastic = []
-        floating = []
-
-        for i in range(0, len(weights_data)):
-            weight = weights_data[i]
-            print(i)
-
-            # theorical model
-            theorical_results = []
-            for j in range(0, len(pixels_data)):
-                pixel = pixels_data[j]
-                product = np.dot(weight, pixel)
-                product = (product >> 8) / 256
-                res = np.tanh(product)
-                theorical_results.append(float((res + 1) / 2))
-                # print(f"weight {weight} pixel {pixel}")
-
-            # print(f"theorical res {theorical_results}")
-            floating.append(theorical_results)
-
-            # practical model
-            neuron = Neuron()
-            practical_results = []
-            for j in range(0, len(pixels_data)):
-                pixel = pixels_data[j]
-                bitstream = []
-                for _ in range(0, 1024):
-                    bit = neuron.tick(weight, pixel)
-                    bitstream.append(bit)
-                sum = 0
-                for bit in bitstream:
-                    sum = sum + bit
-                sum = sum / len(bitstream)
-                practical_results.append(sum)
-                # print(f"weight {weight} pixel {pixel}")
-
-            # print(f"practical res {practical_results}")
-            stochastic.append(practical_results)
-        
-        np.save("results/stochastic_limit.npy", stochastic)
-        np.save("results/floating_limit.npy", floating)
-
-    def dataHandling(self):
-        x = np.load("limit_pixels.npy")
-        y = np.load("limit_weights.npy")
-        x = x[::3]
-        y = y[::3]
-        np.save("results/pixels_sampled.npy", x)
-        np.save("results/weights_sampled.npy", y)
-
-    def NeuronTest2(self):
+    def NeuronTest1(self):
         print("something")
         th_weight = [[-128, -128], [-64, -64], [-32, -32], [32, -32], [32, -64], [0, 0], [32, 32], [64, 64], [127, 127]]
+        th_weight = [[32, -32]]
         b2is1 = B2ISBipolar()
         s = []
         y = []
@@ -562,7 +504,7 @@ class Test(Module):
             stream2 = []
             stream1 = []    
             stream_combined = []
-            for _ in range(0, 1024):
+            for _ in range(0, 20):
                 val1 = b2is1.tick(th_weight[j][0])
                 stream1.append(val1)
 
@@ -572,13 +514,14 @@ class Test(Module):
                 val3 = val1 + val2
                 stream_combined.append(val3)
             
+            print(f"stream combined {stream_combined}")
             nStanh = NStanh(offset=2)
             m = 2
             result_after_stanh = []
             for i in range(0, len(stream_combined)):
                 val = nStanh.tick(Si=stream_combined[i], mn=3*m)
                 result_after_stanh.append(val)
-
+            print(f"result after stanh {result_after_stanh}")
             sum = 0
             for i in range(0, len(result_after_stanh)):
                 sum = sum + result_after_stanh[i]
@@ -607,38 +550,13 @@ class Test(Module):
         average_difference = np.average(relative_difference)
         print(f"Average difference (%) : {average_difference}")
         
-
-
-class DataHandling():
-    def analyse(self):
-        stochastic = np.load("results/stochastic_limit.npy")
-        floating = np.load("results/floating_limit.npy")
-        percentage = []
-        for row in range(0, len(stochastic)):
-            for col in range(0, len(stochastic[row])):
-                stochastic_value = stochastic[row][col]
-                floating_value = floating[row][col]
-                difference = abs(stochastic_value - floating_value)
-                percentage.append(difference * 100)
-        
-        mean = np.mean(percentage)
-        print(f"mean {mean}")
-
-
-data = DataHandling()
-# data.analyse()
-
 test = Test()
 # test.B2ISTest()
 # test.B2STest()
 # test.BitwiseANDTest()
 # test.UnipolarCounterTest()
-# test.NStanhTest1()
+test.NStanhTest1()
 # test.NStanhTest2()
 # test.NStanhTest3()
-# test.NeuronTest()
-test.NeuronTest2()
-#test.TheoricalComparison()
-#test.testLimits()
-# test.dataHandling()
-
+# test.NStanhTest4()
+# test.NeuronTest1()
