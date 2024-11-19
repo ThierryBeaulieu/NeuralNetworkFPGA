@@ -1,5 +1,7 @@
 import numpy as np
 
+# test weights 14
+
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
@@ -73,7 +75,7 @@ for imgIndex in range(0, 5000):
     image_fp = np.zeros_like(xp)
 
     for i in range(xp.shape[0]):
-        image_fp[i] = convert_float_to_fix_point(xp[i], 0, 0, 8)
+        image_fp[i] = convert_float_to_fix_point(xp[i], 0, 0, 4)
 
     ## Step 3. Convert Weight Precision Into Fixed Point Precision
     # {4, 4} [-1.463356, 1.00899]
@@ -111,7 +113,7 @@ for imgIndex in range(0, 5000):
     theta_1_fp = np.zeros_like(theta_1)
     for i in range(theta_1.shape[0]): # 10
         for j in range(theta_1.shape[1]): # 26
-            theta_1_fp[i][j] = convert_float_to_fix_point(theta_1[i][j], 1, 3, 0)
+            theta_1_fp[i][j] = convert_float_to_fix_point(theta_1[i][j], 1, 3, 10)
 
     ## Step 7. Make The Second Hidden Layer Multiplication X*W 
     # Result [-6.9375, 0.3125]
@@ -142,4 +144,4 @@ for imgIndex in range(0, 5000):
 
 # Get precentage
 average = (sum / 5000) * 100
-print(f"4, 14 is {average}%")
+print(f"8, 14 is {average}%")

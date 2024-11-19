@@ -1,5 +1,9 @@
 import numpy as np
 
+
+# Test weight 6
+
+
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
@@ -111,7 +115,7 @@ for imgIndex in range(0, 5000):
     theta_1_fp = np.zeros_like(theta_1)
     for i in range(theta_1.shape[0]): # 10
         for j in range(theta_1.shape[1]): # 26
-            theta_1_fp[i][j] = convert_float_to_fix_point(theta_1[i][j], 1, 3, 0)
+            theta_1_fp[i][j] = convert_float_to_fix_point(theta_1[i][j], 1, 3, 2)
 
     ## Step 7. Make The Second Hidden Layer Multiplication X*W 
     # Result [-6.9375, 0.3125]
@@ -142,4 +146,4 @@ for imgIndex in range(0, 5000):
 
 # Get precentage
 average = (sum / 5000) * 100
-print(f"4, 6 is {average}%")
+print(f"8, 6 is {average}%")
