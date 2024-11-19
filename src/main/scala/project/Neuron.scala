@@ -12,6 +12,11 @@ import chisel3._
   *   bipolar stream {0, 1}
   */
 class Neuron(nbData: Int) extends Module {
+  private val nStanh = new NStanh(offset = 2.S, mn = 6.S)
+  private val b2SUnipolar = new B2SUnipolar()
+  private val b2ISBipolar = new B2ISBipolar()
+  private val treeAdder = new TreeAdder(nbStream = nbData)
+
   val io = IO(new Bundle {
     val inputPixels = Input(Vec(nbData, UInt(8.W)))
     val inputWeights = Input(Vec(nbData, SInt(8.W)))
@@ -25,7 +30,6 @@ class Neuron(nbData: Int) extends Module {
   // Step 3. Pixel & Weight
 
   // Step 4. TreeAdder All Streams
-  val nStanh = new NStanh(offset = 2.S, mn = 6.S)
 
   // Step 5. Passing Stream to NStanh
 
