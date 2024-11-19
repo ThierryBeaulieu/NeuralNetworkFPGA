@@ -24,7 +24,9 @@ class Neuron(nbData: Int) extends Module {
   private val b2ISBipolar = Seq.fill(nbData)(Module(new B2ISBipolar))
   private val bitwiseAND = Seq.fill(nbData)(Module(new BitwiseAND))
   private val treeAdder = Module(new TreeAdder(nbStream = nbData))
-  // private val nStanh = Module(new NStanh(offset = 2.S, mn = 6.S))
+  private val nStanh = Module(
+    new NStanh(offset = 2.S, mn = 6.S, nbData = nbData)
+  )
 
   val io = IO(new Bundle {
     val inputPixels = Input(Vec(nbData, UInt(8.W)))
@@ -33,7 +35,7 @@ class Neuron(nbData: Int) extends Module {
     val outputB2ISValues = Output(Vec(nbData, SInt(2.W)))
     val outputANDValues = Output(Vec(nbData, SInt(2.W)))
     val outputTreeAdder = Output(SInt((nbData + 1).W))
-    val outputStream = Output(Vec(nbData, UInt(1.W)))
+    val outputStream = Output(UInt(1.W))
   })
 
   // Step 1. Pixel Unipolar Conversion
@@ -42,7 +44,6 @@ class Neuron(nbData: Int) extends Module {
     b2SUnipolar(i).io.inputPixel := io.inputPixels(i)
     regB2S(i) := b2SUnipolar(i).io.outputStream
     io.outputB2SValues(i) := regB2S(i)
-    io.outputStream(i) := regB2S(i) // todo assign last value at the end
   }
 
   // Step 2. Weight Bipolar Conversion
@@ -67,5 +68,6 @@ class Neuron(nbData: Int) extends Module {
   io.outputTreeAdder := treeAdder.io.outputStream
 
   // Step 5. Passing Stream to NStanh
-
+  nStanh.io.inputSi := treeAdder.io.outputStream
+  io.outputStream := nStanh.io.outputStream
 }

@@ -410,4 +410,46 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
     }
   }
 
+  "Neuron should convert pixel and weights into a unipolar stream" in {
+    simulate(new Neuron(nbData = 4)) { dut =>
+      // Reset the DUT
+      dut.reset.poke(true.B)
+      dut.clock.step(1)
+      dut.reset.poke(false.B)
+      dut.clock.step(1)
+
+      // incoming bipolar stochastic stream
+      dut.io.inputPixels(0).poke(220.U)
+      dut.io.inputWeights(0).poke(0.S)
+
+      dut.io.inputPixels(1).poke(220.U)
+      dut.io.inputWeights(1).poke(32.S)
+
+      val expectedStream = Seq(
+        0.U(1.W),
+        0.U(1.W),
+        0.U(1.W),
+        0.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W),
+        1.U(1.W)
+      )
+
+      for (i <- 0 until expectedStream.length) {
+        dut.clock.step(1)
+        // print(dut.io.outputStream.peek().litValue)
+        dut.io.outputStream.expect(expectedStream(i))
+      }
+    }
+  }
+
 }
