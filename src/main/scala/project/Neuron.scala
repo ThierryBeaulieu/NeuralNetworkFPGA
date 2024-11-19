@@ -14,7 +14,7 @@ import chisel3._
   *   bipolar stream {0, 1}
   */
 class Neuron(nbData: Int) extends Module {
-  private val b2SUnipolar = Module(new B2SUnipolar())
+  private val b2SUnipolar = Seq.fill(nbData)(Module(new B2SUnipolar))
   // private val b2ISBipolar = Module(new B2ISBipolar())
   // private val treeAdder = Module(new TreeAdder(nbStream = nbData))
   // private val nStanh = Module(new NStanh(offset = 2.S, mn = 6.S))
@@ -28,10 +28,12 @@ class Neuron(nbData: Int) extends Module {
 
   // Step 1. Pixel Unipolar Conversion
   val regStochastic = RegInit(VecInit(Seq.fill(nbData)(0.U(1.W))))
-  b2SUnipolar.io.inputPixel := io.inputPixels(0)
-  regStochastic(0) := b2SUnipolar.io.outputStream
-  io.outputB2SValues(0) := regStochastic(0)
-  io.outputStream(0) := regStochastic(0)
+  for (i <- 0 until regStochastic.length) {
+    b2SUnipolar(i).io.inputPixel := io.inputPixels(i)
+    regStochastic(i) := b2SUnipolar(i).io.outputStream
+    io.outputB2SValues(i) := regStochastic(i)
+    io.outputStream(i) := regStochastic(i)
+  }
 
   // Step 2. Weight Bipolar Conversion
 
