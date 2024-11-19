@@ -52,10 +52,14 @@ class NeuralNetwork extends Module {
     data
   }
 
+  val output_data = RegInit(VecInit(Seq.fill(nbNeurons)(0.S(16.W))))
+  val inputPixel = RegInit(VecInit(Seq.fill(nbPixels)(0.U(8.W))))
+
+  val transferCount = RegInit(0.U(4.W)) // [0, 9]
+  val pixelIndex = RegInit(0.U(9.W)) // [0, 400]
   val sending = RegInit(false.B)
-  val output_data = RegInit(VecInit(Seq.fill(10)(0.S(16.W))))
-  val transferCount = RegInit(0.U(4.W))
-  val row = RegInit(0.U(9.W)) // 0 to 401
+  val processing = RegInit(false.B)
+  val initialize = RegInit(false.B)
 
   sAxis.tready := RegInit(true.B)
   mAxis.data.tvalid := RegInit(false.B)
@@ -64,13 +68,36 @@ class NeuralNetwork extends Module {
   mAxis.data.tkeep := RegInit("b11".U)
 
   when(sAxis.data.tvalid) {
-    for (col <- 0 until 10) {
-      output_data(col) := output_data(col) + (weights(col)(
-        row
-      ) * sAxis.data.tdata)
-    }
-    row := row + 1.U
+    inputPixel(pixelIndex) := sAxis.data.tdata
+
+    pixelIndex := pixelIndex + 1.U
     when(sAxis.data.tlast) {
+      initialize := true.B
+    }
+  }
+
+  when(initialize) {
+    for (i <- 0 until nbPixels) {
+      for (j <- 0 until nbNeurons) {
+        neurons(j).io.inputPixels := inputPixel(i)
+      }
+    }
+    for (i <- 0 until nbNeurons) {
+      val row: Vec[SInt] = weights(i)
+      for (j <- 0 until nbPixels) {
+        neurons(i).io.inputWeights := row(j)
+      }
+    }
+    initialize := false.B
+    processing := true.B
+  }
+
+  val processing_cycle = RegInit(0.U(10.W))
+  when(processing) {
+    processing_cycle := processing_cycle + 1.U
+    when(processing_cycle === 1024.U) {
+      processing_cycle := 0.U
+      processing := false.B
       sending := true.B
     }
   }
@@ -79,9 +106,9 @@ class NeuralNetwork extends Module {
     when(transferCount === output_data.length.U) {
       mAxis.data.tlast := true.B
       mAxis.data.tvalid := false.B
-      output_data := VecInit(Seq.fill(10)(0.S(16.W)))
+      output_data := VecInit(Seq.fill(nbNeurons)(0.S(16.W)))
       transferCount := 0.U
-      row := 0.U
+      pixelIndex := 0.U
       sending := false.B
     }.otherwise {
       mAxis.data.tlast := false.B
