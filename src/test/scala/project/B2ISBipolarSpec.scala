@@ -1,7 +1,6 @@
 package project
 
 import chisel3._
-import chisel3.experimental.BundleLiterals._
 import chisel3.simulator.EphemeralSimulator._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -71,8 +70,6 @@ class B2ISBipolarSpec extends AnyFreeSpec with Matchers {
       dut.io.inputWeight.poke(-128.S)
       dut.clock.step(1)
 
-      val clock_cycle = 1024
-
       for (i <- 0 until expectedBipolarStream.length) {
         dut.io.outputStream.expect(expectedBipolarStream(i))
         // print(dut.io.outputStream.peek().litValue)
@@ -107,8 +104,6 @@ class B2ISBipolarSpec extends AnyFreeSpec with Matchers {
 
       dut.io.inputWeight.poke(0.S)
       dut.clock.step(1)
-
-      val clock_cycle = 1024
 
       for (i <- 0 until expectedBipolarStream.length) {
         dut.io.outputStream.expect(expectedBipolarStream(i))

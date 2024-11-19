@@ -4,7 +4,16 @@ import chisel3._
 import _root_.circt.stage.ChiselStage
 import scala.io.Source
 
+/** Neural Network Composed of 10 Neurons
+  *
+  * @param slaveIO
+  *   AxiStreamSlaveIf
+  * @param masterIO
+  *   AxiStreamExternalIf
+  */
 class NeuralNetwork extends Module {
+  private val neurons = Seq.fill(10)(Module(new Neuron(401)))
+
   // AXI-Stream Connection
   val sAxis = Wire(new AxiStreamSlaveIf(16))
   val slaveIO =
