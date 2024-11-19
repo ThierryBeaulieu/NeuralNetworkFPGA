@@ -10,7 +10,7 @@ import org.scalatest.matchers.must.Matchers
 
 class NeuronSpec extends AnyFreeSpec with Matchers {
 
-  "Neuron should generate stream with B2S" in {
+  "Neuron should generate stream with a single B2S" in {
     simulate(new Neuron(nbData = 1)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
@@ -99,6 +99,41 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
         dut.clock.step(1)
         // print(dut.io.outputB2SValues(1).peek().litValue)
         dut.io.outputB2SValues(1).expect(expectedUnipolarStream2(i))
+      }
+    }
+  }
+
+  "Neuron should generate bipolar stream with a single B2ISBipolar" in {
+    simulate(new Neuron(nbData = 1)) { dut =>
+      // Reset the DUT
+      dut.reset.poke(true.B)
+      dut.clock.step(1)
+      dut.reset.poke(false.B)
+      dut.clock.step(1)
+
+      // incoming bipolar stochastic stream
+      dut.io.inputPixels(0).poke(127.U)
+      dut.io.inputWeights(0).poke(0.S)
+
+      val expectedBipolarStream1 = Seq(
+        1.S(2.W),
+        -1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        -1.S(2.W),
+        1.S(2.W),
+        -1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        -1.S(2.W),
+        1.S(2.W)
+      )
+
+      for (i <- 0 until expectedBipolarStream1.length) {
+        dut.clock.step(1)
+        // print(dut.io.outputB2ISValues(0).peek().litValue)
+        dut.io.outputB2ISValues(0).expect(expectedBipolarStream1(i))
       }
     }
   }
