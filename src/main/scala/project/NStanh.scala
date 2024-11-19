@@ -8,16 +8,18 @@ import chisel3._
   *   the bipolar stochastic stream Si {-m, m}. 2 bits + log2(weights)
   * @param inputMN
   *   m*n {1*n, 2*n, 3*n}
+  * @param nbData
+  *   nbCombinedStreams int
   * @param outputStream
   *   the unipolar value {0, 1}
   */
-class NStanh(offset: SInt, mn: SInt) extends Module {
+class NStanh(offset: SInt, mn: SInt, nbData: Int) extends Module {
   private val m_offset = RegInit(offset)
   private val m_MN = RegInit(mn)
   private val m_counter = RegInit(0.S(10.W))
 
   val io = IO(new Bundle {
-    val inputSi = Input(SInt(4.W))
+    val inputSi = Input(SInt((nbData + 1).W))
     val outputStream = Output(UInt(1.W))
   })
 

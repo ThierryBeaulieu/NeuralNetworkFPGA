@@ -11,7 +11,7 @@ import org.scalatest.matchers.must.Matchers
 class NStanhSpec extends AnyFreeSpec with Matchers {
 
   "Should produce return an approximation of tanh for a stream [-128, -128]" in {
-    simulate(new NStanh(2.S, 6.S)) { dut =>
+    simulate(new NStanh(2.S, 6.S, 2)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -52,7 +52,7 @@ class NStanhSpec extends AnyFreeSpec with Matchers {
   }
 
   "Should produce return an approximation of tanh for a stream [127, 127]" in {
-    simulate(new NStanh(2.S, 6.S)) { dut =>
+    simulate(new NStanh(2.S, 6.S, 2)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -99,7 +99,7 @@ class NStanhSpec extends AnyFreeSpec with Matchers {
   }
 
   "Should produce return an approximation of tanh for a stream [0, 0]" in {
-    simulate(new NStanh(2.S, 6.S)) { dut =>
+    simulate(new NStanh(2.S, 6.S, 2)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -148,7 +148,7 @@ class NStanhSpec extends AnyFreeSpec with Matchers {
   }
 
   "Should produce return an approximation of tanh for a stream [32, -32]" in {
-    simulate(new NStanh(2.S, 6.S)) { dut =>
+    simulate(new NStanh(2.S, 6.S, 2)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
