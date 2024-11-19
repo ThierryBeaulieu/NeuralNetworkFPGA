@@ -95,6 +95,7 @@ class NeuralNetwork extends Module {
   val processing_cycle = RegInit(0.U(10.W))
   when(processing) {
     processing_cycle := processing_cycle + 1.U
+    // the data needs to be send by every Neuron at the same time
     when(processing_cycle === 1024.U) {
       processing_cycle := 0.U
       processing := false.B
