@@ -12,7 +12,14 @@ import scala.io.Source
   *   AxiStreamExternalIf
   */
 class NeuralNetwork extends Module {
-  private val neurons = Seq.fill(10)(Module(new Neuron(401)))
+  private val nbNeurons = 10
+  private val nbPixels = 401
+  private val neurons = Seq.fill(nbNeurons)(Module(new Neuron(nbPixels)))
+  private val weights = RegInit(
+    VecInit.tabulate(nbNeurons, nbPixels) { (x, y) =>
+      readCSV("weights.csv")(x)(y).S(16.W)
+    }
+  )
 
   // AXI-Stream Connection
   val sAxis = Wire(new AxiStreamSlaveIf(16))
@@ -26,6 +33,13 @@ class NeuralNetwork extends Module {
     .suggestName("m_axis")
     .connect(mAxis)
 
+  /** Fetch the weights from a CSV
+    *
+    * @param filePath
+    *   Location of the file containing the weights
+    * @param data
+    *   The weights Array[Array[Int]]
+    */
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
     val data = source
@@ -37,14 +51,6 @@ class NeuralNetwork extends Module {
     source.close()
     data
   }
-
-  val LabelW = 10
-  val InputW = 401
-
-  val rawData = readCSV("weights.csv")
-  val weights = RegInit(VecInit.tabulate(LabelW, InputW) { (x, y) =>
-    rawData(x)(y).S(16.W)
-  })
 
   val sending = RegInit(false.B)
   val output_data = RegInit(VecInit(Seq.fill(10)(0.S(16.W))))
