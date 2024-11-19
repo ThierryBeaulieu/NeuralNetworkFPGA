@@ -277,14 +277,15 @@ class Test(Module):
     def NStanhTest1(self):
         """
         m = 2
-        offset = 2
-        n = 3
+        offset = 4
+        n = 4
         """
-        nStanh = NStanh(2)
+        nStanh = NStanh(8)
         bipolar = B2ISBipolar()
         output = []
         input = np.arange(-128, 127, 1)
         s = []
+        n = 8
         # practical model
         for i in range(0, len(input)):
             stream = []
@@ -295,7 +296,7 @@ class Test(Module):
                 si = si1 + si2
                 m = 2
                 bipolarValues.append(si)
-                stream.append(2 * nStanh.tick(si, 3 * m) - 1)
+                stream.append(2 * nStanh.tick(si, n * m) - 1)
                 bipolarValues.append(si)
 
             sum = 0
@@ -313,7 +314,7 @@ class Test(Module):
 
         # theorical model
         th_input = np.arange(-2.0, 2.1, 0.1)
-        th_ouput = np.tanh(4 * th_input / 2)
+        th_ouput = np.tanh(n * th_input / 2)
 
         enablePlot = True
         if enablePlot:
@@ -554,8 +555,8 @@ test = Test()
 # test.B2STest()
 # test.BitwiseANDTest()
 # test.UnipolarCounterTest()
-# test.NStanhTest1()
+test.NStanhTest1()
 # test.NStanhTest2()
-test.NStanhTest3()
+# test.NStanhTest3()
 # test.NStanhTest4()
 # test.NeuronTest1()

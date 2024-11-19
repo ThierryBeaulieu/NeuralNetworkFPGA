@@ -13,13 +13,13 @@ import chisel3._
   * @param outputStream
   *   the unipolar value {0, 1}
   */
-class NStanh(offset: SInt, mn: SInt, nbData: Int) extends Module {
-  private val m_offset = RegInit(offset)
-  private val m_MN = RegInit(mn)
+class NStanh(n: Int, m: Int) extends Module {
+  private val m_offset = RegInit(((m * n) / 2).S)
+  private val m_MN = RegInit((n * m).S)
   private val m_counter = RegInit(0.S(10.W))
 
   val io = IO(new Bundle {
-    val inputSi = Input(SInt((nbData + 1).W))
+    val inputSi = Input(SInt((m + 1).W))
     val outputStream = Output(UInt(1.W))
   })
 

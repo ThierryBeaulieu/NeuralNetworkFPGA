@@ -24,9 +24,7 @@ class Neuron(nbData: Int) extends Module {
   private val b2ISBipolar = Seq.fill(nbData)(Module(new B2ISBipolar))
   private val bitwiseAND = Seq.fill(nbData)(Module(new BitwiseAND))
   private val treeAdder = Module(new TreeAdder(nbStream = nbData))
-  private val nStanh = Module(
-    new NStanh(offset = 2.S, mn = 6.S, nbData = nbData)
-  )
+  private val nStanh = Module(new NStanh(n = 4, m = nbData))
 
   val io = IO(new Bundle {
     val inputPixels = Input(Vec(nbData, UInt(8.W)))
