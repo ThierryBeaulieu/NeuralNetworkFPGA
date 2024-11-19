@@ -11,14 +11,17 @@ import chisel3._
   * @param outputB2SValues
   *   unipolar stream {0, 1}
   * @param outputB2ISValues
-  *   bipolar stream {-1, 1}
+  *   bipolar stream {-m, m}
+  * @param outputANDValues
+  *   bipolar stream {-m, 0, m}
   * @param outputStream
   *   unipolar stream {0, 1}
   */
 class Neuron(nbData: Int) extends Module {
   private val b2SUnipolar = Seq.fill(nbData)(Module(new B2SUnipolar))
   private val b2ISBipolar = Seq.fill(nbData)(Module(new B2ISBipolar))
-  // private val treeAdder = Module(new TreeAdder(nbStream = nbData))
+  private val bitwiseAND = Seq.fill(nbData)(Module(new BitwiseAND))
+  // private val treeAdder = Seq.fill(nbData)(Module(new TreeAdder(nbStream = nbData)))
   // private val nStanh = Module(new NStanh(offset = 2.S, mn = 6.S))
 
   val io = IO(new Bundle {
@@ -26,6 +29,7 @@ class Neuron(nbData: Int) extends Module {
     val inputWeights = Input(Vec(nbData, SInt(8.W)))
     val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
     val outputB2ISValues = Output(Vec(nbData, SInt(2.W)))
+    val outputANDValues = Output(Vec(nbData, SInt(2.W)))
     val outputStream = Output(Vec(nbData, UInt(1.W)))
   })
 
@@ -47,8 +51,16 @@ class Neuron(nbData: Int) extends Module {
   }
 
   // Step 3. Pixel & Weight
+  val regAND = RegInit(VecInit(Seq.fill(nbData)(0.S(2.W))))
+  for (i <- 0 until regAND.length) {
+    bitwiseAND(i).io.inputInteger := regB2IS(i)
+    bitwiseAND(i).io.inputBit := regB2S(i)
+    regAND(i) := bitwiseAND(i).io.outputStream
+    io.outputANDValues(i) := regAND(i)
+  }
 
   // Step 4. TreeAdder All Streams
+  // treeAdder.inputStream := regB2IS
 
   // Step 5. Passing Stream to NStanh
 
