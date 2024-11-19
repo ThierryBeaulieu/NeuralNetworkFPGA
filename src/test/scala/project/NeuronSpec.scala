@@ -102,4 +102,87 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
       }
     }
   }
+
+  "Neuron should generate bipolar stream with multiple B2ISBipolar" in {
+    simulate(new Neuron(nbData = 3)) { dut =>
+      // Reset the DUT
+      dut.reset.poke(true.B)
+      dut.clock.step(1)
+      dut.reset.poke(false.B)
+      dut.clock.step(1)
+
+      // incoming bipolar stochastic stream
+      dut.io.inputPixels(0).poke(127.U)
+      dut.io.inputWeights(0).poke(0.S)
+
+      dut.io.inputPixels(1).poke(127.U)
+      dut.io.inputWeights(1).poke(127.S)
+
+      dut.io.inputPixels(2).poke(127.U)
+      dut.io.inputWeights(2).poke(-127.S)
+
+      val expectedBipolarStream1 = Seq(
+        1.S(2.W),
+        -1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        -1.S(2.W),
+        1.S(2.W),
+        -1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        -1.S(2.W),
+        1.S(2.W)
+      )
+
+      val expectedBipolarStream2 = Seq(
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W),
+        1.S(2.W)
+      )
+
+      val expectedBipolarStream3 = Seq(
+        -1.S(2.W),
+        -1.S(2.W),
+        -1.S(2.W),
+        -1.S(2.W),
+        -1.S(2.W),
+        -1.S(2.W),
+        -1.S(2.W),
+        -1.S(2.W),
+        -1.S(2.W),
+        -1.S(2.W),
+        -1.S(2.W),
+        -1.S(2.W)
+      )
+
+      for (i <- 0 until expectedBipolarStream1.length) {
+        dut.clock.step(1)
+        // print(dut.io.outputB2ISValues(0).peek().litValue)
+        dut.io.outputB2ISValues(0).expect(expectedBipolarStream1(i))
+      }
+
+      for (i <- 0 until expectedBipolarStream2.length) {
+        dut.clock.step(1)
+        // print(dut.io.outputB2ISValues(1).peek().litValue)
+        dut.io.outputB2ISValues(1).expect(expectedBipolarStream2(i))
+      }
+
+      for (i <- 0 until expectedBipolarStream3.length) {
+        dut.clock.step(1)
+        // print(dut.io.outputB2ISValues(2).peek().litValue)
+        dut.io.outputB2ISValues(2).expect(expectedBipolarStream3(i))
+      }
+    }
+  }
 }
