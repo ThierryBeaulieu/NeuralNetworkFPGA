@@ -14,6 +14,8 @@ import chisel3._
   *   bipolar stream {-m, m}
   * @param outputANDValues
   *   bipolar stream {-m, 0, m}
+  * @param outputTreeAdder
+  *   bipolar stream {-(m*m'),...,+(m+m')}
   * @param outputStream
   *   unipolar stream {0, 1}
   */
@@ -21,7 +23,7 @@ class Neuron(nbData: Int) extends Module {
   private val b2SUnipolar = Seq.fill(nbData)(Module(new B2SUnipolar))
   private val b2ISBipolar = Seq.fill(nbData)(Module(new B2ISBipolar))
   private val bitwiseAND = Seq.fill(nbData)(Module(new BitwiseAND))
-  // private val treeAdder = Seq.fill(nbData)(Module(new TreeAdder(nbStream = nbData)))
+  private val treeAdder = Module(new TreeAdder(nbStream = nbData))
   // private val nStanh = Module(new NStanh(offset = 2.S, mn = 6.S))
 
   val io = IO(new Bundle {
@@ -30,6 +32,7 @@ class Neuron(nbData: Int) extends Module {
     val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
     val outputB2ISValues = Output(Vec(nbData, SInt(2.W)))
     val outputANDValues = Output(Vec(nbData, SInt(2.W)))
+    val outputTreeAdder = Output(SInt(nbData.W))
     val outputStream = Output(Vec(nbData, UInt(1.W)))
   })
 
@@ -60,7 +63,8 @@ class Neuron(nbData: Int) extends Module {
   }
 
   // Step 4. TreeAdder All Streams
-  // treeAdder.inputStream := regB2IS
+  treeAdder.io.inputStream := regAND
+  io.outputTreeAdder := treeAdder.io.outputStream
 
   // Step 5. Passing Stream to NStanh
 
