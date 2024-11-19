@@ -73,14 +73,14 @@ for imgIndex in range(0, 5000):
     image_fp = np.zeros_like(xp)
 
     for i in range(xp.shape[0]):
-        image_fp[i] = convert_float_to_fix_point(xp[i], 0, 0, 4)
+        image_fp[i] = convert_float_to_fix_point(xp[i], 0, 0, 8)
 
     ## Step 3. Convert Weight Precision Into Fixed Point Precision
     # {4, 4} [-1.463356, 1.00899]
     theta_0_fp = np.zeros_like(theta_0)
     for i in range(theta_0.shape[0]): # 25
         for j in range(theta_0.shape[1]): # 401
-            theta_0_fp[i][j] = convert_float_to_fix_point(theta_0[i][j], 1, 1, 6)
+            theta_0_fp[i][j] = convert_float_to_fix_point(theta_0[i][j], 1, 1, 12)
 
 
     ## Step 4. Make The First Hidden Layer Multiplication X*W 
@@ -142,4 +142,4 @@ for imgIndex in range(0, 5000):
 
 # Get precentage
 average = (sum / 5000) * 100
-print(f"4, 8 is {average}%")
+print(f"4, 14 is {average}%")

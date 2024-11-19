@@ -73,7 +73,7 @@ for imgIndex in range(0, 5000):
     image_fp = np.zeros_like(xp)
 
     for i in range(xp.shape[0]):
-        image_fp[i] = convert_float_to_fix_point(xp[i], 0, 0, 4)
+        image_fp[i] = convert_float_to_fix_point(xp[i], 0, 0, 8)
 
     ## Step 3. Convert Weight Precision Into Fixed Point Precision
     # {4, 4} [-1.463356, 1.00899]
@@ -142,4 +142,4 @@ for imgIndex in range(0, 5000):
 
 # Get precentage
 average = (sum / 5000) * 100
-print(f"4, 8 is {average}%")
+print(f"4, 10 is {average}%")

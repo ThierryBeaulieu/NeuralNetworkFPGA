@@ -80,7 +80,7 @@ for imgIndex in range(0, 5000):
     theta_0_fp = np.zeros_like(theta_0)
     for i in range(theta_0.shape[0]): # 25
         for j in range(theta_0.shape[1]): # 401
-            theta_0_fp[i][j] = convert_float_to_fix_point(theta_0[i][j], 1, 1, 6)
+            theta_0_fp[i][j] = convert_float_to_fix_point(theta_0[i][j], 1, 1, 4)
 
 
     ## Step 4. Make The First Hidden Layer Multiplication X*W 
@@ -142,4 +142,4 @@ for imgIndex in range(0, 5000):
 
 # Get precentage
 average = (sum / 5000) * 100
-print(f"4, 8 is {average}%")
+print(f"4, 6 is {average}%")
