@@ -204,8 +204,8 @@ class NStanhSpec extends AnyFreeSpec with Matchers {
       for (i <- 0 until inputBipolarStream.length) {
         dut.io.inputSi.poke(inputBipolarStream(i))
         dut.clock.step(1)
-        print(dut.io.outputStream.peek().litValue)
-        // dut.io.outputStream.expect(expectedUnipolarStream(i))
+        // print(dut.io.outputStream.peek().litValue)
+        dut.io.outputStream.expect(expectedUnipolarStream(i))
       }
     }
   }
