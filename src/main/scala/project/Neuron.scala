@@ -25,6 +25,7 @@ class Neuron(nbData: Int) extends Module {
   // Step 3. Pixel & Weight
 
   // Step 4. TreeAdder All Streams
+  val nStanh = new NStanh(offset = 2.S, mn = 6.S)
 
   // Step 5. Passing Stream to NStanh
 
