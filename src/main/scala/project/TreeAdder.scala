@@ -1,7 +1,6 @@
 package project
 
 import chisel3._
-import chisel3.Vec._
 
 /** Takes a value in the integral stream and returns a 0 or the integral value
   * according to the bit
