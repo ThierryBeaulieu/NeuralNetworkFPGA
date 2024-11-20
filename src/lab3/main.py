@@ -20,9 +20,6 @@ class FixedPoint():
     
 class FixedPointOp():
     def Add(value1: FixedPoint, value2: FixedPoint):
-
-        # "01.01"
-        # "100.1"
         tmp1 = value1.value
         tmp2 = value2.value
         comaDiff = abs(value1.coma - value2.coma)
