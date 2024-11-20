@@ -67,9 +67,7 @@ class FixedPointOp():
         pass
         
 
-
-# Example of multiplication : 0.5 (00.100) * 1.25 (01.010) = 0.625 (00.101)
-
+# Test Addition of Two Fixed Point Numbers that uses Two's Complement
 fixedPoint1 =   ["11010",   "10110", "0000", "1111"]
 fixedPoint2 =   ["00100",   "10110", "0000", "1111"]
 expectedResult = ["011110", "101100", "00000", "11110"]
