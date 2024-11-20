@@ -41,12 +41,13 @@ class FixedPointOp():
                     reserve = 0
                     result = "1" + result
                 else:
-                     result = "0" + result
+                    result = "0" + result
+                    reserve = 0
             elif tmp1[i] == '1' and tmp2[i] == '1':
-                if reserve == '0':
-                    result = '0' + result
-                else:
+                if reserve:
                     result = '1' + result
+                else:
+                    result = '0' + result
                 reserve = 1
             else:
                 if reserve:
@@ -54,6 +55,7 @@ class FixedPointOp():
                     result = "0" + result
                 else:
                     result = "1" + result
+
         if reserve == 0:
             result = "0" + result
         else:
@@ -67,8 +69,12 @@ class FixedPointOp():
 
 
 # Example of multiplication : 0.5 (00.100) * 1.25 (01.010) = 0.625 (00.101)
-fixedPoint1 = FixedPoint(value="11010", coma=3)
-fixedPoint2 = FixedPoint(value="00100", coma=3)
-result = FixedPointOp.Add(fixedPoint1, fixedPoint2)
 
-assert(result.value == "011110")
+fixedPoint1 =   ["11010",   "10110", "0000", "1111"]
+fixedPoint2 =   ["00100",   "10110", "0000", "1111"]
+expectedResult = ["011110", "101100", "00000", "11110"]
+for i in range(0, len(fixedPoint1)):
+    fp1 = FixedPoint(value=fixedPoint1[i], coma=3)
+    fp2 = FixedPoint(value=fixedPoint2[i], coma=3)
+    result = FixedPointOp.Add(fp1, fp2)
+    assert(result.value == expectedResult[i])
