@@ -8,7 +8,7 @@ def convert_float_to_fix_point(floating_value: float, signed: int, integer: int,
     # 
     # For instance, the possible values for 1 bit signed, 1 bit integer and 2 bits signed are :
     # 1111, 1110, 1101, 1100, 1011, 1010, 1001, 1000, 0000, 0001, 0010, 0011, 0100, 0101, 0110, 0111
-    # {-1.75, -1.50, -1.25, -1.0, -0.75, -0.5, -0.25, -0.0, 0.0 , 0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 1.75}
+    # {-1.75, -1.50, -1.25, -1.0, -0.75, -0.5, -0.25, -0.0, 0.0 , 0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 1.75}chrom
 
     # The fixed point notation only affects the uncertainty 
     # We therefore can keep "floating point values" by reducing there precision
