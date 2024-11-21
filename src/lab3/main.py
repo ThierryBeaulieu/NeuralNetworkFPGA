@@ -67,11 +67,12 @@ for i in range(0, weightsHidden1Int8.shape[0]):
             weight = 2**8 - weight
         pixel = int(imagesInt8[j]) << 1
         tmp = pixel * weight
+        tmp = int(tmp) >> 1
         if isNegative and tmp != 0:
             tmp = 2**16 - tmp
-        tmp = int(tmp) >> 1
         #print(f"w {weights[j]} p {imagesInt8[j]} res {tmp}")
         sum = sum + tmp
+    firstHiddenLayerResult[i] = sum
 
 # Verification
 # px = 2/(2**3) + 2/(2**4) + 2/(2**5) + 2/(2**7)
@@ -82,8 +83,7 @@ for i in range(0, weightsHidden1Int8.shape[0]):
 
 # Step 4. Sigmoid operation First Hidden Layer
 sigmoidTmp = np.zeros(25)
-
-sigmoidFirstHiddenLayer = np.zeros(26)
+print(firstHiddenLayerResult)
 
 # Step 5. Add 1 to the result of the Sigmoid
 
