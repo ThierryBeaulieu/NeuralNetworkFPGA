@@ -73,9 +73,13 @@ for i in range(0, weightsHidden1Int8.shape[0]):
         if isNegative and tmp != 0:
             tmp = 2**16 - tmp
         # print(f"w {weights[j]} p {imagesInt8[j]} res {tmp}")
+        # tmp is 16 bits (log_2(401 * 16 bits) = 24.64) donc 25 bits 
+        # pour représenter
         sum = sum + tmp
     firstHiddenLayerResult[i] = sum
+print(2**25)
 
+print(firstHiddenLayerResult)
 # w = 1/(2**5) + 1/(2**6)
 # p = 1/(2**3) + 1/(2**4) + 1/(2**5) + 1/(2**7)
 # expected = 1/(2**7) + 1/(2**9) + 1/(2**11) + 1/(2**12) + 1/(2**13)
@@ -100,11 +104,47 @@ for i in range(0, weightsHidden1Int8.shape[0]):
 # print(f"pixel {px} weight {wt} res {px * wt}")
 # print(f"res {px * wt} == {app}")
 
+
+# Step 4. Create CSV containing Sigmoid Operations
+
+# print("For positive")
+# sum = 0
+# for i in range(1, 14):
+#     sum = sum + 1/(2**i)
+# print(f"max value of {sum}")
+# print(f"min value {1/(2**13)}")
+# 
+# print("For negative")
+# sum = -1
+# for i in range(1, 14):
+#     sum = sum + 1/(2**i)
+# print(f"max value of {sum}")
+# print(f"min value {1/(2**13)}")
+
+# Step 5. Create Sigmoid Approximation for the First Hidden Layer
+# Le résultat obtenu précédemment est sur 416 bits
+sigmoidApprox = np.zeros(65536)
+sum = 0.0
+for i in range(0, 65536): # [0 -> 65535]
+    if i == 32768:
+        sum = -4.0
+    sigValue = sigmoid(sum)
+    # print(f"sum {sum} sigmoid {sigValue}")
+    sigmoidApprox[i] = to_signed_fixed_point(sigValue, 8, 7)
+    sum += 1/2**13
+
+np.save("sigmoid.npy", sigmoidApprox)
+
 # Step 4. Sigmoid operation First Hidden Layer
-print(firstHiddenLayerResult)
 sigmoidTmp = np.zeros(25)
 for i in range(len(firstHiddenLayerResult)):
-    sigmoidTmp[i] = sigmoid(firstHiddenLayerResult[i])
+    sigmoidTmp[i] = sigmoidApprox[firstHiddenLayerResult[i]]
+
+sigmoidHiddenLayer1 = np.hstack((1, sigmoidTmp))
+
+print(sigmoidHiddenLayer1)
+
+
 
 
 # Step 5. Add 1 to the result of the Sigmoid

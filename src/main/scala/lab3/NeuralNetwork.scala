@@ -1,24 +1,127 @@
 package lab3
 
 import chisel3._
-import scala.math.exp
 import _root_.circt.stage.ChiselStage
+import scala.io.Source
 
-// J'ai besoin de savoir le range de x pour établir
-// Elle est où la virugle flottante
 class NeuralNetwork extends Module {
-  def sigmoid(x: Double): Double = {
-    1.0 / (1.0 + exp(-x))
+  val io = IO(new Bundle {
+    val outputTestWeight = Output(UInt(8.W))
+    val outputTestReceiving = Output(UInt(8.W))
+  })
+
+  // AXI-Stream Connection
+  val sAxis = Wire(new AxiStreamSlaveIf(8))
+  val slaveIO =
+    IO(new AxiStreamExternalIf(8))
+  slaveIO.suggestName("s_axis").connect(sAxis)
+
+  val mAxis = Wire(new AxiStreamMasterIf(8))
+  val masterIO = IO(Flipped(new AxiStreamExternalIf(8)))
+  masterIO
+    .suggestName("m_axis")
+    .connect(mAxis)
+
+  def readCSV(filePath: String): Array[Array[Int]] = {
+    val source = Source.fromResource(filePath)
+    val data = source
+      .getLines()
+      .map { line =>
+        line.split(",").map(_.trim.toInt)
+      }
+      .toArray
+    source.close()
+    data
+  }
+  val LabelW = 25
+  val InputW = 401
+
+  val rawData = readCSV("lab3/theta_0_int8.csv")
+  val weights_hidden_layer1 = RegInit(
+    VecInit.tabulate(LabelW, InputW) { (x, y) =>
+      rawData(x)(y).U(8.W)
+    }
+  )
+
+  io.outputTestWeight := weights_hidden_layer1(0)(0)
+  io.outputTestReceiving := 0.U
+
+  sAxis.tready := RegInit(true.B)
+  mAxis.data.tvalid := RegInit(false.B)
+  mAxis.data.tlast := RegInit(false.B)
+  mAxis.data.tdata := RegInit(0.U(8.W))
+  mAxis.data.tkeep := RegInit("b1".U)
+
+  val image = RegInit(VecInit(Seq.fill(401)(0.U(8.W))))
+  val index = RegInit(0.U(9.W))
+
+  val sending = RegInit(false.B)
+  val handling = RegInit(false.B)
+
+  when(sAxis.data.tvalid) {
+    image(index) := sAxis.data.tdata
+    io.outputTestReceiving := sAxis.data.tdata
+    index := index + 1.U
+    when(sAxis.data.tlast) {
+      handling := true.B
+      sAxis.tready := false.B
+      io.outputTestReceiving := 10.U
+    }
   }
 
+  val layer1 = RegInit(VecInit(Seq.fill(25)(0.U(25.W))))
+  val pixelIndex = RegInit(0.U(9.W))
+  val row = RegInit(0.U(6.W))
+  when(handling) {
+    layer1(row) := (layer1(row) + weights_hidden_layer1(row)(
+      pixelIndex
+    ))
+
+    io.outputTestReceiving := weights_hidden_layer1(row)(pixelIndex)
+
+    pixelIndex := (pixelIndex + 1.U)
+
+    when(pixelIndex === (401.U - 1.U)) {
+      sending := true.B
+      handling := false.B
+    }
+
+  }
+
+  when(sending) {
+    io.outputTestReceiving := layer1(0)
+  }
 }
+
+/*
+  firstHiddenLayerResult = np.zeros(25)
+# print(weightsHidden1Int8.shape) # (25, 401)
+for i in range(0, weightsHidden1Int8.shape[0]):
+    weights = weightsHidden1Int8[i]
+    sum = 0
+    for j in range(0, len(weights)):
+        weight = int(weights[j])
+        isNegative = False
+        if weight > 127:
+            isNegative = True
+            weight = 2**8 - weight
+        pixel = imagesInt8[j]
+        tmp = pixel * weight
+        if isNegative and tmp != 0:
+            tmp = 2**16 - tmp
+        # print(f"w {weights[j]} p {imagesInt8[j]} res {tmp}")
+        # tmp is 16 bits (log_2(401 * 16 bits) = 24.64) donc 25 bits
+        # pour représenter
+        sum = sum + tmp
+    firstHiddenLayerResult[i] = sum
+ */
 
 object NeuralNetwork extends App {
   ChiselStage.emitSystemVerilogFile(
     new NeuralNetwork,
     args = Array(
       "--target-dir",
-      "generated/lab2/"
+      "generated/lab3/"
     ),
     firtoolOpts = Array(
       "-disable-all-randomization",
