@@ -1,5 +1,8 @@
 import numpy as np
 
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
 # Converting the values of the pixels into Fixed-Point notation using two's complement
 
 def to_fixed_point(value, bits=8, frac_bits=7):
@@ -60,19 +63,35 @@ for i in range(0, weightsHidden1Int8.shape[0]):
     weights = weightsHidden1Int8[i]
     sum = 0
     for j in range(0, len(weights)):
-        weight = weights[j]
+        weight = int(weights[j])
         isNegative = False
         if weight > 127:
             isNegative = True
             weight = 2**8 - weight
-        pixel = int(imagesInt8[j]) << 1
+        pixel = imagesInt8[j]
         tmp = pixel * weight
-        tmp = int(tmp) >> 1
         if isNegative and tmp != 0:
             tmp = 2**16 - tmp
-        #print(f"w {weights[j]} p {imagesInt8[j]} res {tmp}")
+        # print(f"w {weights[j]} p {imagesInt8[j]} res {tmp}")
         sum = sum + tmp
     firstHiddenLayerResult[i] = sum
+
+# w = 1/(2**5) + 1/(2**6)
+# p = 1/(2**3) + 1/(2**4) + 1/(2**5) + 1/(2**7)
+# expected = 1/(2**7) + 1/(2**9) + 1/(2**11) + 1/(2**12) + 1/(2**13)
+# print(f"pos res {p * w} == {expected}")
+# 
+# 
+# w = -1 + 1/(2**3) + 1/(2**4) + 1/(2**5)
+# p = 1/(2**1) + 1/(2**3) + 1/(2**4) + 1/(2**5) + 1/(2**7)
+# expected = -1 + 1/(2**2) + 1/(2**3) + 1/(2**6) + 1/(2**6) + 1/(2**7) + 1/(2**9) + 1/(2**11) + 1/(2**12)
+# print(f"neg res {p * w} == {expected}")
+# 
+# w = -1 + 1/(2**1) + 1/(2**2) + 1/(2**3) + 1/(2**4)+ 1/(2**5)
+# p = 1/(2**1) + 1/(2**3) + 1/(2**4) + 1/(2**7)
+# expected = -1 + 1/(2**1) + 1/(2**2) + 1/(2**3) + 1/(2**4) + 1/(2**5) + 1/(2**7) + 1/(2**10) + 1/(2**11) +1/(2**12)
+# print(f"neg res {p * w} == {expected}")
+
 
 # Verification
 # px = 2/(2**3) + 2/(2**4) + 2/(2**5) + 2/(2**7)
@@ -82,8 +101,11 @@ for i in range(0, weightsHidden1Int8.shape[0]):
 # print(f"res {px * wt} == {app}")
 
 # Step 4. Sigmoid operation First Hidden Layer
-sigmoidTmp = np.zeros(25)
 print(firstHiddenLayerResult)
+sigmoidTmp = np.zeros(25)
+for i in range(len(firstHiddenLayerResult)):
+    sigmoidTmp[i] = sigmoid(firstHiddenLayerResult[i])
+
 
 # Step 5. Add 1 to the result of the Sigmoid
 
