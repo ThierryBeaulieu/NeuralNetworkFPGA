@@ -22,19 +22,19 @@ def to_signed_fixed_point(value, bits=8, frac_bits=7):
 
 # Step 1. Converts Pixel Values To Fixed Point Notation [1:7]
 images = np.load("x.npy")
-imagesInt8 = np.zeros((5000, 401))
-for i in range(0, len(images)):
-    image = images[i]
-    image = np.hstack((1, image))
-    for j in range(0, len(image)):
-        pixel = image[j]
-        imagesInt8[i][j] = to_fixed_point(pixel)
+imagesInt8 = np.zeros(401)
+imgIndex = 0
 
+image = images[imgIndex]
+image = np.hstack((1, image))
+for i in range(0, len(image)):
+    pixel = image[i]
+    imagesInt8[i] = to_signed_fixed_point(pixel, 8, 7)
 
 # Step 2. Converts Weights And Saves Them In CSV [2:6]
 # Hidden Layer 1 [-1.463356, 1.00899]
-weightsHidden1 = np.load("theta_0.npy") # (25, 401)
-weightsHidden1Int8 = np.zeros((26, 401))
+weightsHidden1 = np.load("theta_0.npy").T # (401, 25)
+weightsHidden1Int8 = np.zeros((401, 26))
 for i in range(0, len(weightsHidden1)):
     weightRow = weightsHidden1[i]
     for j in range(0, len(weightRow)):
@@ -44,7 +44,7 @@ for i in range(0, len(weightsHidden1)):
 np.savetxt('theta_0_int8.csv', weightsHidden1Int8, delimiter=',', fmt='%d')
 
 # Hidden Layer 2 [-4.0308, 3.2115848]
-weightsHidden2 = np.load("theta_1.npy") # (25, 401)
+weightsHidden2 = np.load("theta_1.npy").T # (26, 10)
 weightsHidden2Int8 = np.zeros_like(weightsHidden2)
 for i in range(0, len(weightsHidden2)):
     weightRow = weightsHidden2[i]
@@ -54,4 +54,22 @@ for i in range(0, len(weightsHidden2)):
 
 np.savetxt('theta_1_int8.csv', weightsHidden2Int8, delimiter=',', fmt='%d')
 
-# Step 3. Make The Multiplication W*X
+# Step 3. Multiplication W*X First Hidden Layer
+firstHiddenLayerResult = np.zeros(25)
+
+for i in range(0, len(imagesInt8)):
+    pixel = imagesInt8[i]
+    pass
+    
+
+
+# Step 4. Sigmoid operation First Hidden Layer
+sigmoidTmp = np.zeros(25)
+
+sigmoidFirstHiddenLayer = np.zeros(26)
+
+# Step 5. Add 1 to the result of the Sigmoid
+
+# Step 6. Multiplication W*X Second Hidden Layer
+
+# Step 7. Sigmoid operation Second Hidden Layer
