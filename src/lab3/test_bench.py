@@ -82,7 +82,7 @@ for imgIndex in range(0, 5000):
     for i in range(theta_0.shape[0]): # 25
         for j in range(theta_0.shape[1]): # 401
             theta_0_fp[i][j] = convert_float_to_fix_point(theta_0[i][j], 1, 1, 2)
-
+    
 
     ## Step 4. Make The First Hidden Layer Multiplication X*W 
     hiddenLayer_fp = np.zeros(theta_0.shape[0])

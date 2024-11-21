@@ -18,12 +18,12 @@ class FixedPointAdditionSpec extends AnyFreeSpec with Matchers {
       dut.reset.poke(false.B)
       dut.clock.step(1)
 
-      dut.io.in1.poke("b00001011".U(8.W))
-      dut.io.in2.poke("b00001011".U(8.W))
+      dut.io.in1.poke(143.S)
+      dut.io.in2.poke(423.S)
 
       dut.clock.step(1)
 
-      dut.io.out.expect("b00010110".U(8.W))
+      dut.io.out.expect(566.S)
     }
   }
 

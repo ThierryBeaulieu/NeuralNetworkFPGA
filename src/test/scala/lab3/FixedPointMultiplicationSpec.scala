@@ -19,8 +19,8 @@ class FixedPointMultiplicationSpec extends AnyFreeSpec with Matchers {
       dut.clock.step(1)
       // val value1 = ("b00001011".U(8.W)).asSInt
 
-      dut.io.in1.poke("b00001011".U(8.W)) // 8 + 2 + 1 = 11
-      dut.io.in2.poke("b11011111".U(8.W)) // -64 + 1 + 2 + 4 + 8 + 16 = -33
+      dut.io.in1.poke(11) // 8 + 2 + 1 = 11
+      dut.io.in2.poke(-33) // -64 + 1 + 2 + 4 + 8 + 16 = -33
 
       dut.clock.step(1)
       print(dut.io.out.peek().litValue)
