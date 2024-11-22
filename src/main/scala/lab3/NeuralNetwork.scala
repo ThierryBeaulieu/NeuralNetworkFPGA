@@ -11,7 +11,7 @@ class NeuralNetwork extends Module {
     val outputMultiplication = Output(SInt(25.W))
     val outputUMultiplication = Output(UInt(25.W))
     val outputWeight = Output(SInt(8.W))
-    val outputSigmoid = Output(SInt(25.W))
+    val outputSigmoid = Output(UInt(25.W))
   })
 
   // AXI-Stream Connection
@@ -38,24 +38,26 @@ class NeuralNetwork extends Module {
     data
   }
 
-  def initSigmoid(sigmoidMemory: SyncReadMem[SInt]) = {
-    // [12:4] [-24.0, 23.0] 24+23 = 47/(2*16)
-    val range = 2 * pow(2, 12) - 1
-    val interval = range / pow(2, 16)
-    val startingValue = -24.0
-    // [1:7]
-    for (i <- 0 until pow(2, 16).toInt) {
+  def sigmoid(x: Double): UInt = {
+    val result = (pow(E, x) / (1 + pow(E, x)))
+    val resultSInt = (result * pow(2, 7)).toInt.asUInt(8.W)
+    resultSInt
+  }
+
+  def initSigmoid(sigmoidMemory: SyncReadMem[UInt]) = {
+    // [4:4] [-4.0, 3.9375] = 8 / (2*8)
+    for (i <- -128 until 128) {
       sigmoidMemory.write(
-        i.U,
-        ((startingValue - (i * interval)) * pow(2, 7)).toInt.asSInt
+        (i.S).asUInt,
+        sigmoid(i / 32.0)
       )
     }
   }
 
-  val sigmoid: SyncReadMem[SInt] = SyncReadMem(pow(2, 16).toInt, SInt(8.W))
+  val sigmoid: SyncReadMem[UInt] = SyncReadMem(pow(2, 8).toInt, UInt(8.W))
   initSigmoid(sigmoid)
 
-  io.outputSigmoid := sigmoid.read(0.U)
+  io.outputSigmoid := sigmoid.read((-128.S).asUInt)
 
   val rawData = readCSV("lab3/theta_0_int8.csv")
   val weights_hidden_layer1 = RegInit(
