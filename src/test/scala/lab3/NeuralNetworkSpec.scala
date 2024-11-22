@@ -79,7 +79,7 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
       // dut.masterIO.tvalid.expect(true.B)
       // dut.masterIO.tdata.expect(10)
       // dut.clock.step(1)
-
+      println(f"sigmoid ${dut.io.outputSigmoid.peek().litValue}")
     }
   }
 

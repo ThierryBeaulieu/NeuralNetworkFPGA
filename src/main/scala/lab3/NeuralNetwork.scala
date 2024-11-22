@@ -3,6 +3,7 @@ package lab3
 import chisel3._
 import _root_.circt.stage.ChiselStage
 import scala.io.Source
+import scala.math._
 
 class NeuralNetwork extends Module {
   val io = IO(new Bundle {
@@ -10,6 +11,7 @@ class NeuralNetwork extends Module {
     val outputMultiplication = Output(SInt(25.W))
     val outputUMultiplication = Output(UInt(25.W))
     val outputWeight = Output(SInt(8.W))
+    val outputSigmoid = Output(UInt(25.W))
   })
 
   // AXI-Stream Connection
@@ -35,6 +37,11 @@ class NeuralNetwork extends Module {
     source.close()
     data
   }
+
+  val sigmoid = SyncReadMem(pow(2, 25).toInt, UInt(8.W))
+  sigmoid.write(0.U, 159.U)
+
+  io.outputSigmoid := sigmoid.read(0.U)
 
   val rawData = readCSV("lab3/theta_0_int8.csv")
   val weights_hidden_layer1 = RegInit(
