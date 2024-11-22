@@ -7,7 +7,7 @@ import scala.io.Source
 class NeuralNetwork extends Module {
   val io = IO(new Bundle {
     val outputTestWeight = Output(UInt(8.W))
-    val layer1Value = Output(SInt(25.W))
+    val layer1Value = Output(UInt(25.W))
     // val testValue = Output(UInt(8.W))
   })
 
@@ -42,8 +42,7 @@ class NeuralNetwork extends Module {
     }
   )
 
-  io.layer1Value := 0.S
-
+  io.layer1Value := 0.U
   io.outputTestWeight := weights_hidden_layer1(0)(0)
 
   sAxis.tready := RegInit(true.B)
@@ -76,24 +75,28 @@ class NeuralNetwork extends Module {
       pixelIndex
     ) * image(pixelIndex))
 
+    io.layer1Value := (401.U * row + pixelIndex)
+
     pixelIndex := (pixelIndex + 1.U)
 
     // sur 25 bits, on va de [-33554432, 33554431]
     // Mais ça doit être mappé sur quelles valeurs?
 
     when(pixelIndex === (401.U - 1.U)) {
-      row := row + 1.U
+      row := (row + 1.U)
       pixelIndex := 0.U
     }
 
-    when(row === (25.U - 1.U)) {
+    when(row === 25.U) {
       sending := true.B
       handling := false.B
+      row := 0.U
+      pixelIndex := 0.U
     }
   }
 
   when(sending) {
-    io.layer1Value := layer1(0)
+    io.layer1Value := 3.U
   }
 }
 
