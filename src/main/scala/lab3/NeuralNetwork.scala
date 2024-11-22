@@ -87,7 +87,7 @@ class NeuralNetwork extends Module {
       pixelIndex := 0.U
     }
 
-    when(row === 25.U) {
+    when(row === 24.U && pixelIndex === (401.U - 1.U)) {
       sending := true.B
       handling := false.B
       row := 0.U
