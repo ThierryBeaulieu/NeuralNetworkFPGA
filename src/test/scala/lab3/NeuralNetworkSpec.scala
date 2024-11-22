@@ -73,7 +73,10 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
         dut.clock.step(1)
       }
 
-      print(dut.io.layer1Value.peek().litValue)
+      // (-3).asUInt = (101).asUInt = 5
+      // println(dut.io.testValue.peek().litValue)
+      println(dut.io.layer1Value.peek().litValue)
+
       // dut.masterIO.tvalid.expect(true.B)
       // dut.masterIO.tdata.expect(10)
       // dut.clock.step(1)

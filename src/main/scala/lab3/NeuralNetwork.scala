@@ -7,8 +7,8 @@ import scala.io.Source
 class NeuralNetwork extends Module {
   val io = IO(new Bundle {
     val outputTestWeight = Output(UInt(8.W))
-    val outputTestReceiving = Output(UInt(8.W))
-    val layer1Value = Output(UInt(25.W))
+    val layer1Value = Output(SInt(25.W))
+    val testValue = Output(UInt(8.W))
   })
 
   // AXI-Stream Connection
@@ -44,10 +44,9 @@ class NeuralNetwork extends Module {
     }
   )
 
-  io.layer1Value := 0.U
+  io.layer1Value := 0.S
 
   io.outputTestWeight := weights_hidden_layer1(0)(0)
-  io.outputTestReceiving := 0.U
 
   sAxis.tready := RegInit(true.B)
   mAxis.data.tvalid := RegInit(false.B)
@@ -55,15 +54,14 @@ class NeuralNetwork extends Module {
   mAxis.data.tdata := RegInit(0.U(8.W))
   mAxis.data.tkeep := RegInit("b1".U)
 
-  val image = RegInit(VecInit(Seq.fill(401)(0.U(8.W))))
+  val image = RegInit(VecInit(Seq.fill(401)(0.S(8.W))))
   val index = RegInit(0.U(9.W))
 
   val sending = RegInit(false.B)
   val handling = RegInit(false.B)
 
   when(sAxis.data.tvalid) {
-    image(index) := sAxis.data.tdata
-    io.outputTestReceiving := sAxis.data.tdata
+    image(index) := (sAxis.data.tdata).asSInt
     index := index + 1.U
     when(sAxis.data.tlast) {
       handling := true.B
@@ -71,15 +69,18 @@ class NeuralNetwork extends Module {
     }
   }
 
-  val layer1 = RegInit(VecInit(Seq.fill(25)(0.U(25.W))))
+  val layer1 = RegInit(VecInit(Seq.fill(25)(0.S(25.W))))
   val pixelIndex = RegInit(0.U(9.W))
-  val row = RegInit(0.U(6.W))
+  val row = RegInit(0.U(5.W))
   when(handling) {
     layer1(row) := (layer1(row) + weights_hidden_layer1(row)(
       pixelIndex
     ) * image(pixelIndex))
 
     pixelIndex := (pixelIndex + 1.U)
+
+    // sur 25 bits, on va de - 33554432 à 33554431
+    // Mais ça doit être mappé sur quelles valeurs?
 
     when(pixelIndex === (401.U - 1.U)) {
       row := row + 1.U
@@ -92,8 +93,10 @@ class NeuralNetwork extends Module {
     }
   }
 
+  io.testValue := (-1.S * 3.U).asUInt
+
   when(sending) {
-    io.layer1Value := layer1(24)
+    io.layer1Value := (255.U).asSInt
   }
 }
 
