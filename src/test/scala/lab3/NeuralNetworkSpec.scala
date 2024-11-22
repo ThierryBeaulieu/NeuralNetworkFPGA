@@ -55,6 +55,7 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
 
       dut.slaveIO.tready.expect(true.B)
       for (i <- 0 until imageTest.length) {
+        println(f"receiving ${dut.io.testValue.peek().litValue}")
         dut.slaveIO.tvalid.poke(true.B)
         dut.slaveIO.tdata.poke(imageTest(i))
         dut.slaveIO.tlast.poke(
@@ -69,13 +70,13 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
       dut.clock.step(1)
 
       for (_ <- 0 until (401 * 25)) {
-
+        println(f"handling ${dut.io.layer1Value.peek().litValue}")
         dut.clock.step(1)
       }
 
       // (-3).asUInt = (101).asUInt = 5
       // println(dut.io.testValue.peek().litValue)
-      println(dut.io.layer1Value.peek().litValue)
+      println(f"sending ${dut.io.layer1Value.peek().litValue}")
 
       // dut.masterIO.tvalid.expect(true.B)
       // dut.masterIO.tdata.expect(10)

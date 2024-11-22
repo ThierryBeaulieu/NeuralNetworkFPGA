@@ -8,7 +8,7 @@ class NeuralNetwork extends Module {
   val io = IO(new Bundle {
     val outputTestWeight = Output(UInt(8.W))
     val layer1Value = Output(SInt(25.W))
-    val testValue = Output(UInt(8.W))
+    // val testValue = Output(UInt(8.W))
   })
 
   // AXI-Stream Connection
@@ -34,12 +34,10 @@ class NeuralNetwork extends Module {
     source.close()
     data
   }
-  val LabelW = 25
-  val InputW = 401
 
   val rawData = readCSV("lab3/theta_0_int8.csv")
   val weights_hidden_layer1 = RegInit(
-    VecInit.tabulate(LabelW, InputW) { (x, y) =>
+    VecInit.tabulate(25, 401) { (x, y) =>
       rawData(x)(y).U(8.W)
     }
   )
@@ -69,6 +67,7 @@ class NeuralNetwork extends Module {
     }
   }
 
+  // [2:6] * [2:6] = [4:12] [13:12]
   val layer1 = RegInit(VecInit(Seq.fill(25)(0.S(25.W))))
   val pixelIndex = RegInit(0.U(9.W))
   val row = RegInit(0.U(5.W))
@@ -79,7 +78,7 @@ class NeuralNetwork extends Module {
 
     pixelIndex := (pixelIndex + 1.U)
 
-    // sur 25 bits, on va de - 33554432 à 33554431
+    // sur 25 bits, on va de [-33554432, 33554431]
     // Mais ça doit être mappé sur quelles valeurs?
 
     when(pixelIndex === (401.U - 1.U)) {
@@ -93,10 +92,8 @@ class NeuralNetwork extends Module {
     }
   }
 
-  io.testValue := (-1.S * 3.U).asUInt
-
   when(sending) {
-    io.layer1Value := (255.U).asSInt
+    io.layer1Value := layer1(0)
   }
 }
 
