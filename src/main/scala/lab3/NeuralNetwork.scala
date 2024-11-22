@@ -11,7 +11,7 @@ class NeuralNetwork extends Module {
     val outputMultiplication = Output(SInt(25.W))
     val outputUMultiplication = Output(UInt(25.W))
     val outputWeight = Output(SInt(8.W))
-    val outputSigmoid = Output(UInt(25.W))
+    val outputSigmoid = Output(SInt(25.W))
   })
 
   // AXI-Stream Connection
@@ -38,8 +38,22 @@ class NeuralNetwork extends Module {
     data
   }
 
-  val sigmoid = SyncReadMem(pow(2, 25).toInt, UInt(8.W))
-  sigmoid.write(0.U, 159.U)
+  def initSigmoid(sigmoidMemory: SyncReadMem[SInt]) = {
+    // [12:4] [-24.0, 23.0] 24+23 = 47/(2*16)
+    val range = 2 * pow(2, 12) - 1
+    val interval = range / pow(2, 16)
+    val startingValue = -24.0
+    // [1:7]
+    for (i <- 0 until pow(2, 16).toInt) {
+      sigmoidMemory.write(
+        i.U,
+        ((startingValue - (i * interval)) * pow(2, 7)).toInt.asSInt
+      )
+    }
+  }
+
+  val sigmoid: SyncReadMem[SInt] = SyncReadMem(pow(2, 16).toInt, SInt(8.W))
+  initSigmoid(sigmoid)
 
   io.outputSigmoid := sigmoid.read(0.U)
 
