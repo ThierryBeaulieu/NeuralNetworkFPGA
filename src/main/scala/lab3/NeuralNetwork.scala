@@ -11,7 +11,14 @@ class NeuralNetwork extends Module {
     val outputMultiplication = Output(SInt(25.W))
     val outputUMultiplication = Output(UInt(25.W))
     val outputWeight = Output(SInt(8.W))
-    val outputSigmoid = Output(UInt(25.W))
+    val outputSigmoid0 = Output(SInt(8.W))
+    val outputSigmoid1 = Output(UInt(8.W))
+    val outputSigmoid2 = Output(UInt(8.W))
+    val outputSigmoid3 = Output(UInt(8.W))
+    val outputSigmoid4 = Output(UInt(8.W))
+    val outputSigmoid5 = Output(UInt(8.W))
+    val outputSigmoid6 = Output(UInt(8.W))
+    val outputSigmoid7 = Output(UInt(8.W))
   })
 
   // AXI-Stream Connection
@@ -38,26 +45,24 @@ class NeuralNetwork extends Module {
     data
   }
 
-  def sigmoid(x: Double): UInt = {
+  def scalaSigmoid(x: Double): UInt = {
     val result = (pow(E, x) / (1 + pow(E, x)))
     val resultSInt = (result * pow(2, 7)).toInt.asUInt(8.W)
     resultSInt
   }
 
-  def initSigmoid(sigmoidMemory: SyncReadMem[UInt]) = {
+  def initSigmoid(sigMemory: SyncReadMem[UInt]) = {
     // [4:4] [-4.0, 3.9375] = 8 / (2*8)
     for (i <- -128 until 128) {
-      sigmoidMemory.write(
+      sigMemory.write(
         (i.S).asUInt,
-        sigmoid(i / 32.0)
+        scalaSigmoid(i / 32.0)
       )
     }
   }
 
-  val sigmoid: SyncReadMem[UInt] = SyncReadMem(pow(2, 8).toInt, UInt(8.W))
-  initSigmoid(sigmoid)
-
-  io.outputSigmoid := sigmoid.read((-128.S).asUInt)
+  val sigmoidMemory: SyncReadMem[UInt] = SyncReadMem(pow(2, 8).toInt, UInt(8.W))
+  initSigmoid(sigmoidMemory)
 
   val rawData = readCSV("lab3/theta_0_int8.csv")
   val weights_hidden_layer1 = RegInit(
@@ -65,6 +70,16 @@ class NeuralNetwork extends Module {
       rawData(x)(y).S(8.W)
     }
   )
+
+  io.outputSigmoid0 := 0.S
+  io.outputSigmoid1 := 0.U
+  io.outputSigmoid2 := 0.U
+  io.outputSigmoid3 := 0.U
+  io.outputSigmoid4 := 0.U
+  io.outputSigmoid5 := 0.U
+  io.outputSigmoid6 := 0.U
+  io.outputSigmoid7 := 0.U
+
   io.outputWeight := weights_hidden_layer1(0)(0)
   io.outputUMultiplication := 0.U
   io.outputMultiplication := 0.S
@@ -80,7 +95,7 @@ class NeuralNetwork extends Module {
   val index = RegInit(0.U(9.W))
 
   object State extends ChiselEnum {
-    val receiving, handling, sending = Value
+    val receiving, firstHiddenLayer, firstSigmoid, sending = Value
   }
 
   val state = RegInit(State.receiving)
@@ -91,7 +106,7 @@ class NeuralNetwork extends Module {
       image(index) := (sAxis.data.tdata).asSInt
       index := index + 1.U
       when(sAxis.data.tlast) {
-        state := State.handling
+        state := State.firstHiddenLayer
         sAxis.tready := false.B
       }
     }
@@ -99,13 +114,13 @@ class NeuralNetwork extends Module {
 
   // [1:7] * [2:6] = [3:13] [12:13]
   // [-33554432, 33554431]
-  val layer1 = RegInit(VecInit(Seq.fill(25)(0.S(25.W))))
+  val hiddenLayer1 = RegInit(VecInit(Seq.fill(25)(0.S(25.W))))
   val pixelIndex = RegInit(0.U(9.W))
   val row = RegInit(0.U(5.W))
-  when(state === State.handling) {
+  when(state === State.firstHiddenLayer) {
     io.outputState := 2.U
 
-    layer1(row) := (layer1(row) + (weights_hidden_layer1(row)(
+    hiddenLayer1(row) := (hiddenLayer1(row) + (weights_hidden_layer1(row)(
       pixelIndex
     ) * image(pixelIndex)))
 
@@ -117,15 +132,36 @@ class NeuralNetwork extends Module {
     }
 
     when(row === 24.U && pixelIndex === (401.U - 1.U)) {
-      state := State.sending
+      state := State.firstSigmoid
       row := 0.U
       pixelIndex := 0.U
     }
   }
 
-  when(state === State.sending) {
+  val sigHiddenLayer1 = RegInit(VecInit(Seq.fill(26)(1.U(8.W))))
+  when(state === State.firstSigmoid) {
     io.outputState := 3.U
-    io.outputMultiplication := layer1(1) >> 13
+
+    io.outputSigmoid2 := sigmoidMemory.read(125.U)
+    for (i <- 1 until hiddenLayer1.length) {
+      val addr = (hiddenLayer1(i - 1)(16, 9)).asUInt
+      io.outputSigmoid0 := (hiddenLayer1(i - 1)(16, 9)).asSInt
+      sigHiddenLayer1(i) := sigmoidMemory.read(addr)
+    }
+
+    state := State.sending
+  }
+
+  when(state === State.sending) {
+
+    io.outputSigmoid3 := sigHiddenLayer1(3)
+    io.outputSigmoid4 := sigHiddenLayer1(4)
+    io.outputSigmoid5 := sigHiddenLayer1(5)
+    io.outputSigmoid6 := sigHiddenLayer1(6)
+    io.outputSigmoid7 := sigHiddenLayer1(7)
+
+    io.outputState := 4.U
+    io.outputMultiplication := hiddenLayer1(1) >> 13
   }
 }
 

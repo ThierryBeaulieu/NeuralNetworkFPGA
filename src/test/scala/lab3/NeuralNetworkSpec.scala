@@ -72,14 +72,26 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
 
       // (-3).asUInt = (101).asUInt = 5
       // println(dut.io.testValue.peek().litValue)
-      println(f"weights ${dut.io.outputWeight.peek().litValue}")
-      println(f"sending ${dut.io.outputState.peek().litValue}")
-      println(f"layer0 int  ${dut.io.outputMultiplication.peek().litValue}")
-      println(f"layer0 uint ${dut.io.outputUMultiplication.peek().litValue}")
+      // println(f"weights ${dut.io.outputWeight.peek().litValue}")
+      // println(f"sending ${dut.io.outputState.peek().litValue}")
+      // println(f"layer0 int  ${dut.io.outputMultiplication.peek().litValue}")
+      // println(f"layer0 uint ${dut.io.outputUMultiplication.peek().litValue}")
       // dut.masterIO.tvalid.expect(true.B)
       // dut.masterIO.tdata.expect(10)
-      // dut.clock.step(1)
-      println(f"sigmoid ${dut.io.outputSigmoid.peek().litValue}")
+      // println(f"sigmoid ${dut.io.outputSigmoid.peek().litValue}")
+      println(f"sigmoid(0) ${dut.io.outputSigmoid0.peek().litValue}")
+      println(f"state ${dut.io.outputState.peek().litValue}")
+      dut.clock.step(1)
+      println(f"sigmoid(0) ${dut.io.outputSigmoid0.peek().litValue}")
+      println(f"sigmoid(1) ${dut.io.outputSigmoid1.peek().litValue}")
+      println(f"sigmoid(2) ${dut.io.outputSigmoid2.peek().litValue}")
+      println(f"sigmoid(3) ${dut.io.outputSigmoid3.peek().litValue}")
+      println(f"sigmoid(4) ${dut.io.outputSigmoid4.peek().litValue}")
+      println(f"sigmoid(5) ${dut.io.outputSigmoid5.peek().litValue}")
+      println(f"sigmoid(6) ${dut.io.outputSigmoid6.peek().litValue}")
+      println(f"sigmoid(7) ${dut.io.outputSigmoid7.peek().litValue}")
+      dut.clock.step(1)
+      println(f"state ${dut.io.outputState.peek().litValue}")
     }
   }
 
