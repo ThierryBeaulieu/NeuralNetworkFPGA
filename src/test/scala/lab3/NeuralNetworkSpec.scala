@@ -19,7 +19,6 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
 
       dut.weights_hidden_layer1.length.mustBe(25)
       dut.weights_hidden_layer1(0).length.mustBe(401)
-      dut.io.outputTestWeight.expect(255.U)
     }
   }
 
@@ -69,14 +68,16 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
       dut.clock.step(1)
 
       for (_ <- 0 until (401 * 25)) {
-        print(f"[${dut.io.layer1Value.peek().litValue}]")
+        // print(f"[${dut.io.outputState.peek().litValue}]")
         dut.clock.step(1)
       }
 
       // (-3).asUInt = (101).asUInt = 5
       // println(dut.io.testValue.peek().litValue)
-      println(f"sending ${dut.io.layer1Value.peek().litValue}")
-
+      println(f"weights ${dut.io.outputWeight.peek().litValue}")
+      println(f"sending ${dut.io.outputState.peek().litValue}")
+      println(f"layer0 int  ${dut.io.outputMultiplication.peek().litValue}")
+      println(f"layer0 uint ${dut.io.outputUMultiplication.peek().litValue}")
       // dut.masterIO.tvalid.expect(true.B)
       // dut.masterIO.tdata.expect(10)
       // dut.clock.step(1)

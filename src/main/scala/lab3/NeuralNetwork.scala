@@ -6,9 +6,10 @@ import scala.io.Source
 
 class NeuralNetwork extends Module {
   val io = IO(new Bundle {
-    val outputTestWeight = Output(UInt(8.W))
-    val layer1Value = Output(UInt(25.W))
-    // val testValue = Output(UInt(8.W))
+    val outputState = Output(UInt(3.W))
+    val outputMultiplication = Output(SInt(25.W))
+    val outputUMultiplication = Output(UInt(25.W))
+    val outputWeight = Output(SInt(8.W))
   })
 
   // AXI-Stream Connection
@@ -38,12 +39,13 @@ class NeuralNetwork extends Module {
   val rawData = readCSV("lab3/theta_0_int8.csv")
   val weights_hidden_layer1 = RegInit(
     VecInit.tabulate(25, 401) { (x, y) =>
-      rawData(x)(y).U(8.W)
+      rawData(x)(y).S(8.W)
     }
   )
-
-  io.layer1Value := 0.U
-  io.outputTestWeight := weights_hidden_layer1(0)(0)
+  io.outputWeight := weights_hidden_layer1(0)(0)
+  io.outputUMultiplication := 0.U
+  io.outputMultiplication := 0.S
+  io.outputState := 0.U
 
   sAxis.tready := RegInit(true.B)
   mAxis.data.tvalid := RegInit(false.B)
@@ -61,6 +63,7 @@ class NeuralNetwork extends Module {
   val state = RegInit(State.receiving)
 
   when(state === State.receiving) {
+    io.outputState := 1.U
     when(sAxis.data.tvalid) {
       image(index) := (sAxis.data.tdata).asSInt
       index := index + 1.U
@@ -71,21 +74,19 @@ class NeuralNetwork extends Module {
     }
   }
 
-  // [2:6] * [2:6] = [4:12] [13:12]
+  // [1:7] * [2:6] = [3:13] [12:13]
+  // [-33554432, 33554431]
   val layer1 = RegInit(VecInit(Seq.fill(25)(0.S(25.W))))
   val pixelIndex = RegInit(0.U(9.W))
   val row = RegInit(0.U(5.W))
   when(state === State.handling) {
-    layer1(row) := (layer1(row) + weights_hidden_layer1(row)(
-      pixelIndex
-    ) * image(pixelIndex))
+    io.outputState := 2.U
 
-    io.layer1Value := (401.U * row + pixelIndex)
+    layer1(row) := (layer1(row) + (weights_hidden_layer1(row)(
+      pixelIndex
+    ) * image(pixelIndex)))
 
     pixelIndex := (pixelIndex + 1.U)
-
-    // sur 25 bits, on va de [-33554432, 33554431]
-    // Mais ça doit être mappé sur quelles valeurs?
 
     when(pixelIndex === (401.U - 1.U)) {
       row := (row + 1.U)
@@ -100,32 +101,10 @@ class NeuralNetwork extends Module {
   }
 
   when(state === State.sending) {
-    io.layer1Value := 3.U
+    io.outputState := 3.U
+    io.outputMultiplication := layer1(3) >> 13
   }
 }
-
-/*
-  firstHiddenLayerResult = np.zeros(25)
-# print(weightsHidden1Int8.shape) # (25, 401)
-for i in range(0, weightsHidden1Int8.shape[0]):
-    weights = weightsHidden1Int8[i]
-    sum = 0
-    for j in range(0, len(weights)):
-        weight = int(weights[j])
-        isNegative = False
-        if weight > 127:
-            isNegative = True
-            weight = 2**8 - weight
-        pixel = imagesInt8[j]
-        tmp = pixel * weight
-        if isNegative and tmp != 0:
-            tmp = 2**16 - tmp
-        # print(f"w {weights[j]} p {imagesInt8[j]} res {tmp}")
-        # tmp is 16 bits (log_2(401 * 16 bits) = 24.64) donc 25 bits
-        # pour représenter
-        sum = sum + tmp
-    firstHiddenLayerResult[i] = sum
- */
 
 object NeuralNetwork extends App {
   ChiselStage.emitSystemVerilogFile(

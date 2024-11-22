@@ -77,7 +77,6 @@ for i in range(0, weightsHidden1Int8.shape[0]):
         # pour représenter
         sum = sum + tmp
     firstHiddenLayerResult[i] = sum
-print(2**25)
 
 print(firstHiddenLayerResult)
 # w = 1/(2**5) + 1/(2**6)
