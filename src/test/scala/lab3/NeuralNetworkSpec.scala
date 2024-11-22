@@ -68,10 +68,12 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
       dut.masterIO.tready.poke(true.B)
       dut.clock.step(1)
 
-      for (_ <- 0 until 410) {
+      for (_ <- 0 until (401 * 25)) {
+
         dut.clock.step(1)
-        print(dut.io.outputTestReceiving.peek().litValue)
       }
+
+      print(dut.io.layer1Value.peek().litValue)
       // dut.masterIO.tvalid.expect(true.B)
       // dut.masterIO.tdata.expect(10)
       // dut.clock.step(1)

@@ -8,6 +8,7 @@ class NeuralNetwork extends Module {
   val io = IO(new Bundle {
     val outputTestWeight = Output(UInt(8.W))
     val outputTestReceiving = Output(UInt(8.W))
+    val layer1Value = Output(UInt(25.W))
   })
 
   // AXI-Stream Connection
@@ -43,6 +44,8 @@ class NeuralNetwork extends Module {
     }
   )
 
+  io.layer1Value := 0.U
+
   io.outputTestWeight := weights_hidden_layer1(0)(0)
   io.outputTestReceiving := 0.U
 
@@ -65,7 +68,6 @@ class NeuralNetwork extends Module {
     when(sAxis.data.tlast) {
       handling := true.B
       sAxis.tready := false.B
-      io.outputTestReceiving := 10.U
     }
   }
 
@@ -75,21 +77,23 @@ class NeuralNetwork extends Module {
   when(handling) {
     layer1(row) := (layer1(row) + weights_hidden_layer1(row)(
       pixelIndex
-    ))
-
-    io.outputTestReceiving := weights_hidden_layer1(row)(pixelIndex)
+    ) * image(pixelIndex))
 
     pixelIndex := (pixelIndex + 1.U)
 
     when(pixelIndex === (401.U - 1.U)) {
+      row := row + 1.U
+      pixelIndex := 0.U
+    }
+
+    when(row === (25.U - 1.U)) {
       sending := true.B
       handling := false.B
     }
-
   }
 
   when(sending) {
-    io.outputTestReceiving := layer1(0)
+    io.layer1Value := layer1(24)
   }
 }
 
