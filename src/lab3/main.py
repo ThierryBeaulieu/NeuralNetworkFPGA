@@ -34,6 +34,8 @@ for i in range(0, len(image)):
     pixel = image[i]
     imagesInt8[i] = to_signed_fixed_point(pixel, 8, 7)
 
+np.save('test_int8.npy', imagesInt8)
+
 # Step 2. Converts Weights And Saves Them In CSV [2:6]
 # Hidden Layer 1 [-1.463356, 1.00899]
 weightsHidden1 = np.load("theta_0.npy") # (25, 401)

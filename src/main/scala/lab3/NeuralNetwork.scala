@@ -102,7 +102,7 @@ class NeuralNetwork extends Module {
 
   when(state === State.sending) {
     io.outputState := 3.U
-    io.outputMultiplication := layer1(3) >> 13
+    io.outputMultiplication := layer1(1) >> 13
   }
 }
 
