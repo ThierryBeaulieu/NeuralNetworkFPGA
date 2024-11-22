@@ -60,12 +60,14 @@ class NeuralNetwork extends Module {
 
   val state = RegInit(State.receiving)
 
-  when(sAxis.data.tvalid && state === State.receiving) {
-    image(index) := (sAxis.data.tdata).asSInt
-    index := index + 1.U
-    when(sAxis.data.tlast) {
-      state := State.handling
-      sAxis.tready := false.B
+  when(state === State.receiving) {
+    when(sAxis.data.tvalid) {
+      image(index) := (sAxis.data.tdata).asSInt
+      index := index + 1.U
+      when(sAxis.data.tlast) {
+        state := State.handling
+        sAxis.tready := false.B
+      }
     }
   }
 
