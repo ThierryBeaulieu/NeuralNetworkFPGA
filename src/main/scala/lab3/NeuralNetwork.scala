@@ -54,14 +54,17 @@ class NeuralNetwork extends Module {
   val image = RegInit(VecInit(Seq.fill(401)(0.S(8.W))))
   val index = RegInit(0.U(9.W))
 
-  val sending = RegInit(false.B)
-  val handling = RegInit(false.B)
+  object State extends ChiselEnum {
+    val receiving, handling, sending = Value
+  }
 
-  when(sAxis.data.tvalid) {
+  val state = RegInit(State.receiving)
+
+  when(sAxis.data.tvalid && state === State.receiving) {
     image(index) := (sAxis.data.tdata).asSInt
     index := index + 1.U
     when(sAxis.data.tlast) {
-      handling := true.B
+      state := State.handling
       sAxis.tready := false.B
     }
   }
@@ -70,7 +73,7 @@ class NeuralNetwork extends Module {
   val layer1 = RegInit(VecInit(Seq.fill(25)(0.S(25.W))))
   val pixelIndex = RegInit(0.U(9.W))
   val row = RegInit(0.U(5.W))
-  when(handling) {
+  when(state === State.handling) {
     layer1(row) := (layer1(row) + weights_hidden_layer1(row)(
       pixelIndex
     ) * image(pixelIndex))
@@ -88,14 +91,13 @@ class NeuralNetwork extends Module {
     }
 
     when(row === 24.U && pixelIndex === (401.U - 1.U)) {
-      sending := true.B
-      handling := false.B
+      state := State.sending
       row := 0.U
       pixelIndex := 0.U
     }
   }
 
-  when(sending) {
+  when(state === State.sending) {
     io.layer1Value := 3.U
   }
 }
