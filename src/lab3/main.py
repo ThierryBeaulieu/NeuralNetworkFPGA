@@ -48,7 +48,7 @@ for i in range(0, len(weightsHidden1)):
 
 np.savetxt('theta_0_int8.csv', weightsHidden1Int8, delimiter=',', fmt='%d')
 
-# Hidden Layer 2 [-4.0308, 3.2115848]
+# Hidden Layer 2 [-4.0308, 3.2115848] [4:4]
 weightsHidden2 = np.load("theta_1.npy") # (10, 26)
 weightsHidden2Int8 = np.zeros_like(weightsHidden2)
 for i in range(0, len(weightsHidden2)):
