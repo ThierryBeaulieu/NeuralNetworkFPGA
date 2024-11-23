@@ -24,17 +24,19 @@ def to_signed_fixed_point(value, bits=8, frac_bits=7):
 
 
 # Step 1. Converts Pixel Values To Fixed Point Notation [1:7]
-images = np.load("x.npy")
-imagesInt8 = np.zeros(401)
-imgIndex = 0
+images = np.load("x.npy") # 5000 x 400
+imageInt8 = np.zeros(401)
+imagesInt8 = np.zeros((5000, 401))
+print(images.shape)
 
-image = images[imgIndex]
-image = np.hstack((1, image))
-for i in range(0, len(image)):
-    pixel = image[i]
-    imagesInt8[i] = to_signed_fixed_point(pixel, 8, 7)
+for i in range(0, len(images)):
+    image = images[i] # 400
+    image = np.hstack((1, image)) # 401
+    for j in range(0, len(image)):
+        pixel = image[j]
+        imagesInt8[i][j] = to_signed_fixed_point(pixel, 8, 7)
 
-np.save('test_int8.npy', imagesInt8)
+np.save('imagesInt8.npy', imagesInt8)
 
 # Step 2. Converts Weights And Saves Them In CSV [2:6]
 # Hidden Layer 1 [-1.463356, 1.00899]
