@@ -138,12 +138,11 @@ class NeuralNetwork extends Module {
       }
     }
     is(State.firstSigmoid) {
-      io.outputState := 3.U // works
-      io.outputSigmoid0 := sigmoidMemory.read(64.U)
-      // for (i <- 1 until hiddenLayer1.length) {
-      //  val addr = (hiddenLayer1(i - 1)(16, 9)).asUInt
-      //  sigHiddenLayer1(i) := sigmoidMemory.read(addr)
-      // }
+      io.outputState := 3.U
+      for (i <- 1 until hiddenLayer1.length) {
+        val addr = (hiddenLayer1(i - 1)(16, 9)).asUInt
+        sigHiddenLayer1(i) := sigmoidMemory.read(addr)
+      }
       isLoaded := true.B
       when(isLoaded === true.B) {
         state := State.sending
@@ -151,15 +150,14 @@ class NeuralNetwork extends Module {
     }
     is(State.sending) {
       io.outputState := 4.U
-      io.outputSigmoid0 := sigmoidMemory.read(24.U)
-      // io.outputSigmoid1 := sigHiddenLayer1(0)
-      // io.outputSigmoid1 := sigHiddenLayer1(1)
-      // io.outputSigmoid2 := sigHiddenLayer1(2)
-      // io.outputSigmoid3 := sigHiddenLayer1(3)
-      // io.outputSigmoid4 := sigHiddenLayer1(4)
-      // io.outputSigmoid5 := sigHiddenLayer1(5)
-      // io.outputSigmoid6 := sigHiddenLayer1(6)
-      // io.outputSigmoid7 := sigHiddenLayer1(7)
+      io.outputSigmoid0 := sigHiddenLayer1(0)
+      io.outputSigmoid1 := sigHiddenLayer1(1)
+      io.outputSigmoid2 := sigHiddenLayer1(2)
+      io.outputSigmoid3 := sigHiddenLayer1(3)
+      io.outputSigmoid4 := sigHiddenLayer1(4)
+      io.outputSigmoid5 := sigHiddenLayer1(5)
+      io.outputSigmoid6 := sigHiddenLayer1(6)
+      io.outputSigmoid7 := sigHiddenLayer1(7)
       // io.outputState := 4.U
       // io.outputMultiplication := hiddenLayer1(1) >> 13
     }
