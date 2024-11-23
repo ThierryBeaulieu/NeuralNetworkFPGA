@@ -163,6 +163,7 @@ class NeuralNetwork extends Module {
     }
     is(State.firstSigmoid) {
       io.outputState := 3.U
+
       for (i <- 1 until hiddenLayer1.length) {
         val addr = (hiddenLayer1(i - 1)(16, 9)).asUInt
         sigHiddenLayer1(i) := sigmoidMemory.read(addr)
@@ -174,30 +175,28 @@ class NeuralNetwork extends Module {
     }
     is(State.secondHiddenLayer) {
       io.outputState := 4.U
+      io.sigHiddenLayer1 := sigHiddenLayer1(5)
 
-      io.sigHiddenLayer1 := sigHiddenLayer1(2)
-      // hiddenLayer1 is empty unless the first element?
       hiddenLayer2(row2) := (hiddenLayer2(row2) + (weights_hidden_layer2(row2)(
         sigmoidIndex
       ) * sigHiddenLayer1(sigmoidIndex)))
 
       sigmoidIndex := (sigmoidIndex + 1.U)
 
-      when(sigmoidIndex === (25.U - 1.U)) {
+      when(sigmoidIndex === (26.U - 1.U)) {
         row2 := (row2 + 1.U)
         sigmoidIndex := 0.U
       }
 
-      when(row2 === 9.U && sigmoidIndex === (25.U - 1.U)) {
-        state := State.sending
+      when(row2 === 9.U && sigmoidIndex === (26.U - 1.U)) {
+        state := State.secondSigmoid
         row2 := 0.U
         sigmoidIndex := 0.U
       }
-
-      state := State.secondSigmoid
     }
     is(State.secondSigmoid) {
       io.outputState := 5.U
+      // io.outputHiddenSum2 := (weights_hidden_layer2(5)(5) * sigHiddenLayer1(5))
 
       for (i <- 0 until hiddenLayer2.length) {
         val addr = (hiddenLayer2(i)(14, 7)).asUInt
@@ -211,20 +210,16 @@ class NeuralNetwork extends Module {
     }
     is(State.sending) {
       io.outputState := 6.U
-
-      io.outputHiddenSum2 := hiddenLayer2(6)
-      io.outputWeight := weights_hidden_layer2(0)(2)
-
-      // io.outputSigmoid0 := sigHiddenLayer2(0)
-      // io.outputSigmoid1 := sigHiddenLayer2(1)
-      // io.outputSigmoid2 := sigHiddenLayer2(2)
-      // io.outputSigmoid3 := sigHiddenLayer2(3)
-      // io.outputSigmoid4 := sigHiddenLayer2(4)
-      // io.outputSigmoid5 := sigHiddenLayer2(5)
-      // io.outputSigmoid6 := sigHiddenLayer2(6)
-      // io.outputSigmoid7 := sigHiddenLayer2(7)
-      // io.outputSigmoid8 := sigHiddenLayer2(8)
-      // io.outputSigmoid9 := sigHiddenLayer2(9)
+      io.outputSigmoid0 := sigHiddenLayer2(0)
+      io.outputSigmoid1 := sigHiddenLayer2(1)
+      io.outputSigmoid2 := sigHiddenLayer2(2)
+      io.outputSigmoid3 := sigHiddenLayer2(3)
+      io.outputSigmoid4 := sigHiddenLayer2(4)
+      io.outputSigmoid5 := sigHiddenLayer2(5)
+      io.outputSigmoid6 := sigHiddenLayer2(6)
+      io.outputSigmoid7 := sigHiddenLayer2(7)
+      io.outputSigmoid8 := sigHiddenLayer2(8)
+      io.outputSigmoid9 := sigHiddenLayer2(9)
 
     }
   }
