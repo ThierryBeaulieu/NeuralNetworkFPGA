@@ -211,6 +211,17 @@ class NeuralNetwork extends Module {
       }
     }
     is(State.sending) {
+      io.outputSigmoid0 := sigHiddenLayer2(0)
+      io.outputSigmoid1 := sigHiddenLayer2(1)
+      io.outputSigmoid2 := sigHiddenLayer2(2)
+      io.outputSigmoid3 := sigHiddenLayer2(3)
+      io.outputSigmoid4 := sigHiddenLayer2(4)
+      io.outputSigmoid5 := sigHiddenLayer2(5)
+      io.outputSigmoid6 := sigHiddenLayer2(6)
+      io.outputSigmoid7 := sigHiddenLayer2(7)
+      io.outputSigmoid8 := sigHiddenLayer2(8)
+      io.outputSigmoid9 := sigHiddenLayer2(9)
+
       when(mAxis.tready) {
         when(transferCount === sigHiddenLayer2.length.U) {
           mAxis.data.tlast := true.B

@@ -82,7 +82,7 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
       // println(f"state ${dut.io.outputState.peek().litValue}")
       // println(f"state ${dut.io.outputState.peek().litValue}")
       dut.clock.step(2)
-      println(f"state ${dut.io.outputState.peek().litValue}")
+      // println(f"state ${dut.io.outputState.peek().litValue}")
       // println(f"sig hidden layer ${dut.io.sigHiddenLayer1.peek().litValue}") // works returns values
       dut.clock.step(1)
 
@@ -90,21 +90,32 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
         // print(f"[${dut.io.outputState.peek().litValue}]")
         dut.clock.step(1)
       }
-      dut.clock.step(2)
-      println(f"state ${dut.io.outputState.peek().litValue}")
-      // println(f"outputHiddenSum2 ${dut.io.outputHiddenSum2.peek().litValue}")
       dut.clock.step(1)
-      println(f"state ${dut.io.outputState.peek().litValue}")
+      // println(f"state ${dut.io.outputState.peek().litValue}")
       // println(f"outputHiddenSum2 ${dut.io.outputHiddenSum2.peek().litValue}")
-      println(f"sigmoid(0) ${dut.io.outputSigmoid0.peek().litValue}")
+      // println(f"sigmoid(0) ${dut.io.outputSigmoid0.peek().litValue}")
       // println(f"weights ${dut.io.outputWeight.peek().litValue}")
-      println(f"sigmoid(1) ${dut.io.outputSigmoid1.peek().litValue}")
-      println(f"sigmoid(2) ${dut.io.outputSigmoid2.peek().litValue}")
-      println(f"sigmoid(3) ${dut.io.outputSigmoid3.peek().litValue}")
-      println(f"sigmoid(4) ${dut.io.outputSigmoid4.peek().litValue}")
-      println(f"sigmoid(5) ${dut.io.outputSigmoid5.peek().litValue}")
-      println(f"sigmoid(6) ${dut.io.outputSigmoid6.peek().litValue}")
-      println(f"sigmoid(7) ${dut.io.outputSigmoid7.peek().litValue}")
+      // println(f"sigmoid(1) ${dut.io.outputSigmoid1.peek().litValue}")
+      // println(f"sigmoid(2) ${dut.io.outputSigmoid2.peek().litValue}")
+      // println(f"sigmoid(3) ${dut.io.outputSigmoid3.peek().litValue}")
+      // println(f"sigmoid(4) ${dut.io.outputSigmoid4.peek().litValue}")
+      // println(f"sigmoid(5) ${dut.io.outputSigmoid5.peek().litValue}")
+      // println(f"sigmoid(6) ${dut.io.outputSigmoid6.peek().litValue}")
+      // println(f"sigmoid(7) ${dut.io.outputSigmoid7.peek().litValue}")
+      // println(f"sigmoid(8) ${dut.io.outputSigmoid8.peek().litValue}")
+      // println(f"sigmoid(9) ${dut.io.outputSigmoid9.peek().litValue}")
+
+      val expectedValues = Seq(12, 0, 4, 3, 0, 14, 3, 0, 0, 93)
+
+      dut.masterIO.tready.poke(true.B)
+
+      for (i <- 0 until 10) {
+        dut.masterIO.tvalid.expect(true.B)
+        // dut.masterIO.tlast.expect((i == expectedValues.length - 1).B)
+        dut.masterIO.tdata.expect(expectedValues(i))
+        dut.clock.step(1)
+      }
+
     }
   }
 
