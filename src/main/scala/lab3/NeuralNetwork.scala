@@ -106,9 +106,6 @@ class NeuralNetwork extends Module {
   mAxis.data.tdata := RegInit(0.U(8.W))
   mAxis.data.tkeep := RegInit("b1".U)
 
-  val image = RegInit(VecInit(Seq.fill(401)(0.S(8.W))))
-  val index = RegInit(0.U(9.W))
-
   object State extends ChiselEnum {
     val receiving, firstHiddenLayer, firstSigmoid, secondHiddenLayer,
         secondSigmoid, sending =
@@ -116,6 +113,9 @@ class NeuralNetwork extends Module {
   }
 
   val state = RegInit(State.receiving)
+
+  val image = RegInit(VecInit(Seq.fill(401)(0.S(8.W))))
+  val index = RegInit(0.U(9.W))
 
   val hiddenLayer1 = RegInit(VecInit(Seq.fill(25)(0.S(25.W))))
   val pixelIndex = RegInit(0.U(9.W))
@@ -128,6 +128,8 @@ class NeuralNetwork extends Module {
   val row2 = RegInit(0.U(4.W))
   val sigHiddenLayer2 = RegInit(VecInit(Seq.fill(10)(0.U(8.W))))
   val secondSigmoidLoaded = RegInit(false.B)
+
+  val transferCount = RegInit(0.U(4.W))
 
   switch(state) {
     is(State.receiving) {
@@ -209,18 +211,34 @@ class NeuralNetwork extends Module {
       }
     }
     is(State.sending) {
-      io.outputState := 6.U
-      io.outputSigmoid0 := sigHiddenLayer2(0)
-      io.outputSigmoid1 := sigHiddenLayer2(1)
-      io.outputSigmoid2 := sigHiddenLayer2(2)
-      io.outputSigmoid3 := sigHiddenLayer2(3)
-      io.outputSigmoid4 := sigHiddenLayer2(4)
-      io.outputSigmoid5 := sigHiddenLayer2(5)
-      io.outputSigmoid6 := sigHiddenLayer2(6)
-      io.outputSigmoid7 := sigHiddenLayer2(7)
-      io.outputSigmoid8 := sigHiddenLayer2(8)
-      io.outputSigmoid9 := sigHiddenLayer2(9)
+      when(mAxis.tready) {
+        when(transferCount === sigHiddenLayer2.length.U) {
+          mAxis.data.tlast := true.B
+          mAxis.data.tvalid := false.B
+          // reinitialize everything
+          image := VecInit(Seq.fill(401)(0.S(8.W)))
+          index := 0.U
+          hiddenLayer1 := VecInit(Seq.fill(25)(0.S(25.W)))
+          pixelIndex := 0.U
+          row1 := 0.U
+          sigHiddenLayer1 := VecInit(Seq.fill(26)(1.U(8.W)))
+          firstSigmoidLoaded := false.B
 
+          hiddenLayer2 := VecInit(Seq.fill(10)(0.S(21.W)))
+          sigmoidIndex := 0.U
+          row2 := 0.U
+          sigHiddenLayer2 := VecInit(Seq.fill(10)(0.U(8.W)))
+          secondSigmoidLoaded := false.B
+
+          state := State.receiving
+
+        }.otherwise {
+          mAxis.data.tlast := false.B
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := sigHiddenLayer2(transferCount)
+          transferCount := transferCount + 1.U
+        }
+      }
     }
   }
 
