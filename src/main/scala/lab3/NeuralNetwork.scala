@@ -46,6 +46,15 @@ class NeuralNetwork extends Module {
     data
   }
 
+  def initSigmoidMemory(memory: SyncReadMem[UInt]) = {
+    for (i <- -128 until 128) {
+      memory.write(
+        (i.S).asUInt,
+        scalaSigmoid(i / 32.0)
+      )
+    }
+  }
+
   def scalaSigmoid(x: Double): UInt = {
     val result = (pow(E, x) / (1 + pow(E, x)))
     val resultSInt = (result * pow(2, 7)).toInt.asUInt(8.W)
@@ -53,13 +62,7 @@ class NeuralNetwork extends Module {
   }
 
   val sigmoidMemory = SyncReadMem(256, UInt(8.W))
-
-  for (i <- -128 until 128) {
-    sigmoidMemory.write(
-      (i.S).asUInt,
-      scalaSigmoid(i / 32.0)
-    )
-  }
+  initSigmoidMemory(sigmoidMemory)
 
   val rawData = readCSV("lab3/theta_0_int8.csv")
   val weights_hidden_layer1 = RegInit(
