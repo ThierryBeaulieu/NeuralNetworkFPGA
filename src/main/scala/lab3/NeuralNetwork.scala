@@ -11,7 +11,7 @@ class NeuralNetwork extends Module {
     val outputMultiplication = Output(SInt(25.W))
     val outputUMultiplication = Output(UInt(25.W))
     val outputWeight = Output(SInt(8.W))
-    val outputSigmoid0 = Output(SInt(8.W))
+    val outputSigmoid0 = Output(UInt(8.W))
     val outputSigmoid1 = Output(UInt(8.W))
     val outputSigmoid2 = Output(UInt(8.W))
     val outputSigmoid3 = Output(UInt(8.W))
@@ -51,18 +51,21 @@ class NeuralNetwork extends Module {
     resultSInt
   }
 
-  def initSigmoid(sigMemory: SyncReadMem[UInt]) = {
-    // [4:4] [-4.0, 3.9375] = 8 / (2*8)
-    for (i <- -128 until 128) {
-      sigMemory.write(
-        (i.S).asUInt,
-        scalaSigmoid(i / 32.0)
-      )
-    }
+  io.outputSigmoid2 := 0.U
+
+  val sigmoidMemory = SyncReadMem(256, UInt(8.W))
+
+  for (i <- -128 until 128) {
+    sigmoidMemory.write(
+      (i.S).asUInt,
+      scalaSigmoid(i / 32.0)
+    )
   }
 
-  val sigmoidMemory: SyncReadMem[UInt] = SyncReadMem(pow(2, 8).toInt, UInt(8.W))
-  initSigmoid(sigmoidMemory)
+  val mem = SyncReadMem(8, UInt(8.W))
+  // Create one write port and one read port
+  mem.write(0.U, 19.U)
+  io.outputSigmoid2 := mem.read(0.U)
 
   val rawData = readCSV("lab3/theta_0_int8.csv")
   val weights_hidden_layer1 = RegInit(
@@ -71,9 +74,8 @@ class NeuralNetwork extends Module {
     }
   )
 
-  io.outputSigmoid0 := 0.S
+  io.outputSigmoid0 := 0.U
   io.outputSigmoid1 := 0.U
-  io.outputSigmoid2 := 0.U
   io.outputSigmoid3 := 0.U
   io.outputSigmoid4 := 0.U
   io.outputSigmoid5 := 0.U
@@ -138,14 +140,15 @@ class NeuralNetwork extends Module {
     }
   }
 
+  // io.outputSigmoid0 := sigmoidMemory.read(0.U)
+
+  io.outputSigmoid0 := hiddenLayer1.length.U
   val sigHiddenLayer1 = RegInit(VecInit(Seq.fill(26)(1.U(8.W))))
   when(state === State.firstSigmoid) {
     io.outputState := 3.U
 
-    io.outputSigmoid2 := sigmoidMemory.read(125.U)
     for (i <- 1 until hiddenLayer1.length) {
       val addr = (hiddenLayer1(i - 1)(16, 9)).asUInt
-      io.outputSigmoid0 := (hiddenLayer1(i - 1)(16, 9)).asSInt
       sigHiddenLayer1(i) := sigmoidMemory.read(addr)
     }
 
@@ -153,7 +156,9 @@ class NeuralNetwork extends Module {
   }
 
   when(state === State.sending) {
-
+    // io.outputSigmoid1 := sigHiddenLayer1(0)
+    // io.outputSigmoid1 := sigHiddenLayer1(1)
+    io.outputSigmoid2 := sigHiddenLayer1(2)
     io.outputSigmoid3 := sigHiddenLayer1(3)
     io.outputSigmoid4 := sigHiddenLayer1(4)
     io.outputSigmoid5 := sigHiddenLayer1(5)
