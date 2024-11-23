@@ -7,24 +7,24 @@ import scala.math._
 import chisel3.util._
 
 class NeuralNetwork extends Module {
-  val io = IO(new Bundle {
-    val outputState = Output(UInt(3.W))
-    val outputMultiplication = Output(SInt(25.W))
-    val outputUMultiplication = Output(UInt(25.W))
-    val outputWeight = Output(SInt(8.W))
-    val outputSigmoid0 = Output(UInt(8.W))
-    val outputSigmoid1 = Output(UInt(8.W))
-    val outputSigmoid2 = Output(UInt(8.W))
-    val outputSigmoid3 = Output(UInt(8.W))
-    val outputSigmoid4 = Output(UInt(8.W))
-    val outputSigmoid5 = Output(UInt(8.W))
-    val outputSigmoid6 = Output(UInt(8.W))
-    val outputSigmoid7 = Output(UInt(8.W))
-    val outputSigmoid8 = Output(UInt(8.W))
-    val outputSigmoid9 = Output(UInt(8.W))
-    val outputHiddenSum2 = Output(SInt(21.W))
-    val sigHiddenLayer1 = Output(UInt(8.W))
-  })
+  // val io = IO(new Bundle {
+  //   val outputState = Output(UInt(3.W))
+  //   val outputMultiplication = Output(SInt(25.W))
+  //   val outputUMultiplication = Output(UInt(25.W))
+  //   val outputWeight = Output(SInt(8.W))
+  //   val outputSigmoid0 = Output(UInt(8.W))
+  //   val outputSigmoid1 = Output(UInt(8.W))
+  //   val outputSigmoid2 = Output(UInt(8.W))
+  //   val outputSigmoid3 = Output(UInt(8.W))
+  //   val outputSigmoid4 = Output(UInt(8.W))
+  //   val outputSigmoid5 = Output(UInt(8.W))
+  //   val outputSigmoid6 = Output(UInt(8.W))
+  //   val outputSigmoid7 = Output(UInt(8.W))
+  //   val outputSigmoid8 = Output(UInt(8.W))
+  //   val outputSigmoid9 = Output(UInt(8.W))
+  //   val outputHiddenSum2 = Output(SInt(21.W))
+  //   val sigHiddenLayer1 = Output(UInt(8.W))
+  // })
 
   // AXI-Stream Connection
   val sAxis = Wire(new AxiStreamSlaveIf(8))
@@ -82,23 +82,23 @@ class NeuralNetwork extends Module {
     }
   )
 
-  io.sigHiddenLayer1 := 0.U
-  io.outputHiddenSum2 := 0.S
-  io.outputSigmoid0 := 0.U
-  io.outputSigmoid1 := 0.U
-  io.outputSigmoid2 := 0.U
-  io.outputSigmoid3 := 0.U
-  io.outputSigmoid4 := 0.U
-  io.outputSigmoid5 := 0.U
-  io.outputSigmoid6 := 0.U
-  io.outputSigmoid7 := 0.U
-  io.outputSigmoid8 := 0.U
-  io.outputSigmoid9 := 0.U
+  // io.sigHiddenLayer1 := 0.U
+  // io.outputHiddenSum2 := 0.S
+  // io.outputSigmoid0 := 0.U
+  // io.outputSigmoid1 := 0.U
+  // io.outputSigmoid2 := 0.U
+  // io.outputSigmoid3 := 0.U
+  // io.outputSigmoid4 := 0.U
+  // io.outputSigmoid5 := 0.U
+  // io.outputSigmoid6 := 0.U
+  // io.outputSigmoid7 := 0.U
+  // io.outputSigmoid8 := 0.U
+  // io.outputSigmoid9 := 0.U
 
-  io.outputWeight := weights_hidden_layer1(0)(0)
-  io.outputUMultiplication := 0.U
-  io.outputMultiplication := 0.S
-  io.outputState := 0.U
+  // io.outputWeight := weights_hidden_layer1(0)(0)
+  // io.outputUMultiplication := 0.U
+  // io.outputMultiplication := 0.S
+  // io.outputState := 0.U
 
   sAxis.tready := RegInit(true.B)
   mAxis.data.tvalid := RegInit(false.B)
@@ -133,7 +133,7 @@ class NeuralNetwork extends Module {
 
   switch(state) {
     is(State.receiving) {
-      io.outputState := 1.U
+      // io.outputState := 1.U
       when(sAxis.data.tvalid) {
         image(index) := (sAxis.data.tdata).asSInt
         index := index + 1.U
@@ -144,7 +144,7 @@ class NeuralNetwork extends Module {
       }
     }
     is(State.firstHiddenLayer) {
-      io.outputState := 2.U
+      // io.outputState := 2.U
 
       hiddenLayer1(row1) := (hiddenLayer1(row1) + (weights_hidden_layer1(row1)(
         pixelIndex
@@ -164,7 +164,7 @@ class NeuralNetwork extends Module {
       }
     }
     is(State.firstSigmoid) {
-      io.outputState := 3.U
+      // io.outputState := 3.U
 
       for (i <- 1 until hiddenLayer1.length) {
         val addr = (hiddenLayer1(i - 1)(16, 9)).asUInt
@@ -176,8 +176,8 @@ class NeuralNetwork extends Module {
       }
     }
     is(State.secondHiddenLayer) {
-      io.outputState := 4.U
-      io.sigHiddenLayer1 := sigHiddenLayer1(5)
+      // io.outputState := 4.U
+      // io.sigHiddenLayer1 := sigHiddenLayer1(5)
 
       hiddenLayer2(row2) := (hiddenLayer2(row2) + (weights_hidden_layer2(row2)(
         sigmoidIndex
@@ -197,7 +197,7 @@ class NeuralNetwork extends Module {
       }
     }
     is(State.secondSigmoid) {
-      io.outputState := 5.U
+      // io.outputState := 5.U
       // io.outputHiddenSum2 := (weights_hidden_layer2(5)(5) * sigHiddenLayer1(5))
 
       for (i <- 0 until hiddenLayer2.length) {
@@ -211,16 +211,16 @@ class NeuralNetwork extends Module {
       }
     }
     is(State.sending) {
-      io.outputSigmoid0 := sigHiddenLayer2(0)
-      io.outputSigmoid1 := sigHiddenLayer2(1)
-      io.outputSigmoid2 := sigHiddenLayer2(2)
-      io.outputSigmoid3 := sigHiddenLayer2(3)
-      io.outputSigmoid4 := sigHiddenLayer2(4)
-      io.outputSigmoid5 := sigHiddenLayer2(5)
-      io.outputSigmoid6 := sigHiddenLayer2(6)
-      io.outputSigmoid7 := sigHiddenLayer2(7)
-      io.outputSigmoid8 := sigHiddenLayer2(8)
-      io.outputSigmoid9 := sigHiddenLayer2(9)
+      // io.outputSigmoid0 := sigHiddenLayer2(0)
+      // io.outputSigmoid1 := sigHiddenLayer2(1)
+      // io.outputSigmoid2 := sigHiddenLayer2(2)
+      // io.outputSigmoid3 := sigHiddenLayer2(3)
+      // io.outputSigmoid4 := sigHiddenLayer2(4)
+      // io.outputSigmoid5 := sigHiddenLayer2(5)
+      // io.outputSigmoid6 := sigHiddenLayer2(6)
+      // io.outputSigmoid7 := sigHiddenLayer2(7)
+      // io.outputSigmoid8 := sigHiddenLayer2(8)
+      // io.outputSigmoid9 := sigHiddenLayer2(9)
 
       when(mAxis.tready) {
         when(transferCount === sigHiddenLayer2.length.U) {
