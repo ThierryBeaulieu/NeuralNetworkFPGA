@@ -454,11 +454,11 @@ class Test(Module):
             """
             La valeur du offset est toujours (m * n) / 2
             n peut varier, mais par expérience, on obtient de bon résultats avec m = 4 
-            m = 8
-            offset = 16
+            m = 401
+            offset = 128
             n = 4
             """
-            nStanh = NStanh(16)
+            nStanh = NStanh(128)
             bipolar = B2ISBipolar()
             output = []
             input = np.arange(-128, 127, 1)
@@ -468,12 +468,12 @@ class Test(Module):
             for i in range(0, len(input)):
                 stream = []
                 bipolarValues = []
-                for _ in range(0, 1024):
+                for _ in range(0, 128):
 
                     si = 0
-                    for _ in range(0, 8):
+                    for _ in range(0, 401):
                         si += bipolar.tick(input[i])
-                    m = 8
+                    m = 401
                     bipolarValues.append(si)
                     stream.append(2 * nStanh.tick(si, n * m) - 1)
                     bipolarValues.append(si)
@@ -492,7 +492,7 @@ class Test(Module):
                 output.append(sum)
 
             # theorical model
-            th_input = np.arange(-4.0, 4.1, 0.1)
+            th_input = np.arange(-401.0, 401.1, 0.1)
             th_ouput = np.tanh(n * th_input / 2)
 
             enablePlot = True
@@ -502,7 +502,7 @@ class Test(Module):
                 plt.xlabel('s')
                 plt.ylabel('ouput')
                 plt.legend()
-                plt.title('Approximation de NStanh avec m = 8 et offset = 16')
+                plt.title('Approximation de NStanh avec m = 401 et offset = 128')
                 plt.show()
 
     def IntegrationTest1(self):
@@ -601,7 +601,7 @@ class Neuron(Module):
         self.weights = self.weights[weightIndex]
         self.b2ISBipolar = B2ISBipolar()
         self.b2sUnipolar = B2SUnipolar()
-        self.nstanh = NStanh(offset=(401 * 4 / 16))
+        self.nstanh = NStanh(offset=(128))
         self.bitwiseAND = BitwiseOperatorAND()
 
     def tick(self, pixels):
@@ -618,8 +618,9 @@ class Neuron(Module):
             unipolar = self.b2sUnipolar.tick(pixels[i])
             bitwiseAND = self.bitwiseAND.tick(bipolar, unipolar)
             si += bitwiseAND
-
-        sthanRes = self.nstanh.tick(si, 401 * 0.25)
+        n = 4
+        m = len(self.weights)
+        sthanRes = self.nstanh.tick (si, m * n)
         # print(f"unipolar {unipolar} bipolar {bipolar} bitwiseAND {bitwiseAND} si {si} NStanh {sthanRes}")
         return sthanRes
 
@@ -631,8 +632,8 @@ test = Test()
 # test.NStanhTest1()
 # test.NStanhTest2()
 # test.NStanhTest3()
-#test.NStanhTest4()
-test.NStanhTest5()
+# test.NStanhTest4()
+# test.NStanhTest5()
 # test.IntegrationTest1()
-#test.IntegrationTest2()
+test.IntegrationTest2()
 # test.NeuralNetwork()
