@@ -154,6 +154,7 @@ class NStanh(Module):
         Output: {0, 1}
         """
         self.counter = self.counter + Si
+        # print(f"NStanh counter {self.counter}")
         if self.counter > (mn - 1):
             self.counter = mn - 1
         if self.counter < 0:
@@ -509,8 +510,32 @@ class Test(Module):
         
     def IntegrationTest2(self):
         print("### Integration Test 2")
-        neuron = Neuron(0)
-        neuron.tick([])
+        images = np.load("images.npy")
+        y = np.load("resources/y.npy")
+
+        correct = 0
+        for j in range(0, 10):
+            imgIndex = j
+            pixels = images[imgIndex]
+
+            results = np.zeros(10)
+            neurons = [Neuron(i) for i in range(10)]
+            for i in range(0, 10):
+                neuron = neurons[i]
+                counter = 0
+                nbCycles = 1024
+                for _ in range(0, nbCycles):
+                    counter += neuron.tick(pixels)
+                #print(f"counter {counter}")
+                probability = counter / nbCycles
+                results[i] = probability
+            #print(f"results: {results}")
+            prediction = results.argmax()
+            if prediction == y[imgIndex]:
+                correct += 1
+            print(f"Prediction {prediction} Label {y[imgIndex]}")
+
+        print(f"percentage of correctness {correct / 10}")
 
 class Neuron(Module):
 
@@ -522,7 +547,7 @@ class Neuron(Module):
         self.weights = self.weights[weightIndex]
         self.b2ISBipolar = B2ISBipolar()
         self.b2sUnipolar = B2SUnipolar()
-        self.nstanh = NStanh(offset=(401 * 4 / 2))
+        self.nstanh = NStanh(offset=(401 * 4 / 32))
         self.bitwiseAND = BitwiseOperatorAND()
 
     def tick(self, pixels):
@@ -539,8 +564,10 @@ class Neuron(Module):
             unipolar = self.b2sUnipolar.tick(pixels[i])
             bitwiseAND = self.bitwiseAND.tick(bipolar, unipolar)
             si += bitwiseAND
-    
-        return self.nstanh.tick(si, 401 * 4)
+
+        sthanRes = self.nstanh.tick(si, 401 * 4)
+        # print(f"unipolar {unipolar} bipolar {bipolar} bitwiseAND {bitwiseAND} si {si} NStanh {sthanRes}")
+        return sthanRes
 
 test = Test()
 # test.B2ISTest()
