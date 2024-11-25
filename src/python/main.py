@@ -568,7 +568,7 @@ class Test(Module):
         y = np.load("resources/y.npy")
 
         correct = 0
-        for j in range(0, 10):
+        for j in range(0, 100):
             imgIndex = j
             pixels = images[imgIndex]
 
@@ -584,13 +584,32 @@ class Test(Module):
                 probability = counter / nbCycles
                 results[i] = probability
             print(f"results: {results}")
-            prediction = results.argmax()
+            prediction = results.argmax() + 1
             if prediction == y[imgIndex]:
                 correct += 1
             print(f"Prediction {prediction} Label {y[imgIndex]}")
 
-        print(f"percentage of correctness {correct / 10}")
+        print(f"percentage of correctness {correct / 100}")
 
+    def TheoreticalValues(self):
+        # x = np.load("resources/x.npy")
+        y = np.load("resources/y.npy")
+        x = np.load("images.npy")
+        counter = 0
+        for i in range(0, 10):
+            imageIndex = i
+            weights = np.loadtxt("resources/weights.csv", delimiter=",").astype(np.int8)
+            image = x[imageIndex]
+
+            fpga_out = (np.dot(image.astype(np.int16), weights.T.astype(np.int16)) >> 8).astype(np.int8)
+            pred = fpga_out.argmax() + 1
+
+            if pred == y[imageIndex]:
+                counter += 1
+            print("FPGA Ouput: ", fpga_out)
+            print("Prediction: ", pred, "Label", y[imageIndex])
+        print(f"accuracy : {counter / 401}")
+              
 class Neuron(Module):
 
     def __init__(self, weightIndex: int):
@@ -624,6 +643,7 @@ class Neuron(Module):
         # print(f"unipolar {unipolar} bipolar {bipolar} bitwiseAND {bitwiseAND} si {si} NStanh {sthanRes}")
         return sthanRes
 
+
 test = Test()
 # test.B2ISTest()
 # test.B2STest()
@@ -635,5 +655,6 @@ test = Test()
 # test.NStanhTest4()
 # test.NStanhTest5()
 # test.IntegrationTest1()
-test.IntegrationTest2()
+# test.IntegrationTest2()
+test.TheoreticalValues()
 # test.NeuralNetwork()
