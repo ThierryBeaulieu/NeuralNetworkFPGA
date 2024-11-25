@@ -3,6 +3,7 @@ package project
 import chisel3._
 import _root_.circt.stage.ChiselStage
 import scala.io.Source
+import chisel3.util._
 
 /** Neural Network Composed of 10 Neurons
   *
@@ -12,34 +13,29 @@ import scala.io.Source
   *   AxiStreamExternalIf
   */
 class NeuralNetwork extends Module {
-  private val nbNeurons = 10
-  private val nbPixels = 401
-  private val neurons = Seq.fill(nbNeurons)(Module(new Neuron(nbPixels)))
+  private val neurons = Seq.fill(10)(Module(new Neuron(401)))
+  private val weightsCSV = readCSV("weights.csv")
   private val weights = RegInit(
-    VecInit.tabulate(nbNeurons, nbPixels) { (x, y) =>
-      readCSV("weights.csv")(x)(y).S(16.W)
+    VecInit.tabulate(10, 401) { (x, y) =>
+      weightsCSV(x)(y).S(8.W)
     }
   )
 
-  // AXI-Stream Connection
-  val sAxis = Wire(new AxiStreamSlaveIf(16))
+  val sAxis = Wire(new AxiStreamSlaveIf(8))
   val slaveIO =
-    IO(new AxiStreamExternalIf(16))
+    IO(new AxiStreamExternalIf(8))
   slaveIO.suggestName("s_axis").connect(sAxis)
 
-  val mAxis = Wire(new AxiStreamMasterIf(16))
-  val masterIO = IO(Flipped(new AxiStreamExternalIf(16)))
+  val mAxis = Wire(new AxiStreamMasterIf(8))
+  val masterIO = IO(Flipped(new AxiStreamExternalIf(8)))
   masterIO
     .suggestName("m_axis")
     .connect(mAxis)
 
-  /** Fetch the weights from a CSV
-    *
-    * @param filePath
-    *   Location of the file containing the weights
-    * @param data
-    *   The weights Array[Array[Int]]
-    */
+  val io = IO(new Bundle {
+    val outputNeurons = Input(Vec(10, UInt(8.W)))
+  })
+
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
     val data = source
@@ -52,70 +48,62 @@ class NeuralNetwork extends Module {
     data
   }
 
-  val output_data = RegInit(VecInit(Seq.fill(nbNeurons)(0.S(16.W))))
-  val inputPixel = RegInit(VecInit(Seq.fill(nbPixels)(0.U(8.W))))
-
-  val transferCount = RegInit(0.U(4.W)) // [0, 9]
-  val pixelIndex = RegInit(0.U(9.W)) // [0, 400]
-  val sending = RegInit(false.B)
-  val processing = RegInit(false.B)
-  val initialize = RegInit(false.B)
-
-  sAxis.tready := RegInit(true.B)
-  mAxis.data.tvalid := RegInit(false.B)
-  mAxis.data.tlast := RegInit(false.B)
-  mAxis.data.tdata := RegInit(0.S(16.W))
-  mAxis.data.tkeep := RegInit("b11".U)
-
-  when(sAxis.data.tvalid) {
-    inputPixel(pixelIndex) := sAxis.data.tdata
-
-    pixelIndex := pixelIndex + 1.U
-    when(sAxis.data.tlast) {
-      initialize := true.B
+  def setNeuronData() = {
+    for (i <- 0 until 10) {
+      neurons(i).io.inputPixels := image
+      neurons(i).io.inputWeights := weights(i)
     }
   }
 
-  when(initialize) {
-    for (i <- 0 until nbPixels) {
-      for (j <- 0 until nbNeurons) {
-        neurons(j).io.inputPixels := inputPixel(i)
+  object State extends ChiselEnum {
+    val receiving, handling, sending = Value
+  }
+
+  val state = RegInit(State.receiving)
+
+  val image = RegInit(VecInit(Seq.fill(401)(0.U(8.W))))
+  val index = RegInit(0.U(9.W))
+
+  val counter = RegInit(VecInit(Seq.fill(10)(0.U(10.W))))
+  val transferCount = RegInit(0.U(4.W))
+
+  val minCycles = RegInit(0.U(10.W))
+
+  switch(state) {
+    // Step 1. Fill the image with 401 pixels
+    is(State.receiving) {
+      when(sAxis.data.tvalid) {
+        image(index) := (sAxis.data.tdata).asSInt
+        index := index + 1.U
+        when(sAxis.data.tlast) {
+          state := State.handling
+          sAxis.tready := false.B
+        }
       }
     }
-    for (i <- 0 until nbNeurons) {
-      val row: Vec[SInt] = weights(i)
-      for (j <- 0 until nbPixels) {
-        neurons(i).io.inputWeights := row(j)
+    // Step 2. Process the information for 1024 cycles
+    is(State.handling) {
+      setNeuronData()
+      minCycles := (minCycles + 1.U)
+    }
+    // State 3. Return the information
+    is(State.sending) {
+      when(mAxis.tready) {
+        when(transferCount === counter.length.U) {
+          mAxis.data.tlast := true.B
+          mAxis.data.tvalid := false.B
+          // reinitialize everything
+          // todo
+          state := State.receiving
+          transferCount := 0.U
+
+        }.otherwise {
+          mAxis.data.tlast := false.B
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := counter(transferCount)
+          transferCount := transferCount + 1.U
+        }
       }
-    }
-    initialize := false.B
-    processing := true.B
-  }
-
-  val processing_cycle = RegInit(0.U(10.W))
-  when(processing) {
-    processing_cycle := processing_cycle + 1.U
-    // the data needs to be send by every Neuron at the same time
-    when(processing_cycle === 1024.U) {
-      processing_cycle := 0.U
-      processing := false.B
-      sending := true.B
-    }
-  }
-
-  when(sending && mAxis.tready) {
-    when(transferCount === output_data.length.U) {
-      mAxis.data.tlast := true.B
-      mAxis.data.tvalid := false.B
-      output_data := VecInit(Seq.fill(nbNeurons)(0.S(16.W)))
-      transferCount := 0.U
-      pixelIndex := 0.U
-      sending := false.B
-    }.otherwise {
-      mAxis.data.tlast := false.B
-      mAxis.data.tvalid := true.B
-      mAxis.data.tdata := output_data(transferCount)
-      transferCount := transferCount + 1.U
     }
   }
 }
