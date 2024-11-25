@@ -565,10 +565,10 @@ class Test(Module):
     def IntegrationTest2(self):
         print("### Integration Test 2")
         images = np.load("images.npy")
-        y = np.load("resources/y.npy")
+        y = np.load("practical.npy")
 
         correct = 0
-        for j in range(0, 100):
+        for j in range(0, 10):
             imgIndex = j
             pixels = images[imgIndex]
 
@@ -585,6 +585,7 @@ class Test(Module):
                 results[i] = probability
             print(f"results: {results}")
             prediction = results.argmax() + 1
+
             if prediction == y[imgIndex]:
                 correct += 1
             print(f"Prediction {prediction} Label {y[imgIndex]}")
@@ -595,8 +596,9 @@ class Test(Module):
         # x = np.load("resources/x.npy")
         y = np.load("resources/y.npy")
         x = np.load("images.npy")
+        practical = np.zeros_like(y)
         counter = 0
-        for i in range(0, 10):
+        for i in range(0, 5000):
             imageIndex = i
             weights = np.loadtxt("resources/weights.csv", delimiter=",").astype(np.int8)
             image = x[imageIndex]
@@ -606,9 +608,11 @@ class Test(Module):
 
             if pred == y[imageIndex]:
                 counter += 1
-            print("FPGA Ouput: ", fpga_out)
-            print("Prediction: ", pred, "Label", y[imageIndex])
-        print(f"accuracy : {counter / 401}")
+            practical[i] = pred
+            # print("FPGA Ouput: ", fpga_out)
+            # print("Prediction: ", pred, "Label", y[imageIndex])
+        #print(f"accuracy : {counter / 401}")
+        np.save("practical.npy", practical)
               
 class Neuron(Module):
 
@@ -655,6 +659,6 @@ test = Test()
 # test.NStanhTest4()
 # test.NStanhTest5()
 # test.IntegrationTest1()
-# test.IntegrationTest2()
-test.TheoreticalValues()
+test.IntegrationTest2()
+# test.TheoreticalValues()
 # test.NeuralNetwork()
