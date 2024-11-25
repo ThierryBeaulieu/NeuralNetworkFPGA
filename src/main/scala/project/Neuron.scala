@@ -19,7 +19,7 @@ import chisel3._
   * @param outputStream
   *   unipolar stream {0, 1}
   */
-class Neuron(nbData: Int, enableDebug: Boolean = false) extends Module {
+class Neuron(nbData: Int) extends Module {
   private val b2SUnipolar = Seq.fill(nbData)(Module(new B2SUnipolar))
   private val b2ISBipolar = Seq.fill(nbData)(Module(new B2ISBipolar))
   private val bitwiseAND = Seq.fill(nbData)(Module(new BitwiseAND))
@@ -29,14 +29,10 @@ class Neuron(nbData: Int, enableDebug: Boolean = false) extends Module {
   val io = IO(new Bundle {
     val inputPixels = Input(Vec(nbData, UInt(8.W)))
     val inputWeights = Input(Vec(nbData, SInt(8.W)))
-    // Outputs only for debugging purposes
-    val dbg = if (enableDebug) Some(new Bundle {
-      val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
-      val outputB2ISValues = Output(Vec(nbData, SInt(2.W)))
-      val outputANDValues = Output(Vec(nbData, SInt(2.W)))
-      val outputTreeAdder = Output(SInt((nbData + 1).W))
-    })
-    else None
+    val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
+    val outputB2ISValues = Output(Vec(nbData, SInt(2.W)))
+    val outputANDValues = Output(Vec(nbData, SInt(2.W)))
+    val outputTreeAdder = Output(SInt((nbData + 1).W))
 
     // end of debugging purposes
     val outputStream = Output(UInt(1.W))
@@ -47,7 +43,7 @@ class Neuron(nbData: Int, enableDebug: Boolean = false) extends Module {
   for (i <- 0 until regB2S.length) {
     b2SUnipolar(i).io.inputPixel := io.inputPixels(i)
     regB2S(i) := b2SUnipolar(i).io.outputStream
-    if (enableDebug) io.dbg.get.outputB2SValues(i) := regB2S(i)
+    io.outputB2SValues(i) := regB2S(i)
   }
 
   // Step 2. Weight Bipolar Conversion
@@ -55,7 +51,7 @@ class Neuron(nbData: Int, enableDebug: Boolean = false) extends Module {
   for (i <- 0 until regB2IS.length) {
     b2ISBipolar(i).io.inputWeight := io.inputWeights(i)
     regB2IS(i) := b2ISBipolar(i).io.outputStream
-    if (enableDebug) io.dbg.get.outputB2ISValues(i) := regB2IS(i)
+    io.outputB2ISValues(i) := regB2IS(i)
   }
 
   // Step 3. Pixel & Weight
@@ -64,12 +60,12 @@ class Neuron(nbData: Int, enableDebug: Boolean = false) extends Module {
     bitwiseAND(i).io.inputInteger := regB2IS(i)
     bitwiseAND(i).io.inputBit := regB2S(i)
     regAND(i) := bitwiseAND(i).io.outputStream
-    if (enableDebug) io.dbg.get.outputANDValues(i) := regAND(i)
+    io.outputANDValues(i) := regAND(i)
   }
 
   // Step 4. TreeAdder All Streams
   treeAdder.io.inputStream := regAND
-  if (enableDebug) io.dbg.get.outputTreeAdder := treeAdder.io.outputStream
+  io.outputTreeAdder := treeAdder.io.outputStream
 
   // Step 5. Passing Stream to NStanh
   nStanh.io.inputSi := treeAdder.io.outputStream
