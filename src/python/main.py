@@ -508,24 +508,28 @@ class Test(Module):
         print(f"Average difference (%) : {average_difference}")
         
     def IntegrationTest2(self):
-        pass
+        print("### Integration Test 2")
+        neuron = Neuron(0)
+        neuron.tick([])
 
 class Neuron(Module):
 
-    def __init__(sel, weightIndex: int):
+    def __init__(self, weightIndex: int):
         """
         Single Neuron from a neural network
         """
-        self.weights = np.load()
+        self.weights = np.loadtxt("resources/weights.csv", delimiter=",")
+        self.weights = self.weights[weightIndex]
 
-    def tick(self, weights: NDArray[np.int8], pixels: NDArray[np.uint8]):
+    def tick(self, pixels: NDArray[np.uint8]):
         """
         Neuron. Takes i=4 W1, W2,...,Wi weights and v1, v2,...,vi pixels.
         The pixels are an array of int8 and the weights too.
 
-        Input: weights int8, pixels int8
+        Input: pixels int8
         Output: {-(m1+m2+..+mi), +(m1+m2+...+mi)}
         """
+        print(len(self.weights))
 
 test = Test()
 # test.B2ISTest()
@@ -536,6 +540,6 @@ test = Test()
 # test.NStanhTest2()
 # test.NStanhTest3()
 # test.NStanhTest4()
-test.IntegrationTest1()
+# test.IntegrationTest1()
 test.IntegrationTest2()
 # test.NeuralNetwork()
