@@ -392,7 +392,7 @@ class Test(Module):
     def NStanhTest4(self):
             """
             La valeur du offset est toujours (m * n) / 2
-            n peut varier, mais par expérience, on obtien de bon résultats avec m = 4 
+            n peut varier, mais par expérience, on obtient de bon résultats avec m = 4 
             m = 8
             offset = 16
             n = 4
@@ -520,16 +520,27 @@ class Neuron(Module):
         """
         self.weights = np.loadtxt("resources/weights.csv", delimiter=",")
         self.weights = self.weights[weightIndex]
+        self.b2ISBipolar = B2ISBipolar()
+        self.b2sUnipolar = B2SUnipolar()
+        self.nstanh = NStanh(offset=(401 * 4 / 2))
+        self.bitwiseAND = BitwiseOperatorAND()
 
-    def tick(self, pixels: NDArray[np.uint8]):
+    def tick(self, pixels):
         """
         Neuron. Takes i=4 W1, W2,...,Wi weights and v1, v2,...,vi pixels.
         The pixels are an array of int8 and the weights too.
 
         Input: pixels int8
-        Output: {-(m1+m2+..+mi), +(m1+m2+...+mi)}
+        Output: {0, 1}
         """
-        print(len(self.weights))
+        si = 0
+        for i in range(0, len(pixels)):
+            bipolar = self.b2ISBipolar.tick(self.weights[i])
+            unipolar = self.b2sUnipolar.tick(pixels[i])
+            bitwiseAND = self.bitwiseAND.tick(bipolar, unipolar)
+            si += bitwiseAND
+    
+        return self.nstanh.tick(si, 401 * 4)
 
 test = Test()
 # test.B2ISTest()
