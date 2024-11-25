@@ -51,6 +51,12 @@ class NeuralNetwork extends Module {
     }
   }
 
+  sAxis.tready := RegInit(true.B)
+  mAxis.data.tvalid := RegInit(false.B)
+  mAxis.data.tlast := RegInit(false.B)
+  mAxis.data.tdata := RegInit(0.U(8.W))
+  mAxis.data.tkeep := RegInit("b1".U)
+
   object State extends ChiselEnum {
     val receiving, handling, sending = Value
   }
