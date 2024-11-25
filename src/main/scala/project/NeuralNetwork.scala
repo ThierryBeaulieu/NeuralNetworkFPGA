@@ -84,6 +84,10 @@ class NeuralNetwork extends Module {
     // Step 2. Process the information for 1024 cycles
     is(State.handling) {
       setNeuronData()
+      for (i <- 0 until 10) {
+        counter(i) := counter(i) + neurons(i).io.outputStream
+      }
+
       minCycles := (minCycles + 1.U)
       when(minCycles === (1024.U - 1.U)) {
         state := State.sending
