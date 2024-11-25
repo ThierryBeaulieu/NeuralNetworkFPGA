@@ -85,6 +85,9 @@ class NeuralNetwork extends Module {
     is(State.handling) {
       setNeuronData()
       minCycles := (minCycles + 1.U)
+      when(minCycles === (1024.U - 1.U)) {
+        state := State.sending
+      }
     }
     // State 3. Return the information
     is(State.sending) {
@@ -93,7 +96,11 @@ class NeuralNetwork extends Module {
           mAxis.data.tlast := true.B
           mAxis.data.tvalid := false.B
           // reinitialize everything
-          // todo
+          image := VecInit(Seq.fill(401)(0.S(8.W)))
+          index := 0.U
+          counter := VecInit(Seq.fill(10)(0.S(10.W)))
+
+          minCycles := 0.U
           state := State.receiving
           transferCount := 0.U
 
