@@ -450,6 +450,60 @@ class Test(Module):
                 plt.title('Approximation de NStanh avec m = 8 et offset = 16')
                 plt.show()
 
+    def NStanhTest5(self):
+            """
+            La valeur du offset est toujours (m * n) / 2
+            n peut varier, mais par expérience, on obtient de bon résultats avec m = 4 
+            m = 8
+            offset = 16
+            n = 4
+            """
+            nStanh = NStanh(16)
+            bipolar = B2ISBipolar()
+            output = []
+            input = np.arange(-128, 127, 1)
+            s = []
+            n = 4
+            # practical model
+            for i in range(0, len(input)):
+                stream = []
+                bipolarValues = []
+                for _ in range(0, 1024):
+
+                    si = 0
+                    for _ in range(0, 8):
+                        si += bipolar.tick(input[i])
+                    m = 8
+                    bipolarValues.append(si)
+                    stream.append(2 * nStanh.tick(si, n * m) - 1)
+                    bipolarValues.append(si)
+
+                sum = 0
+                for j in range(0, len(stream)):
+                    sum = sum + stream[j]
+
+                probability = 0
+                for j in range(0, len(bipolarValues)):
+                    probability = probability + bipolarValues[j]
+
+                sum = sum / len(stream)
+                probability = probability / len(bipolarValues)
+                s.append(probability)
+                output.append(sum)
+
+            # theorical model
+            th_input = np.arange(-4.0, 4.1, 0.1)
+            th_ouput = np.tanh(n * th_input / 2)
+
+            enablePlot = True
+            if enablePlot:
+                plt.scatter(s, output, marker='o', label='NStanh(s)')
+                plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
+                plt.xlabel('s')
+                plt.ylabel('ouput')
+                plt.legend()
+                plt.title('Approximation de NStanh avec m = 8 et offset = 16')
+                plt.show()
 
     def IntegrationTest1(self):
         print("### Integration Test")
@@ -526,10 +580,10 @@ class Test(Module):
                 nbCycles = 1024
                 for _ in range(0, nbCycles):
                     counter += neuron.tick(pixels)
-                #print(f"counter {counter}")
+                print(f"counter {counter}")
                 probability = counter / nbCycles
                 results[i] = probability
-            #print(f"results: {results}")
+            print(f"results: {results}")
             prediction = results.argmax()
             if prediction == y[imgIndex]:
                 correct += 1
@@ -547,7 +601,7 @@ class Neuron(Module):
         self.weights = self.weights[weightIndex]
         self.b2ISBipolar = B2ISBipolar()
         self.b2sUnipolar = B2SUnipolar()
-        self.nstanh = NStanh(offset=(401 * 4 / 32))
+        self.nstanh = NStanh(offset=(401 * 4 / 16))
         self.bitwiseAND = BitwiseOperatorAND()
 
     def tick(self, pixels):
@@ -565,7 +619,7 @@ class Neuron(Module):
             bitwiseAND = self.bitwiseAND.tick(bipolar, unipolar)
             si += bitwiseAND
 
-        sthanRes = self.nstanh.tick(si, 401 * 4)
+        sthanRes = self.nstanh.tick(si, 401 * 0.25)
         # print(f"unipolar {unipolar} bipolar {bipolar} bitwiseAND {bitwiseAND} si {si} NStanh {sthanRes}")
         return sthanRes
 
@@ -577,7 +631,8 @@ test = Test()
 # test.NStanhTest1()
 # test.NStanhTest2()
 # test.NStanhTest3()
-# test.NStanhTest4()
+#test.NStanhTest4()
+test.NStanhTest5()
 # test.IntegrationTest1()
-test.IntegrationTest2()
+#test.IntegrationTest2()
 # test.NeuralNetwork()
