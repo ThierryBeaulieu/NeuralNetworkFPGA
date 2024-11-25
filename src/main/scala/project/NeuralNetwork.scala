@@ -44,13 +44,6 @@ class NeuralNetwork extends Module {
     data
   }
 
-  def setNeuronData() = {
-    for (i <- 0 until 10) {
-      neurons(i).io.inputPixels := image
-      neurons(i).io.inputWeights := weights(i)
-    }
-  }
-
   sAxis.tready := RegInit(true.B)
   mAxis.data.tvalid := RegInit(false.B)
   mAxis.data.tlast := RegInit(false.B)
@@ -71,6 +64,11 @@ class NeuralNetwork extends Module {
 
   val minCycles = RegInit(0.U(10.W))
 
+  for (i <- 0 until 10) {
+    neurons(i).io.inputPixels := image
+    neurons(i).io.inputWeights := weights(i)
+  }
+
   switch(state) {
     // Step 1. Fill the image with 401 pixels
     is(State.receiving) {
@@ -85,7 +83,6 @@ class NeuralNetwork extends Module {
     }
     // Step 2. Process the information for 1024 cycles
     is(State.handling) {
-      setNeuronData()
       for (i <- 0 until 10) {
         counter(i) := counter(i) + neurons(i).io.outputStream
       }
