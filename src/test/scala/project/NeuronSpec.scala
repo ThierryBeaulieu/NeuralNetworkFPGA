@@ -9,7 +9,7 @@ import org.scalatest.matchers.must.Matchers
 
 class NeuronSpec extends AnyFreeSpec with Matchers {
   "Neuron should generate stream with a single B2S" in {
-    simulate(new Neuron(nbData = 1)) { dut =>
+    simulate(new Neuron(nbData = 1, enableDebug = true)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -37,13 +37,13 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
       for (i <- 0 until expectedUnipolarStream.length) {
         dut.clock.step(1)
         // print(dut.io.outputB2SValues(0).peek().litValue)
-        dut.io.outputB2SValues(0).expect(expectedUnipolarStream(i))
+        dut.io.dbg.get.outputB2SValues(0).expect(expectedUnipolarStream(i))
       }
     }
   }
 
   "Neuron should generate stream with multiple B2S" in {
-    simulate(new Neuron(nbData = 2)) { dut =>
+    simulate(new Neuron(nbData = 2, enableDebug = true)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -90,19 +90,19 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
       for (i <- 0 until expectedUnipolarStream1.length) {
         dut.clock.step(1)
         // print(dut.io.outputB2SValues(0).peek().litValue)
-        dut.io.outputB2SValues(0).expect(expectedUnipolarStream1(i))
+        dut.io.dbg.get.outputB2SValues(0).expect(expectedUnipolarStream1(i))
       }
 
       for (i <- 0 until expectedUnipolarStream2.length) {
         dut.clock.step(1)
         // print(dut.io.outputB2SValues(1).peek().litValue)
-        dut.io.outputB2SValues(1).expect(expectedUnipolarStream2(i))
+        dut.io.dbg.get.outputB2SValues(1).expect(expectedUnipolarStream2(i))
       }
     }
   }
 
   "Neuron should generate bipolar stream with a single B2ISBipolar" in {
-    simulate(new Neuron(nbData = 1)) { dut =>
+    simulate(new Neuron(nbData = 1, enableDebug = true)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -131,13 +131,13 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
       for (i <- 0 until expectedBipolarStream1.length) {
         dut.clock.step(1)
         // print(dut.io.outputB2ISValues(0).peek().litValue)
-        dut.io.outputB2ISValues(0).expect(expectedBipolarStream1(i))
+        dut.io.dbg.get.outputB2ISValues(0).expect(expectedBipolarStream1(i))
       }
     }
   }
 
   "Neuron should generate bipolar stream with multiple B2ISBipolar" in {
-    simulate(new Neuron(nbData = 3)) { dut =>
+    simulate(new Neuron(nbData = 3, enableDebug = true)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -202,25 +202,25 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
       for (i <- 0 until expectedBipolarStream1.length) {
         dut.clock.step(1)
         // print(dut.io.outputB2ISValues(0).peek().litValue)
-        dut.io.outputB2ISValues(0).expect(expectedBipolarStream1(i))
+        dut.io.dbg.get.outputB2ISValues(0).expect(expectedBipolarStream1(i))
       }
 
       for (i <- 0 until expectedBipolarStream2.length) {
         dut.clock.step(1)
         // print(dut.io.outputB2ISValues(1).peek().litValue)
-        dut.io.outputB2ISValues(1).expect(expectedBipolarStream2(i))
+        dut.io.dbg.get.outputB2ISValues(1).expect(expectedBipolarStream2(i))
       }
 
       for (i <- 0 until expectedBipolarStream3.length) {
         dut.clock.step(1)
         // print(dut.io.outputB2ISValues(2).peek().litValue)
-        dut.io.outputB2ISValues(2).expect(expectedBipolarStream3(i))
+        dut.io.dbg.get.outputB2ISValues(2).expect(expectedBipolarStream3(i))
       }
     }
   }
 
   "Neuron should apply the Bitwise AND operator on a single pair of streams" in {
-    simulate(new Neuron(nbData = 1)) { dut =>
+    simulate(new Neuron(nbData = 1, enableDebug = true)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -247,13 +247,13 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
       for (i <- 0 until expectedBipolarStream1.length) {
         dut.clock.step(1)
         // print(dut.io.outputANDValues(0).peek().litValue)
-        dut.io.outputANDValues(0).expect(expectedBipolarStream1(i))
+        dut.io.dbg.get.outputANDValues(0).expect(expectedBipolarStream1(i))
       }
     }
   }
 
   "Neuron should apply the Bitwise AND operator on a multiple pair of streams" in {
-    simulate(new Neuron(nbData = 3)) { dut =>
+    simulate(new Neuron(nbData = 3, enableDebug = true)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -312,25 +312,25 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
       for (i <- 0 until expectedBipolarStream1.length) {
         dut.clock.step(1)
         // print(dut.io.outputANDValues(0).peek().litValue)
-        dut.io.outputANDValues(0).expect(expectedBipolarStream1(i))
+        dut.io.dbg.get.outputANDValues(0).expect(expectedBipolarStream1(i))
       }
 
       for (i <- 0 until expectedBipolarStream1.length) {
         dut.clock.step(1)
         // print(dut.io.outputANDValues(1).peek().litValue)
-        dut.io.outputANDValues(1).expect(expectedBipolarStream2(i))
+        dut.io.dbg.get.outputANDValues(1).expect(expectedBipolarStream2(i))
       }
 
       for (i <- 0 until expectedBipolarStream1.length) {
         dut.clock.step(1)
         // print(dut.io.outputANDValues(2).peek().litValue)
-        dut.io.outputANDValues(2).expect(expectedBipolarStream3(i))
+        dut.io.dbg.get.outputANDValues(2).expect(expectedBipolarStream3(i))
       }
     }
   }
 
   "Neuron should have the TreeAdder work for only one stream" in {
-    simulate(new Neuron(nbData = 1)) { dut =>
+    simulate(new Neuron(nbData = 1, enableDebug = true)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -359,13 +359,13 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
       for (i <- 0 until expectedStream.length) {
         dut.clock.step(1)
         // print(dut.io.outputTreeAdder.peek().litValue)
-        dut.io.outputTreeAdder.expect(expectedStream(i))
+        dut.io.dbg.get.outputTreeAdder.expect(expectedStream(i))
       }
     }
   }
 
   "Neuron should have the TreeAdder reduce a set of streams" in {
-    simulate(new Neuron(nbData = 4)) { dut =>
+    simulate(new Neuron(nbData = 4, enableDebug = true)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -403,13 +403,13 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
       for (i <- 0 until expectedStream.length) {
         dut.clock.step(1)
         // print(dut.io.outputTreeAdder.peek().litValue)
-        dut.io.outputTreeAdder.expect(expectedStream(i))
+        dut.io.dbg.get.outputTreeAdder.expect(expectedStream(i))
       }
     }
   }
 
   "Neuron should convert pixel and weights into a unipolar stream" in {
-    simulate(new Neuron(nbData = 4)) { dut =>
+    simulate(new Neuron(nbData = 4, enableDebug = true)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)

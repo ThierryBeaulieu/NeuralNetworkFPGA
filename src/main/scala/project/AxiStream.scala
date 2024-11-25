@@ -4,7 +4,7 @@ import chisel3._
 
 // AXI-Stream Definition
 class AxiStreamData(width: Int) extends Bundle {
-  val tdata = SInt(width.W)
+  val tdata = UInt(width.W)
   val tkeep = UInt((width / 8).W)
   val tvalid = Bool()
   val tlast = Bool()
@@ -21,7 +21,7 @@ class AxiStreamSlaveIf(width: Int) extends Bundle {
 }
 
 class AxiStreamExternalIf(width: Int) extends Bundle {
-  val tdata = Input(SInt(width.W))
+  val tdata = Input(UInt(width.W))
   val tkeep = Input(UInt((width / 8).W))
   val tvalid = Input(Bool())
   val tlast = Input(Bool())

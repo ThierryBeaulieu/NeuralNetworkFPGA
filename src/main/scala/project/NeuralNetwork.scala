@@ -13,9 +13,9 @@ import chisel3.util._
   *   AxiStreamExternalIf
   */
 class NeuralNetwork extends Module {
-  private val neurons = Seq.fill(10)(Module(new Neuron(401)))
+  val neurons = Seq.fill(10)(Module(new Neuron(401)))
   private val weightsCSV = readCSV("weights.csv")
-  private val weights = RegInit(
+  val weights = RegInit(
     VecInit.tabulate(10, 401) { (x, y) =>
       weightsCSV(x)(y).S(8.W)
     }
@@ -31,10 +31,6 @@ class NeuralNetwork extends Module {
   masterIO
     .suggestName("m_axis")
     .connect(mAxis)
-
-  val io = IO(new Bundle {
-    val outputNeurons = Input(Vec(10, UInt(8.W)))
-  })
 
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
@@ -73,7 +69,7 @@ class NeuralNetwork extends Module {
     // Step 1. Fill the image with 401 pixels
     is(State.receiving) {
       when(sAxis.data.tvalid) {
-        image(index) := (sAxis.data.tdata).asSInt
+        image(index) := sAxis.data.tdata
         index := index + 1.U
         when(sAxis.data.tlast) {
           state := State.handling
@@ -100,9 +96,9 @@ class NeuralNetwork extends Module {
           mAxis.data.tlast := true.B
           mAxis.data.tvalid := false.B
           // reinitialize everything
-          image := VecInit(Seq.fill(401)(0.S(8.W)))
+          image := VecInit(Seq.fill(401)(0.U(8.W)))
           index := 0.U
-          counter := VecInit(Seq.fill(10)(0.S(10.W)))
+          counter := VecInit(Seq.fill(10)(0.U(10.W)))
 
           minCycles := 0.U
           state := State.receiving
