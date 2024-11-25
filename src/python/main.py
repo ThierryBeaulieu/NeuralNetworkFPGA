@@ -163,47 +163,6 @@ class NStanh(Module):
         else:
             return 0
         
-class Neuron(Module):
-
-    def __init__(self, offset, m):
-        """
-        Single Neuron from a neural network
-        """
-        self.m = m
-        self.pixelConverters = np.array([B2SUnipolar() for _ in range(m)])
-        self.weightConverters = np.array([B2ISBipolar() for _ in range(m)])
-        self.bitwiseAND = np.array([BitwiseOperatorAND() for _ in range(m)])
-        self.NSthan = NStanh(offset)
-
-    def tick(self, weights: NDArray[np.int8], pixels: NDArray[np.uint8]):
-        """
-        Neuron. Takes i=4 W1, W2,...,Wi weights and v1, v2,...,vi pixels.
-        The pixels are an array of int8 and the weights too.
-
-        Input: weights int8, pixels int8
-        Output: {-(m1+m2+..+mi), +(m1+m2+...+mi)}
-        """
-        unipolarPixelsConverted = []
-        for i in range(0, len(self.pixelConverters)):
-            bit = self.pixelConverters[i].tick(pixels[i])
-            unipolarPixelsConverted.append(bit)
-
-        bipolarWeightsConverted = []
-        for i in range(0, len(self.weightConverters)):
-            integer = self.weightConverters[i].tick(weights[i])
-            bipolarWeightsConverted.append(integer)
-
-        bitwiseResults = []
-        for i in range(0, len(self.bitwiseAND)):
-            bitwiseResult = self.bitwiseAND[i].tick(bipolarWeightsConverted[i], unipolarPixelsConverted[i])
-            bitwiseResults.append(bitwiseResult)
-        
-        treeAdderRes = 0
-        for i in range(0, len(bitwiseResults)):
-            treeAdderRes = treeAdderRes + bitwiseResults[i]
-        return self.NSthan.tick(treeAdderRes, 4 * self.m)
-        
-
 class Test(Module):
     def B2ISTest(self):
         print("### B2SITest")
@@ -491,13 +450,11 @@ class Test(Module):
                 plt.show()
 
 
-    def NeuronTest1(self):
-        print("something")
+    def IntegrationTest1(self):
+        print("### Integration Test")
         th_weight = [[-128, -128], [-64, -64], [-32, -32], [32, -32], [32, -64], [0, 0], [32, 32], [64, 64], [127, 127]]
         th_weight = [[32, -32]]
         b2is1 = B2ISBipolar()
-        s = []
-        y = []
         pr_res = []
         print("### Practical")
         for j in range(0, len(th_weight)):
@@ -550,13 +507,35 @@ class Test(Module):
         average_difference = np.average(relative_difference)
         print(f"Average difference (%) : {average_difference}")
         
+    def IntegrationTest2(self):
+        pass
+
+class Neuron(Module):
+
+    def __init__(sel, weightIndex: int):
+        """
+        Single Neuron from a neural network
+        """
+        self.weights = np.load()
+
+    def tick(self, weights: NDArray[np.int8], pixels: NDArray[np.uint8]):
+        """
+        Neuron. Takes i=4 W1, W2,...,Wi weights and v1, v2,...,vi pixels.
+        The pixels are an array of int8 and the weights too.
+
+        Input: weights int8, pixels int8
+        Output: {-(m1+m2+..+mi), +(m1+m2+...+mi)}
+        """
+
 test = Test()
 # test.B2ISTest()
 # test.B2STest()
 # test.BitwiseANDTest()
 # test.UnipolarCounterTest()
-test.NStanhTest1()
+# test.NStanhTest1()
 # test.NStanhTest2()
 # test.NStanhTest3()
 # test.NStanhTest4()
-# test.NeuronTest1()
+test.IntegrationTest1()
+test.IntegrationTest2()
+# test.NeuralNetwork()
