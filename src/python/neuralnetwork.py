@@ -143,8 +143,7 @@ class CounterUnipolar(Module):
             return res
         
 class NStanh(Module):
-    def __init__(self, offset, n, m):
-        self.counter = n * m
+    def __init__(self, offset):
         self.counter = 0
         self.offset = offset
 
@@ -182,7 +181,7 @@ class Neuron(Module):
         self.b2ISBipolar = B2ISBipolar()
         self.b2sUnipolar = B2SUnipolar()
         self.bitwiseAND = BitwiseOperatorAND()
-        self.nstanh = NStanh(offset=offset, n=n, m=m)
+        self.nstanh = NStanh(offset=offset)
 
     def tick(self, pixels):
         """
