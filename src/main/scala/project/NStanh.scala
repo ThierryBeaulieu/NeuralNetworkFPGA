@@ -14,7 +14,7 @@ import chisel3._
   *   the unipolar value {0, 1}
   */
 class NStanh(n: Int, m: Int) extends Module {
-  private val m_offset = RegInit((128).S)
+  private val m_offset = RegInit((m * n / 2).S)
   private val m_MN = RegInit((n * m).S)
   private val m_counter = RegInit(0.S(10.W))
 
