@@ -115,7 +115,7 @@ class TestNeuron(unittest.TestCase):
     def test_integration_neuron_m_8_w_min(self):
         inputPixels = [255, 255, 255, 255, 255, 255, 255, 255]
         weights = [-128, -128, -128, -128, -128, -128, -128, -128]
-        m = 16
+        m = 8
         n = 4
 
         fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / ((2**8) * (2**8 - 1))
@@ -135,7 +135,7 @@ class TestNeuron(unittest.TestCase):
     def test_integration_neuron_m_8_w_max(self):
         inputPixels = [255, 255, 255, 255, 255, 255, 255, 255]
         weights = [127, 127, 127, 127, 127, 127, 127, 127]
-        m = 16
+        m = 8
         n = 4
 
         fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / ((2**8) * (2**8 - 1))
@@ -154,7 +154,7 @@ class TestNeuron(unittest.TestCase):
     def test_integration_neuron_m_8_average(self):
         inputPixels = [255, 255, 255, 255, 255, 255, 255, 255]
         weights = [0, 0, 0, 0, 0, 0, 0, 0]
-        m = 16
+        m = 8
         n = 4
 
         fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / ((2**8) * (2**8 - 1))
