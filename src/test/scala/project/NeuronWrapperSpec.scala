@@ -5,19 +5,19 @@ import chisel3.simulator.EphemeralSimulator._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-// testOnly project.BenchTestSpec
+// testOnly project.NeuronWrapperSpec
 
-class BenchTestSpec extends AnyFreeSpec with Matchers {
+class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
 
-  "BenchTestSpec should have accessible weights" in {
-    simulate(new BenchTest) { dut =>
+  "NeuronWrapperSpec should have accessible weights" in {
+    simulate(new NeuronWrapper) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
       dut.reset.poke(false.B)
 
-      dut.weights.length.mustBe(10)
-      dut.weights(0).length.mustBe(401)
+      dut.weights.length.mustBe(1)
+      dut.weights(0).length.mustBe(8)
     }
   }
 }

@@ -4,14 +4,14 @@ import chisel3._
 import scala.io.Source
 import chisel3.util._
 
-/** Neural Network Composed of 10 Neurons
+/** NeuronWrapper
   *
   * @param slaveIO
   *   AxiStreamSlaveIf
   * @param masterIO
   *   AxiStreamExternalIf
   */
-class BenchTest extends Module {
+class NeuronWrapper extends Module {
 
   val io = IO(new Bundle {
     val outputState = Output(UInt(2.W))
@@ -23,10 +23,10 @@ class BenchTest extends Module {
   io.outputState := 0.U
   io.outputStream := 0.U
 
-  val neurons = Seq.fill(10)(Module(new Neuron(8)))
+  val neuron = Module(new Neuron(8))
   private val weightsCSV = readCSV("weights.csv")
   val weights = RegInit(
-    VecInit.tabulate(10, 8) { (x, y) =>
+    VecInit.tabulate(1, 8) { (x, y) =>
       weightsCSV(x)(y).S(8.W)
     }
   )
@@ -36,8 +36,8 @@ class BenchTest extends Module {
     IO(new AxiStreamExternalIf(8))
   slaveIO.suggestName("s_axis").connect(sAxis)
 
-  val mAxis = Wire(new AxiStreamMasterIf(8))
-  val masterIO = IO(Flipped(new AxiStreamExternalIf(8)))
+  val mAxis = Wire(new AxiStreamMasterIf(10))
+  val masterIO = IO(Flipped(new AxiStreamExternalIf(10)))
   masterIO
     .suggestName("m_axis")
     .connect(mAxis)
@@ -66,19 +66,17 @@ class BenchTest extends Module {
 
   val state = RegInit(State.receiving)
 
-  val image = RegInit(VecInit(Seq.fill(401)(0.U(8.W))))
-  val index = RegInit(0.U(9.W))
+  val image = RegInit(VecInit(Seq.fill(8)(0.U(8.W))))
+  val index = RegInit(0.U(3.W))
 
-  val counter = RegInit(VecInit(Seq.fill(10)(0.U(10.W))))
+  val counter = RegInit(0.U(10.W))
   val transferCount = RegInit(0.U(4.W))
 
   val minCycles = RegInit(0.U(10.W))
 
   def setImageAndWeight() = {
-    for (i <- 0 until 10) {
-      neurons(i).io.inputPixels := image
-      neurons(i).io.inputWeights := weights(i)
-    }
+    neuron.io.inputPixels := image
+    neuron.io.inputWeights := weights(0)
   }
   setImageAndWeight()
 
@@ -100,10 +98,7 @@ class BenchTest extends Module {
     is(State.handling) {
       io.outputState := 2.U
 
-      io.outputStream := neurons(2).io.outputStream
-      for (i <- 0 until 10) {
-        counter(i) := counter(i) + neurons(i).io.outputStream
-      }
+      counter := counter + neuron.io.outputStream
 
       minCycles := (minCycles + 1.U)
       when(minCycles === (1024.U - 1.U)) {
@@ -114,28 +109,19 @@ class BenchTest extends Module {
     is(State.sending) {
       io.outputState := 3.U
       when(mAxis.tready) {
-        when(transferCount === (counter.length.U)) {
-          mAxis.data.tlast := false.B
-          mAxis.data.tvalid := false.B
-          // reinitialize everything
-          image := VecInit(Seq.fill(8)(0.U(8.W)))
-          index := 0.U
-          counter := VecInit(Seq.fill(10)(0.U(10.W)))
+        mAxis.data.tlast := true.B
+        mAxis.data.tvalid := true.B
+        mAxis.data.tdata := counter
 
-          minCycles := 0.U
-          state := State.receiving
-          transferCount := 0.U
+        // reinitialize everything
+        image := VecInit(Seq.fill(8)(0.U(8.W)))
+        index := 0.U
+        counter := RegInit(0.U(10.W))
 
-        }.otherwise {
-          when(transferCount === (counter.length.U - 1.U)) {
-            mAxis.data.tlast := true.B
-          }.otherwise {
-            mAxis.data.tlast := false.B
-          }
-          mAxis.data.tvalid := true.B
-          mAxis.data.tdata := counter(transferCount)
-          transferCount := transferCount + 1.U
-        }
+        minCycles := 0.U
+        state := State.receiving
+        transferCount := 0.U
+
       }
     }
   }
