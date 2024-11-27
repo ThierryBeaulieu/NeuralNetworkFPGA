@@ -458,17 +458,17 @@ class Test(Module):
             offset = 128
             n = 4
             """
-            nStanh = NStanh(128)
+            nStanh = NStanh(256)
             bipolar = B2ISBipolar()
             output = []
-            input = np.arange(-128, 127, 1)
+            input = np.arange(-128, 128, 1)
             s = []
             n = 4
             # practical model
             for i in range(0, len(input)):
                 stream = []
                 bipolarValues = []
-                for _ in range(0, 128):
+                for _ in range(0, 64):
 
                     si = 0
                     for _ in range(0, 401):
@@ -490,9 +490,15 @@ class Test(Module):
                 probability = probability / len(bipolarValues)
                 s.append(probability)
                 output.append(sum)
+            
+            counter = 0
+            for i in range(0,len(output)):
+                if output[i] == 1:
+                    counter += 1
+            print(f"counter of {counter}")
 
             # theorical model
-            th_input = np.arange(-401.0, 401.1, 0.1)
+            th_input = np.arange(-401.0, 401.0, 1.0)
             th_ouput = np.tanh(n * th_input / 2)
 
             enablePlot = True
@@ -502,7 +508,7 @@ class Test(Module):
                 plt.xlabel('s')
                 plt.ylabel('ouput')
                 plt.legend()
-                plt.title('Approximation de NStanh avec m = 401 et offset = 128')
+                plt.title('Approximation de NStanh avec m = 401 et offset = 256')
                 plt.show()
 
     def IntegrationTest1(self):
@@ -592,6 +598,58 @@ class Test(Module):
 
         print(f"percentage of correctness {correct / 100}")
 
+        
+    def IntegrationTest3(self):
+        print("### Integration Test 3")
+        image = [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 138, 162, 163, 164,
+            163, 157, 132, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            138, 177, 238, 255, 252, 247, 255, 251, 186, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 141, 210, 255, 237, 198, 172, 162, 214, 255,
+            244, 141, 128, 128, 128, 128, 128, 128, 128, 129, 151, 229, 252, 187,
+            137, 128, 128, 128, 148, 243, 255, 147, 128, 128, 128, 128, 128, 128,
+            128, 164, 248, 255, 205, 128, 128, 128, 128, 128, 148, 245, 246, 142,
+            128, 128, 128, 128, 128, 128, 145, 228, 255, 225, 164, 129, 128, 128,
+            128, 128, 186, 255, 197, 128, 128, 128, 128, 128, 128, 149, 228, 255,
+            231, 149, 128, 128, 128, 128, 128, 128, 220, 237, 147, 128, 128, 128,
+            128, 128, 133, 217, 255, 255, 241, 178, 128, 128, 128, 128, 128, 175,
+            248, 187, 128, 128, 128, 128, 128, 128, 145, 253, 249, 227, 240, 155,
+            128, 128, 128, 128, 144, 234, 221, 135, 128, 128, 128, 128, 128, 128,
+            133, 217, 255, 206, 170, 128, 128, 128, 128, 140, 221, 217, 147, 128,
+            128, 128, 128, 128, 128, 128, 128, 143, 182, 255, 241, 223, 221, 221,
+            220, 236, 234, 137, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            128, 178, 193, 227, 255, 255, 255, 222, 156, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 136, 165, 169, 167, 139,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128]
+        
+        pixels = image
+
+        results = np.zeros(10)
+        neurons = [Neuron(i) for i in range(10)]
+        for i in range(0, 10):
+            neuron = neurons[i]
+            counter = 0
+            nbCycles = 1024
+            for _ in range(0, nbCycles):
+                counter += neuron.tick(pixels)
+            print(f"counter {counter}")
+            probability = counter / nbCycles
+            results[i] = probability
+        print(f"results: {results}")
+        prediction = results.argmax() + 1
+        print(f"Prediction {prediction}")
+
+
+
     def TheoreticalValues(self):
         # x = np.load("resources/x.npy")
         y = np.load("resources/y.npy")
@@ -624,7 +682,7 @@ class Neuron(Module):
         self.weights = self.weights[weightIndex]
         self.b2ISBipolar = B2ISBipolar()
         self.b2sUnipolar = B2SUnipolar()
-        self.nstanh = NStanh(offset=(128))
+        self.nstanh = NStanh(offset=(256))
         self.bitwiseAND = BitwiseOperatorAND()
 
     def tick(self, pixels):
@@ -642,7 +700,7 @@ class Neuron(Module):
             bitwiseAND = self.bitwiseAND.tick(bipolar, unipolar)
             si += bitwiseAND
         n = 4
-        m = len(self.weights)
+        m = 401
         sthanRes = self.nstanh.tick (si, m * n)
         # print(f"unipolar {unipolar} bipolar {bipolar} bitwiseAND {bitwiseAND} si {si} NStanh {sthanRes}")
         return sthanRes
@@ -657,8 +715,9 @@ test = Test()
 # test.NStanhTest2()
 # test.NStanhTest3()
 # test.NStanhTest4()
-# test.NStanhTest5()
+test.NStanhTest5()
 # test.IntegrationTest1()
-test.IntegrationTest2()
+# test.IntegrationTest2()
+# test.IntegrationTest3()
 # test.TheoreticalValues()
 # test.NeuralNetwork()
