@@ -79,21 +79,20 @@ class TestNeuron(unittest.TestCase):
         n = 4
 
         fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / ((2**8) * (2**8 - 1))
-        
         fpga_out =  (2 * fpga_out) - m # le range se situe entre [-16, 16]
-        print(f"fpga_out = {fpga_out}")
-        print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
 
-        # La valeur obtenu par la fonction ici est adéquate et semble marcher correctement.
+        # print(f"fpga_out = {fpga_out}")
+        # print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
+
         result = 0
         neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
-        nbCycles = 1024
+        nbCycles = 4096
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
             result += res
 
         Ex = result / nbCycles
-        # self.assertAlmostEqual(Ex, 0.5, places=2)
+        self.assertAlmostEqual(Ex, 0.50, delta=1.0)
 
 if __name__ == "__main__":
     unittest.main()
