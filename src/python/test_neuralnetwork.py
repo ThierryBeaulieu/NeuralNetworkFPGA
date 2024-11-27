@@ -19,7 +19,32 @@ class TestNeuron(unittest.TestCase):
         expected = [-52,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,-1,-2,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,-5,-4,-6,-7,-4,1,7,10,0,-16,-6,2,-5,-1,0,0,0,0,0,1,1,4,8,9,1,-22,-4,17,3,-1,8,-3,-4,-11,-5,0,0,0,-1,7,-3,-9,1,-5,-31,-38,-4,9,16,5,0,4,10,-14,-16,0,0,-2,0,13,5,7,7,-3,-44,-33,22,14,-2,21,0,3,21,-1,-20,0,-1,-6,5,15,0,-3,12,5,-40,-25,8,6,-9,12,10,-1,-17,-12,-18,-1,0,-5,15,0,-6,6,6,-2,-30,-10,-15,11,0,1,7,15,-13,-15,-17,-2,0,4,15,-6,7,8,-8,6,-19,-10,6,16,11,14,10,11,-2,-13,-13,-1,0,5,7,12,1,-12,7,-10,-29,-9,-2,3,2,14,3,3,-1,-6,-12,-1,1,-18,-7,14,5,-5,7,-8,-10,-24,-6,8,3,7,4,-17,-3,-3,-15,0,4,-13,-14,2,6,-2,-13,0,5,-6,-8,4,6,0,6,-12,-8,-13,-18,-1,1,-10,-20,8,6,-18,11,-1,-16,2,4,-15,8,8,-6,6,12,3,-8,-1,0,-14,-21,-9,10,-9,16,-6,-20,-7,-11,5,0,-4,1,7,-7,13,-1,-1,0,-7,-1,-12,-1,-4,1,14,6,2,-5,9,-9,-7,14,10,-14,12,-5,0,0,-1,-4,-17,-7,11,-5,2,-3,-7,-14,-2,11,5,3,14,5,4,-4,0,0,0,-2,-15,-16,-8,-7,-6,-20,-5,-20,-20,21,4,0,15,11,1,-2,0,0,0,0,0,-8,-22,-21,5,10,8,-12,0,16,4,4,5,1,-1,0,0,0,0,0,1,0,-7,-8,0,11,8,4,27,19,9,3,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,6,4,0,0,0,0,0,0,0]
         self.assertEqual(neuron.weights.tolist(), expected)
 
-    def test_simple_scala_product(self):
+
+    def test_simple_scala_product_m16_min(self):
+        inputPixels = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]
+        weights = [-128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128]
+        m = 16
+        n = 4
+
+        fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / ((2**8) * (2**8 - 1))
+        fpga_out =  (2 * fpga_out) - m # le range se situe entre [-16, 16]
+
+        # print(f"fpga_out = {fpga_out}")
+        # print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
+
+        # La valeur obtenu par la fonction ici est adéquate et semble marcher correctement.
+        result = 0
+        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        nbCycles = 1024
+        for _ in range(0, nbCycles):
+            res = neuron.tick(inputPixels)
+            result += res
+
+        Ex = result / nbCycles
+        self.assertAlmostEqual(Ex, 0.000, places=2)
+
+
+    def test_simple_scala_product_m16_max(self):
         # exemple m = 8
         # inputPixels = [134, 128, 116, 128, 112, 115, 140, 128, 134, 128, 116, 128, 112, 115, 140, 128]
         # weights = [1, 0, 3, -2, -3, 2, 0, 3, 1, 0, 3, -2, -3, 2, 0, 3]
@@ -46,6 +71,29 @@ class TestNeuron(unittest.TestCase):
 
         Ex = result / nbCycles
         self.assertAlmostEqual(Ex, 0.999, places=2)
+
+    def test_simple_scala_product_m16_average(self):
+        inputPixels = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]
+        weights = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        m = 16
+        n = 4
+
+        fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / ((2**8) * (2**8 - 1))
+        
+        fpga_out =  (2 * fpga_out) - m # le range se situe entre [-16, 16]
+        print(f"fpga_out = {fpga_out}")
+        print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
+
+        # La valeur obtenu par la fonction ici est adéquate et semble marcher correctement.
+        result = 0
+        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        nbCycles = 1024
+        for _ in range(0, nbCycles):
+            res = neuron.tick(inputPixels)
+            result += res
+
+        Ex = result / nbCycles
+        # self.assertAlmostEqual(Ex, 0.5, places=2)
 
 if __name__ == "__main__":
     unittest.main()
