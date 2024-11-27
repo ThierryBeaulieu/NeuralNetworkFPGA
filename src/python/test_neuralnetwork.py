@@ -20,7 +20,7 @@ class TestNeuron(unittest.TestCase):
         self.assertEqual(neuron.weights.tolist(), expected)
 
 
-    def test_simple_scala_product_m16_min(self):
+    def test_integration_neuron_m_16_w_min(self):
         inputPixels = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]
         weights = [-128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128, -128]
         m = 16
@@ -32,7 +32,6 @@ class TestNeuron(unittest.TestCase):
         # print(f"fpga_out = {fpga_out}")
         # print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
 
-        # La valeur obtenu par la fonction ici est adéquate et semble marcher correctement.
         result = 0
         neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
         nbCycles = 1024
@@ -44,24 +43,21 @@ class TestNeuron(unittest.TestCase):
         self.assertAlmostEqual(Ex, 0.000, places=2)
 
 
-    def test_simple_scala_product_m16_max(self):
-        # exemple m = 8
-        # inputPixels = [134, 128, 116, 128, 112, 115, 140, 128, 134, 128, 116, 128, 112, 115, 140, 128]
-        # weights = [1, 0, 3, -2, -3, 2, 0, 3, 1, 0, 3, -2, -3, 2, 0, 3]
+    def test_integration_neuron_m_16_w_max(self):
         inputPixels = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]
         weights = [127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127]
         m = 16
         n = 4
+
         # weights = np.loadtxt("resources/weights.csv", delimiter=",").astype(np.int8)
         # min = 0.0, max = 2**8 * 2**8 = 2**16
-        # pas parfait comme approximation [-128, 127] donc max val positif = 2**8(2**8 - 1), négatif = 2**8(2**8)
+      
         fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / ((2**8) * (2**8 - 1))
-        # le range se situe entre [-16, 16]
-        fpga_out =  (2 * fpga_out) - m
-        print(f"fpga_out = {fpga_out}")
-        print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
+        fpga_out =  (2 * fpga_out) - m # le range se situe entre [-16, 16]
+        
+        # print(f"fpga_out = {fpga_out}")
+        # print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
 
-        # La valeur obtenu par la fonction ici est adéquate et semble marcher correctement.
         result = 0
         neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
         nbCycles = 1024
@@ -72,7 +68,7 @@ class TestNeuron(unittest.TestCase):
         Ex = result / nbCycles
         self.assertAlmostEqual(Ex, 0.999, places=2)
 
-    def test_simple_scala_product_m16_average(self):
+    def test_integration_neuron_m_16_average(self):
         inputPixels = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]
         weights = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         m = 16
@@ -93,6 +89,28 @@ class TestNeuron(unittest.TestCase):
 
         Ex = result / nbCycles
         self.assertAlmostEqual(Ex, 0.50, delta=1.0)
+
+    def test_integration_neuron_m_16_real(self):
+        inputPixels = [134, 128, 116, 128, 112, 115, 140, 128, 134, 128, 116, 128, 112, 115, 140, 128]
+        weights = [1, 0, 3, -2, -3, 2, 0, 3, 1, 0, 3, -2, -3, 2, 0, 3]
+        m = 16
+        n = 4
+
+        fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / ((2**8) * (2**8 - 1))
+        fpga_out =  (2 * fpga_out) - m # le range se situe entre [-16, 16]
+
+        # print(f"fpga_out = {fpga_out}")
+        # print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
+
+        result = 0
+        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        nbCycles = 4096
+        for _ in range(0, nbCycles):
+            res = neuron.tick(inputPixels)
+            result += res
+
+        Ex = result / nbCycles
+        self.assertAlmostEqual(Ex, 0.55, delta=0.1)
 
 if __name__ == "__main__":
     unittest.main()
