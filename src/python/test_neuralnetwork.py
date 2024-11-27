@@ -45,7 +45,7 @@ class TestNeuron(unittest.TestCase):
             result += res
 
         Ex = result / nbCycles
-        print(Ex)
+        self.assertAlmostEqual(Ex, 0.999, places=2)
 
 if __name__ == "__main__":
     unittest.main()
