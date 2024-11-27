@@ -170,6 +170,25 @@ class TestNeuron(unittest.TestCase):
         Ex = result / nbCycles
         self.assertAlmostEqual(Ex, 0.50, delta=1.0)
 
+    def test_integration_neuron_m_8_average(self):
+        inputPixels = [128, 128, 128, 128, 128, 128, 128, 128]
+        weights = [0, 0, 0, 0, 0, 0, 0, 0]
+        m = 8
+        n = 4
+
+        fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / ((2**8) * (2**8 - 1))
+        fpga_out =  (2 * fpga_out) - m # le range se situe entre [-16, 16]
+
+        result = 0
+        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        nbCycles = 4096
+        for _ in range(0, nbCycles):
+            res = neuron.tick(inputPixels)
+            result += res
+
+        Ex = result / nbCycles
+        self.assertAlmostEqual(Ex, 0.25, delta=1.0)
+
 
 if __name__ == "__main__":
     unittest.main()
