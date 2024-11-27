@@ -7,6 +7,8 @@ from neuralnetwork import B2ISBipolar
 from neuralnetwork import B2SBipolar
 from neuralnetwork import B2SUnipolar
 from neuralnetwork import BitwiseOperatorAND
+from neuralnetwork import CounterUnipolar
+from neuralnetwork import NStanh
 
 
 class Test():
@@ -282,7 +284,7 @@ class Test():
                 output.append(sum)
 
             # theorical model
-            th_input = np.arange(-4.0, 4.1, 0.1)
+            th_input = np.arange(-8.0, 8.1, 0.1)
             th_ouput = np.tanh(n * th_input / 2)
 
             enablePlot = True
@@ -354,6 +356,67 @@ class Test():
                 plt.ylabel('ouput')
                 plt.legend()
                 plt.title('Approximation de NStanh avec m = 401 et offset = 256')
+                plt.show()
+
+    def NStanhTest6(self):
+            """
+            La valeur du offset est toujours (m * n) / 2
+            n peut varier, mais par expérience, on obtient de bon résultats avec m = 4 
+            m = 8
+            offset = 16
+            n = 4
+            """
+            n = 16 # Tant que c'est un multiple de deux c'est correct
+            m = 8
+            nStanh = NStanh((m * n) / 2) # m * n / 2 (c'est le nombre d'états qu'il y a, le 0 est donc mi-chemin)
+            bipolar = B2ISBipolar()
+            output = []
+            input = np.arange(-128, 127, 1)
+            s = []
+            # practical model
+            for i in range(0, len(input)):
+                stream = []
+                bipolarValues = []
+                for _ in range(0, 1024):
+                    si1 = bipolar.tick(input[i])
+                    si2 = bipolar.tick(input[i])
+                    si3 = bipolar.tick(input[i])
+                    si4 = bipolar.tick(input[i])
+                    si5 = bipolar.tick(input[i])
+                    si6 = bipolar.tick(input[i])
+                    si7 = bipolar.tick(input[i])
+                    si8 = bipolar.tick(input[i])
+                    si = si1 + si2 + si3 + si4 + si5 + si6 + si7 + si8
+                    bipolarValues.append(si)
+                    # Le 2 * nStanh - 1 permet d'avoir [-1, 1]
+                    stream.append(2 * nStanh.tick(si, n * m) - 1)
+                    bipolarValues.append(si)
+
+                sum = 0
+                for j in range(0, len(stream)):
+                    sum = sum + stream[j]
+
+                probability = 0
+                for j in range(0, len(bipolarValues)):
+                    probability = probability + bipolarValues[j]
+
+                sum = sum / len(stream)
+                probability = probability / len(bipolarValues)
+                s.append(probability)
+                output.append(sum)
+
+            # theorical model
+            th_input = np.arange(-8.0, 8.1, 0.1)
+            th_ouput = np.tanh(n * th_input / 2)
+
+            enablePlot = True
+            if enablePlot:
+                plt.scatter(s, output, marker='o', label='NStanh(s)')
+                plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
+                plt.xlabel('s')
+                plt.ylabel('ouput')
+                plt.legend()
+                plt.title('Approximation de NStanh avec m = 8 et offset = 16')
                 plt.show()
 
     def IntegrationTest1(self):
@@ -517,8 +580,9 @@ test = Test()
 # test.NStanhTest3()
 # test.NStanhTest4()
 # test.NStanhTest5()
+test.NStanhTest6()
 # test.IntegrationTest1()
 # test.IntegrationTest2()
-test.NeuralNetworkTh1()
-test.NeuralNetworkPr1()
+# test.NeuralNetworkTh1()
+# test.NeuralNetworkPr1()
 # test.TheoreticalValues()

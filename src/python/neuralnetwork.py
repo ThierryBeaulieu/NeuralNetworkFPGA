@@ -143,8 +143,9 @@ class CounterUnipolar(Module):
             return res
         
 class NStanh(Module):
-    def __init__(self, offset):
-        self.counter = 0
+    def __init__(self, offset, n):
+        m = 8
+        self.counter = n * m
         self.offset = offset
 
     def tick(self, Si, mn):
@@ -167,16 +168,20 @@ class NStanh(Module):
         
 class Neuron(Module):
 
-    def __init__(self, weightIndex: int):
+    def __init__(self, weightIndex: int, weights=None, offset=256, n=4):
         """
         Single Neuron from a neural network
         """
         self.weights = np.loadtxt("resources/weights.csv", delimiter=",")
         self.weights = self.weights[weightIndex]
+        if weights is not None:
+            self.weights = weights
+        self.n = n
+
         self.b2ISBipolar = B2ISBipolar()
         self.b2sUnipolar = B2SUnipolar()
-        self.nstanh = NStanh(offset=256)
         self.bitwiseAND = BitwiseOperatorAND()
+        self.nstanh = NStanh(offset=offset, n=n)
 
     def tick(self, pixels):
         """
@@ -192,8 +197,7 @@ class Neuron(Module):
             unipolar = self.b2sUnipolar.tick(pixels[i])
             bitwiseAND = self.bitwiseAND.tick(bipolar, unipolar)
             si += bitwiseAND
-        n = 4
         m = len(pixels)
-        sthanRes = self.nstanh.tick (si, m * n)
-        # print(f"unipolar {unipolar} bipolar {bipolar} bitwiseAND {bitwiseAND} si {si} NStanh {sthanRes}")
+        sthanRes = self.nstanh.tick(si, m * self.n)
+        # print(f"unipolar {unipolar} bipolar {bipolar} bitwiseAND {bitwiseAND} si {si} stanhRes {sthanRes}")
         return sthanRes
