@@ -576,20 +576,22 @@ class Test():
             offset = 16
             n = 4
             """
-            n = 16 # Tant que c'est un multiple de deux c'est correct
+            n = 4 # Tant que c'est un multiple de deux c'est correct
             output = []
             input = np.arange(-128, 127, 1)
-            pixels = np.zeros_like(input) + 255
 
-            neuron = Neuron(0, input)
             s = []
             # practical model
             for i in range(0, len(input)):
+                weights = np.full(8, input[i])
+                pixels = np.zeros_like(weights) + 255
+                neuron = Neuron(0, weights=weights, n=n, m=8)
                 stream = []
                 bipolarValues = []
-                for _ in range(0, 1024):
+                for _ in range(0, 128):
                     # Le 2 * nStanh - 1 permet d'avoir
                     stream.append(2 * neuron.tick(pixels) - 1)
+                    bipolarValues.append(neuron.lastSi)
 
                 sum = 0
                 for j in range(0, len(stream)):
@@ -628,7 +630,7 @@ test = Test()
 # test.NStanhTest3()
 # test.NStanhTest4()
 # test.NStanhTest5()
-test.NStanhTest6()
+# test.NStanhTest6()
 # test.IntegrationTest1()
 # test.IntegrationTest2()
 # test.NeuralNetworkTh1()

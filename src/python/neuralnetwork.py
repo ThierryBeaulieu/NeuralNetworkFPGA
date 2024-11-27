@@ -146,6 +146,7 @@ class NStanh(Module):
     def __init__(self, offset):
         self.counter = 0
         self.offset = offset
+        self.offset = offset
 
     def tick(self, Si, mn):
         """
@@ -182,6 +183,7 @@ class Neuron(Module):
         self.b2sUnipolar = B2SUnipolar()
         self.bitwiseAND = BitwiseOperatorAND()
         self.nstanh = NStanh(offset=(m * n / 2))
+        self.lastSi = 0
 
     def tick(self, pixels):
         """
@@ -197,6 +199,7 @@ class Neuron(Module):
             unipolar = self.b2sUnipolar.tick(pixels[i])
             bitwiseAND = self.bitwiseAND.tick(bipolar, unipolar)
             si += bitwiseAND
+        self.lastSi = si
         sthanRes = self.nstanh.tick(si, self.m * self.n)
         # print(f"unipolar {unipolar} bipolar {bipolar} bitwiseAND {bitwiseAND} si {si} stanhRes {sthanRes}")
         return sthanRes
