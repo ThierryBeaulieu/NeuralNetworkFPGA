@@ -57,7 +57,7 @@ class NeuronWrapper extends Module {
   sAxis.tready := RegInit(true.B)
   mAxis.data.tvalid := RegInit(false.B)
   mAxis.data.tlast := RegInit(false.B)
-  mAxis.data.tdata := RegInit(0.U(8.W))
+  mAxis.data.tdata := RegInit(0.U(10.W))
   mAxis.data.tkeep := RegInit("b1".U)
 
   object State extends ChiselEnum {
@@ -73,6 +73,7 @@ class NeuronWrapper extends Module {
   val transferCount = RegInit(0.U(4.W))
 
   val minCycles = RegInit(0.U(10.W))
+  val dataSent = RegInit(false.B)
 
   def setImageAndWeight() = {
     neuron.io.inputPixels := image
@@ -109,19 +110,24 @@ class NeuronWrapper extends Module {
     is(State.sending) {
       io.outputState := 3.U
       when(mAxis.tready) {
-        mAxis.data.tlast := true.B
-        mAxis.data.tvalid := true.B
-        mAxis.data.tdata := counter
+        when(dataSent) {
+          mAxis.data.tlast := true.B
+          mAxis.data.tvalid := false.B
 
-        // reinitialize everything
-        image := VecInit(Seq.fill(8)(0.U(8.W)))
-        index := 0.U
-        counter := RegInit(0.U(10.W))
+          // reinitialize everything
+          image := VecInit(Seq.fill(8)(0.U(8.W)))
+          index := 0.U
+          counter := RegInit(0.U(10.W))
 
-        minCycles := 0.U
-        state := State.receiving
-        transferCount := 0.U
-
+          minCycles := 0.U
+          state := State.receiving
+          transferCount := 0.U
+        }.otherwise {
+          mAxis.data.tlast := false.B
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := counter
+          dataSent := true.B
+        }
       }
     }
   }
