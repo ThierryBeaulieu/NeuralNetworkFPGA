@@ -24,7 +24,7 @@ class TestNeuron(unittest.TestCase):
         # inputPixels = [134, 128, 116, 128, 112, 115, 140, 128, 134, 128, 116, 128, 112, 115, 140, 128]
         # weights = [1, 0, 3, -2, -3, 2, 0, 3, 1, 0, 3, -2, -3, 2, 0, 3]
         inputPixels = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]
-        weights = [-127, -127, -127, -127, -127, -127, -127, -127, -127, -127, -127, -127, -127, -127, -127, -127]
+        weights = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         m = 16
         n = 4
         # weights = np.loadtxt("resources/weights.csv", delimiter=",").astype(np.int8)
@@ -32,7 +32,7 @@ class TestNeuron(unittest.TestCase):
         # pas parfait comme approximation [-128, 127] donc max val positif = 2**8(2**8 - 1), négatif = 2**8(2**8)
         fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / ((2**8) * (2**8 - 1))
         # le range se situe entre [0, 16]
-        fpga_out = fpga_out - (m / 2.0)
+        fpga_out =  (2 * fpga_out) - m
         print(f"fpga_out = {fpga_out}")
         print(f"tanh(s) {np.tanh(fpga_out)}") # output [-1.0, 1.0]
 
