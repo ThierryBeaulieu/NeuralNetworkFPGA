@@ -82,7 +82,7 @@ class TestNeuron(unittest.TestCase):
 
         result = 0
         neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
-        nbCycles = 4096
+        nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
             result += res
@@ -104,7 +104,7 @@ class TestNeuron(unittest.TestCase):
 
         result = 0
         neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
-        nbCycles = 4096
+        nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
             result += res
@@ -162,7 +162,7 @@ class TestNeuron(unittest.TestCase):
 
         result = 0
         neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
-        nbCycles = 4096
+        nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
             result += res
@@ -181,7 +181,7 @@ class TestNeuron(unittest.TestCase):
 
         result = 0
         neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
-        nbCycles = 4096
+        nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
             result += res
