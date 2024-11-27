@@ -388,7 +388,7 @@ class Test():
                     si8 = bipolar.tick(input[i])
                     si = si1 + si2 + si3 + si4 + si5 + si6 + si7 + si8
                     bipolarValues.append(si)
-                    # Le 2 * nStanh - 1 permet d'avoir [-1, 1]
+                    # Le 2 * nStanh - 1 permet d'avoir
                     stream.append(2 * nStanh.tick(si, n * m) - 1)
                     bipolarValues.append(si)
 
@@ -568,7 +568,55 @@ class Test():
         #print(f"accuracy : {counter / 401}")
         np.save("practical.npy", practical)
               
+    def IntegrationTestX(self):
+            """
+            La valeur du offset est toujours (m * n) / 2
+            n peut varier, mais par expérience, on obtient de bon résultats avec m = 4 
+            m = 8
+            offset = 16
+            n = 4
+            """
+            n = 16 # Tant que c'est un multiple de deux c'est correct
+            output = []
+            input = np.arange(-128, 127, 1)
+            pixels = np.zeros_like(input) + 255
 
+            neuron = Neuron(0, input)
+            s = []
+            # practical model
+            for i in range(0, len(input)):
+                stream = []
+                bipolarValues = []
+                for _ in range(0, 1024):
+                    # Le 2 * nStanh - 1 permet d'avoir
+                    stream.append(2 * neuron.tick(pixels) - 1)
+
+                sum = 0
+                for j in range(0, len(stream)):
+                    sum = sum + stream[j]
+
+                probability = 0
+                for j in range(0, len(bipolarValues)):
+                    probability = probability + bipolarValues[j]
+
+                sum = sum / len(stream)
+                probability = probability / len(bipolarValues)
+                s.append(probability)
+                output.append(sum)
+
+            # theorical model
+            th_input = np.arange(-8.0, 8.1, 0.1)
+            th_ouput = np.tanh(n * th_input / 2)
+
+            enablePlot = True
+            if enablePlot:
+                plt.scatter(s, output, marker='o', label='NStanh(s)')
+                plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
+                plt.xlabel('s')
+                plt.ylabel('ouput')
+                plt.legend()
+                plt.title('Approximation de NStanh avec m = 8 et offset = 16')
+                plt.show()
 
 test = Test()
 # test.B2ISTest()
@@ -586,3 +634,4 @@ test.NStanhTest6()
 # test.NeuralNetworkTh1()
 # test.NeuralNetworkPr1()
 # test.TheoreticalValues()
+test.IntegrationTestX()

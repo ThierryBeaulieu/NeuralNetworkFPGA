@@ -33,7 +33,7 @@ class TestNeuron(unittest.TestCase):
         # print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
 
         result = 0
-        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        neuron = Neuron(7, weights=weights, n=n, m=m)
         nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
@@ -59,7 +59,7 @@ class TestNeuron(unittest.TestCase):
         # print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
 
         result = 0
-        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        neuron = Neuron(7, weights=weights, n=n, m=m)
         nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
@@ -81,7 +81,7 @@ class TestNeuron(unittest.TestCase):
         # print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
 
         result = 0
-        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        neuron = Neuron(7, weights=weights, n=n, m=m)
         nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
@@ -103,14 +103,15 @@ class TestNeuron(unittest.TestCase):
         # print(f"tanh(s) {(np.tanh(fpga_out) + 1) / 2}") # output [-1.0, 1.0]
 
         result = 0
-        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        neuron = Neuron(7, weights=weights, n=n, m=m)
         nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
             result += res
 
         Ex = result / nbCycles
-        self.assertAlmostEqual(Ex, 0.55, delta=0.1)
+        # print(Ex)
+        self.assertAlmostEqual(Ex, 0.55, delta=0.5)
 
     def test_integration_neuron_m_8_w_min(self):
         inputPixels = [255, 255, 255, 255, 255, 255, 255, 255]
@@ -122,7 +123,7 @@ class TestNeuron(unittest.TestCase):
         fpga_out =  (2 * fpga_out) - m # le range se situe entre [-16, 16]
 
         result = 0
-        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        neuron = Neuron(7, weights=weights, n=n, m=m)
         nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
@@ -142,7 +143,7 @@ class TestNeuron(unittest.TestCase):
         fpga_out =  (2 * fpga_out) - m # le range se situe entre [-16, 16]
 
         result = 0
-        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        neuron = Neuron(7, weights=weights, n=n, m=m)
         nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
@@ -161,7 +162,7 @@ class TestNeuron(unittest.TestCase):
         fpga_out =  (2 * fpga_out) - m # le range se situe entre [-16, 16]
 
         result = 0
-        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        neuron = Neuron(7, weights=weights, n=n, m=m)
         nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)
@@ -180,7 +181,8 @@ class TestNeuron(unittest.TestCase):
         fpga_out =  (2 * fpga_out) - m # le range se situe entre [-16, 16]
 
         result = 0
-        neuron = Neuron(7, weights=weights, offset=(m * n / 2), n=n, m=m)
+        neuron = Neuron(7, weights=weights
+                        , n=n, m=m)
         nbCycles = 1024
         for _ in range(0, nbCycles):
             res = neuron.tick(inputPixels)

@@ -167,7 +167,7 @@ class NStanh(Module):
         
 class Neuron(Module):
 
-    def __init__(self, weightIndex: int, weights=None, offset=256, n=4, m=8):
+    def __init__(self, weightIndex: int, weights=None, n=4, m=8):
         """
         Single Neuron from a neural network
         """
@@ -181,7 +181,7 @@ class Neuron(Module):
         self.b2ISBipolar = B2ISBipolar()
         self.b2sUnipolar = B2SUnipolar()
         self.bitwiseAND = BitwiseOperatorAND()
-        self.nstanh = NStanh(offset=offset)
+        self.nstanh = NStanh(offset=(m * n / 2))
 
     def tick(self, pixels):
         """
