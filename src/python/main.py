@@ -682,7 +682,7 @@ class Neuron(Module):
         self.weights = self.weights[weightIndex]
         self.b2ISBipolar = B2ISBipolar()
         self.b2sUnipolar = B2SUnipolar()
-        self.nstanh = NStanh(offset=(256))
+        self.nstanh = NStanh(offset=256)
         self.bitwiseAND = BitwiseOperatorAND()
 
     def tick(self, pixels):
