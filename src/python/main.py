@@ -583,12 +583,13 @@ class Test():
             s = []
             # practical model
             for i in range(0, len(input)):
-                weights = np.full(8, input[i])
+                m = 8
+                weights = np.full(m, input[i])
                 pixels = np.zeros_like(weights) + 255
-                neuron = Neuron(0, weights=weights, n=n, m=8)
+                neuron = Neuron(0, weights=weights, n=n, m=m)
                 stream = []
                 bipolarValues = []
-                for _ in range(0, 128):
+                for _ in range(0, 1024):
                     # Le 2 * nStanh - 1 permet d'avoir
                     stream.append(2 * neuron.tick(pixels) - 1)
                     bipolarValues.append(neuron.lastSi)
