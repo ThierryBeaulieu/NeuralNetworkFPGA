@@ -2,169 +2,14 @@ from abc import ABC, abstractmethod
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.typing import NDArray
-import random
-
-enablePlot = False
-
-class LFSR:
-    def __init__(self, seed, taps):
-        "Linear-Feedback shift register"
-        self.state = seed
-        self.taps = taps
-        self.max_bits = seed.bit_length()  # Determine the bit length of the initial seed
-
-    def next_bit(self):
-        "Generate a random bit based on the seed and the taps"
-        # XOR the tapped bits to get the new bit
-        new_bit = 0
-        for tap in self.taps:
-            new_bit ^= (self.state >> (tap - 1)) & 1  # XOR bit values at tap positions
-
-        # Shift left and add the new bit to the LSB
-        self.state = ((self.state << 1) | new_bit) & ((1 << self.max_bits) - 1)
-        return new_bit
-
-    def next_number(self, bits=8):
-        "Generate a number with the specified number of bits. Range [0, 255]"
-        return random.randint(0, 255)
-
-class Module:
-    @abstractmethod
-    def tick(self):
-        pass
-
-class B2SUnipolar(Module):
-    def __init__(self):
-        "Binary 2 stochastic converter in unipolar format"
-        self.seed = 0b11110111
-        self.taps = [7, 5, 3, 1]
-        self.lfsr = LFSR(self.seed, self.taps)
-
-    def tick(self, value: np.uint8):
-        """
-        Converts a binary into a unipolar probability.
-
-        Input : value [0, 255]
-        Output : {0, 1}
-        """
-        value = np.uint8(value)
-        generatedBits = self.lfsr.next_number(self.seed.bit_length())
-        return int(value > generatedBits)
-
-class B2SBipolar(Module):
-    def __init__(self):
-        "Binary 2 stochastic converter in bipolar format"
-        self.seed = 0b11110111
-        self.taps = [7, 5, 3, 1]
-        self.lfsr = LFSR(self.seed, self.taps)
-
-    def tick(self, value: np.int8):
-        """
-        Converts a binary into a probability.
-
-        Input : value [-128, 127]
-        Output : {-1, 1}
-        """
-        value = np.int8(value)
-        generatedBits = self.lfsr.next_number(self.seed.bit_length())
-        generatedBits = self.twos(generatedBits)
-        return int(value > generatedBits) * 2 - 1
-
-    def twos(self, bits):
-        "shifts the range from [0,255] to [-128, 127]"
-        return bits - 128
+from neuralnetwork import Neuron
+from neuralnetwork import B2ISBipolar
+from neuralnetwork import B2SBipolar
+from neuralnetwork import B2SUnipolar
+from neuralnetwork import BitwiseOperatorAND
 
 
-class B2ISBipolar(Module):
-
-    def __init__(self):
-        """
-        Binary to integral stochastic convertor
-        """
-        self.bpB2S = B2SBipolar()
-        
-
-    def tick(self, weightValue):
-        """
-        Takes a weight [-128, 127] and converts it
-        to an integral stochastic stream using m=1 B2S.
-
-        Input : weightValue [-127, 128]
-        Output : {-1, 1}
-        """
-        return self.bpB2S.tick(weightValue)
-
-class BitwiseOperatorAND(Module):
-    def tick(self, integralValue, bit):
-        """
-        Takes a value in the integral stream and returns
-        a 0 or the integral value according to the bit
-
-        Input : integralValue {-m,...,m} bit {0, 1}
-        Output : {0, integralValue}
-        """
-        if bit >= 1:
-            return integralValue
-        return 0
-    
-class IntegralAdder(Module):
-    def tick(self, value1, value2):
-        """
-        Takes two values of the integral stream and 
-        adds them together.
-
-        Input : value1 {-m1, m1}, value2 {-m2, m2}
-        Output : {-(m1+m2), 1,..,m1+m2}
-        """
-        return value1 + value2
-    
-class CounterUnipolar(Module):
-    def __init__(self):
-        self.nbTick = 0
-        self.sum = 0
-
-    def tick(self, stochasticBit):
-        """
-        Accumulate incoming binary stochastic stream.
-        WARNING: This isn't synthesizable in FPGA. This
-        should be done using python by using incoming data
-        from FPGA
-        
-        Input: stochasticBit {0, 1}
-        Output: uint8 [0, 255]
-        """
-        self.nbTick = self.nbTick + 1
-        self.sum = self.sum + stochasticBit
-        if self.nbTick >= 1024:
-            self.nbTick = 0
-            res = self.sum / 4 # floating point
-            self.sum = 0
-            return res
-        
-class NStanh(Module):
-    def __init__(self, offset):
-        self.counter = 0
-        self.offset = offset
-
-    def tick(self, Si, mn):
-        """
-        NStanh function. Using a FSM, we simulate NStanh
-
-        Input: Si {-m,...,m}, mn {1*n,2*n,4*n...}
-        Output: {0, 1}
-        """
-        self.counter = self.counter + Si
-        # print(f"NStanh counter {self.counter}")
-        if self.counter > (mn - 1):
-            self.counter = mn - 1
-        if self.counter < 0:
-            self.counter = 0
-        if self.counter > self.offset:
-            return 1
-        else:
-            return 0
-        
-class Test(Module):
+class Test():
     def B2ISTest(self):
         print("### B2SITest")
         B2IS = B2ISBipolar()
@@ -598,39 +443,9 @@ class Test(Module):
 
         print(f"percentage of correctness {correct / 100}")
 
-        
-    def IntegrationTest3(self):
-        print("### Integration Test 3")
-        image = [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 138, 162, 163, 164,
-            163, 157, 132, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            138, 177, 238, 255, 252, 247, 255, 251, 186, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 141, 210, 255, 237, 198, 172, 162, 214, 255,
-            244, 141, 128, 128, 128, 128, 128, 128, 128, 129, 151, 229, 252, 187,
-            137, 128, 128, 128, 148, 243, 255, 147, 128, 128, 128, 128, 128, 128,
-            128, 164, 248, 255, 205, 128, 128, 128, 128, 128, 148, 245, 246, 142,
-            128, 128, 128, 128, 128, 128, 145, 228, 255, 225, 164, 129, 128, 128,
-            128, 128, 186, 255, 197, 128, 128, 128, 128, 128, 128, 149, 228, 255,
-            231, 149, 128, 128, 128, 128, 128, 128, 220, 237, 147, 128, 128, 128,
-            128, 128, 133, 217, 255, 255, 241, 178, 128, 128, 128, 128, 128, 175,
-            248, 187, 128, 128, 128, 128, 128, 128, 145, 253, 249, 227, 240, 155,
-            128, 128, 128, 128, 144, 234, 221, 135, 128, 128, 128, 128, 128, 128,
-            133, 217, 255, 206, 170, 128, 128, 128, 128, 140, 221, 217, 147, 128,
-            128, 128, 128, 128, 128, 128, 128, 143, 182, 255, 241, 223, 221, 221,
-            220, 236, 234, 137, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 178, 193, 227, 255, 255, 255, 222, 156, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 136, 165, 169, 167, 139,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128]
-        
+    def NeuralNetworkPr1(self):
+        print("### Neural Network Practical Value 1")
+        image = [255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 68, 70, 72, 70, 58, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 98, 220, 254, 248, 238, 254, 246, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 26, 164, 254, 218, 140, 88, 68, 172, 254, 232, 26, 0, 0, 0, 0, 0, 0, 0, 2, 46, 202, 248, 118, 18, 0, 0, 0, 40, 230, 254, 38, 0, 0, 0, 0, 0, 0, 0, 72, 240, 254, 154, 0, 0, 0, 0, 0, 40, 234, 236, 28, 0, 0, 0, 0, 0, 0, 34, 200, 254, 194, 72, 2, 0, 0, 0, 0, 116, 254, 138, 0, 0, 0, 0, 0, 0, 42, 200, 254, 206, 42, 0, 0, 0, 0, 0, 0, 184, 218, 38, 0, 0, 0, 0, 0, 10, 178, 254, 254, 226, 100, 0, 0, 0, 0, 0, 94, 240, 118, 0, 0, 0, 0, 0, 0, 34, 250, 242, 198, 224, 54, 0, 0, 0, 0, 32, 212, 186, 14, 0, 0, 0, 0, 0, 0, 10, 178, 254, 156, 84, 0, 0, 0, 0, 24, 186, 178, 38, 0, 0, 0, 0, 0, 0, 0, 0, 30, 108, 254, 226, 190, 186, 186, 184, 216, 212, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 130, 198, 254, 254, 254, 188, 56, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 74, 82, 78, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         pixels = image
 
         results = np.zeros(10)
@@ -648,9 +463,26 @@ class Test(Module):
         prediction = results.argmax() + 1
         print(f"Prediction {prediction}")
 
+        
+    def NeuralNetworkTh1(self):
+        print("### Neural Network Theoretical Values")
+        # x = np.load("resources/x.npy")
+        
+        # x = np.load("images.npy")
+        image = np.array([255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 68, 70, 72, 70, 58, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 98, 220, 254, 248, 238, 254, 246, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 26, 164, 254, 218, 140, 88, 68, 172, 254, 232, 26, 0, 0, 0, 0, 0, 0, 0, 2, 46, 202, 248, 118, 18, 0, 0, 0, 40, 230, 254, 38, 0, 0, 0, 0, 0, 0, 0, 72, 240, 254, 154, 0, 0, 0, 0, 0, 40, 234, 236, 28, 0, 0, 0, 0, 0, 0, 34, 200, 254, 194, 72, 2, 0, 0, 0, 0, 116, 254, 138, 0, 0, 0, 0, 0, 0, 42, 200, 254, 206, 42, 0, 0, 0, 0, 0, 0, 184, 218, 38, 0, 0, 0, 0, 0, 10, 178, 254, 254, 226, 100, 0, 0, 0, 0, 0, 94, 240, 118, 0, 0, 0, 0, 0, 0, 34, 250, 242, 198, 224, 54, 0, 0, 0, 0, 32, 212, 186, 14, 0, 0, 0, 0, 0, 0, 10, 178, 254, 156, 84, 0, 0, 0, 0, 24, 186, 178, 38, 0, 0, 0, 0, 0, 0, 0, 0, 30, 108, 254, 226, 190, 186, 186, 184, 216, 212, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 130, 198, 254, 254, 254, 188, 56, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 74, 82, 78, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
+        weights = np.loadtxt("resources/weights.csv", delimiter=",").astype(np.int8)
+    
+        fpga_out = (np.dot(image.astype(np.int16), weights.T.astype(np.int16)) >> 8).astype(np.int8)
+        # Ça ne sert à rien d'appliquer la fonction NStanh
+        pred = fpga_out.argmax() + 1
+
+        print("FPGA Ouput: ", fpga_out)
+        print("Prediction: ", pred)
 
     def TheoreticalValues(self):
+        print("Theoretical Values")
+        # todo, the values aren't pass in a tanh function
         # x = np.load("resources/x.npy")
         y = np.load("resources/y.npy")
         x = np.load("images.npy")
@@ -662,6 +494,7 @@ class Test(Module):
             image = x[imageIndex]
 
             fpga_out = (np.dot(image.astype(np.int16), weights.T.astype(np.int16)) >> 8).astype(np.int8)
+
             pred = fpga_out.argmax() + 1
 
             if pred == y[imageIndex]:
@@ -672,38 +505,6 @@ class Test(Module):
         #print(f"accuracy : {counter / 401}")
         np.save("practical.npy", practical)
               
-class Neuron(Module):
-
-    def __init__(self, weightIndex: int):
-        """
-        Single Neuron from a neural network
-        """
-        self.weights = np.loadtxt("resources/weights.csv", delimiter=",")
-        self.weights = self.weights[weightIndex]
-        self.b2ISBipolar = B2ISBipolar()
-        self.b2sUnipolar = B2SUnipolar()
-        self.nstanh = NStanh(offset=256)
-        self.bitwiseAND = BitwiseOperatorAND()
-
-    def tick(self, pixels):
-        """
-        Neuron. Takes i=4 W1, W2,...,Wi weights and v1, v2,...,vi pixels.
-        The pixels are an array of int8 and the weights too.
-
-        Input: pixels int8
-        Output: {0, 1}
-        """
-        si = 0
-        for i in range(0, len(pixels)):
-            bipolar = self.b2ISBipolar.tick(self.weights[i])
-            unipolar = self.b2sUnipolar.tick(pixels[i])
-            bitwiseAND = self.bitwiseAND.tick(bipolar, unipolar)
-            si += bitwiseAND
-        n = 4
-        m = 401
-        sthanRes = self.nstanh.tick (si, m * n)
-        # print(f"unipolar {unipolar} bipolar {bipolar} bitwiseAND {bitwiseAND} si {si} NStanh {sthanRes}")
-        return sthanRes
 
 
 test = Test()
@@ -715,9 +516,9 @@ test = Test()
 # test.NStanhTest2()
 # test.NStanhTest3()
 # test.NStanhTest4()
-test.NStanhTest5()
+# test.NStanhTest5()
 # test.IntegrationTest1()
 # test.IntegrationTest2()
-# test.IntegrationTest3()
+test.NeuralNetworkTh1()
+test.NeuralNetworkPr1()
 # test.TheoreticalValues()
-# test.NeuralNetwork()
