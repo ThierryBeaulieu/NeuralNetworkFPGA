@@ -146,6 +146,7 @@ class NStanh(Module):
     def __init__(self, offset, n):
         m = 8
         self.counter = n * m
+        self.counter = 0
         self.offset = offset
 
     def tick(self, Si, mn):

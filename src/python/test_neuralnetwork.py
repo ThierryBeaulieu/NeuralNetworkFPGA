@@ -23,16 +23,15 @@ class TestNeuron(unittest.TestCase):
         # exemple m = 8
         # inputPixels = [134, 128, 116, 128, 112, 115, 140, 128, 134, 128, 116, 128, 112, 115, 140, 128]
         # weights = [1, 0, 3, -2, -3, 2, 0, 3, 1, 0, 3, -2, -3, 2, 0, 3]
-        inputPixels = [134, 128, 116, 128, 112, 115, 140, 128, 134, 128, 116, 128, 112, 115, 140, 128]
+        inputPixels = [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128]
         weights = [127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127]
         m = 16
         n = 4
         # weights = np.loadtxt("resources/weights.csv", delimiter=",").astype(np.int8)
         # min = 0.0, max = 2**8 * 2**8 = 2**16
         # pas parfait comme approximation [-128, 127] donc max val positif = 2**8(2**8 - 1), négatif = 2**8(2**8)
-        print(np.array(weights).astype(np.int32) + 128)
-        fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / (2**16)
-        fpga_out = fpga_out / (n * 2)
+        fpga_out = np.dot(np.array(inputPixels).astype(np.int32), np.array(weights).astype(np.int32) + 128).astype(np.int64) / ((2**8 - 1) * (2**8 - 1))
+        fpga_out = fpga_out / (n * 4)
         print(f"fpga_out = {fpga_out}")
 
         # La valeur obtenu par la fonction ici est adéquate et semble marcher correctement.
