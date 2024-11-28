@@ -79,6 +79,15 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
       }
 
       // todo: Vérifier valeurs de l'image Test et du weight Test
+      print("image")
+      for (i <- 0 until 8) {
+        print(f"[${dut.io.image(i).peek().litValue}]")
+      }
+      print("weights")
+      for (i <- 0 until 8) {
+        print(f"[${dut.io.weights(i).peek().litValue}]")
+      }
+
       for (i <- 0 until weightTest.length) {
 
         if (i != weightTest.length - 1) {
@@ -95,7 +104,7 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
 
       // handling
       for (_ <- 0 until 1024) {
-        print(f"[${dut.io.outputStream.peek().litValue}]")
+        // print(f"[${dut.io.outputStream.peek().litValue}]")
         dut.clock.step(1)
       }
 

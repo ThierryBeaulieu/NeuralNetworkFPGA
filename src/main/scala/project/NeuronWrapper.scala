@@ -37,8 +37,8 @@ class NeuronWrapper extends Module {
     val outputTreeAdder = Output(SInt((8 + 1).W))
     val outputStream = Output(UInt(1.W))
 
-    val image = Output(Vec(8, 0.U(8.W)))
-    val weights = Output(Vec(8, 0.U(8.W)))
+    val image = Output(Vec(8, UInt(8.W)))
+    val weights = Output(Vec(8, SInt(8.W)))
   })
 
   for (i <- 0 until 8) {
@@ -114,6 +114,8 @@ class NeuronWrapper extends Module {
       io.outputANDValues := neuron.io.outputANDValues
       io.outputTreeAdder := neuron.io.outputTreeAdder
       io.outputStream := neuron.io.outputStream
+      io.image := image
+      io.weights := weights
 
       counter := counter + neuron.io.outputStream
       minCycles := (minCycles + 1.U)
