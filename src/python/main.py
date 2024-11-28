@@ -27,16 +27,16 @@ class Test:
 
     def B2ISTest(self):
         print("### B2SITest")
-        B2IS = B2ISBipolar()
         weights = np.array([-128, -64, -32, -16, 0, 16, 32, 64, 127], dtype=np.int8)
         for i in range(0, len(weights)):
+            b2IS = B2ISBipolar(128, weights[i])
             stream = []
             for _ in range(0, 1024):
-                stream.append(B2IS.tick(weights[i]))
+                stream.append(b2IS.tick())
             sum = 0
             for element in stream:
                 sum = sum + element
-            print(f"Weight {weights[i]} approx : {((sum / (len(stream))) + 1) / 2}")
+            print(f"Weight {weights[i]} approx : {sum / (len(stream))}")
 
     def B2STest(self):
         print("### B2STest")
@@ -1584,7 +1584,8 @@ class Test:
 
 if __name__ == "__main__":
     test = Test()
-    test.B2ISTest0()
+    # test.B2ISTest0()
+    # test.B2ISTest()
     # test.B2STest()
     # test.BitwiseANDTest()
     # test.UnipolarCounterTest()
