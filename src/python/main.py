@@ -620,6 +620,38 @@ class Test():
                 plt.legend()
                 plt.title('Approximation de NStanh avec m = 8 et offset = 16')
                 plt.show()
+                
+    def IntegrationTestX2(self):
+            n = 32 # Tant que c'est un multiple de deux c'est correct
+
+            # practical model
+            pixels = [128, 128, 128, 128, 128, 128, 128, 128] # 0.5
+            weights = [0, 0, 0, 0, 0, 0, 0, 0] # 0.5
+            m = len(pixels)
+            neuron = Neuron(0, weights=weights, n=n, m=m)
+            stream = []
+            bipolarValues = []
+            for _ in range(0, 1024):
+                # Le 2 * nStanh - 1 permet d'avoir
+                stream.append(neuron.tick(pixels))
+                bipolarValues.append(neuron.lastSi)
+
+            sum = 0
+            for j in range(0, len(stream)):
+                sum = sum + stream[j]
+
+            sum = sum / len(stream)
+            output = sum
+
+            bipolarValues = np.average(bipolarValues)
+
+            # theorical model
+            s = (np.average(pixels) / 256) * ((127 + np.average(weights)) / 256)
+            th_ouput = np.tanh(n * bipolarValues / 2)
+            
+            # Comparison
+            print(f"Practical {(2 * output) - 1} Theorical {th_ouput}")
+            print(f"Bipolar {bipolarValues}")
 
 test = Test()
 # test.B2ISTest()
@@ -637,4 +669,5 @@ test = Test()
 # test.NeuralNetworkTh1()
 # test.NeuralNetworkPr1()
 # test.TheoreticalValues()
-test.IntegrationTestX()
+# test.IntegrationTestX()
+test.IntegrationTestX2()

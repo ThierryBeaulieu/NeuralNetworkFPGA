@@ -144,7 +144,7 @@ class CounterUnipolar(Module):
         
 class NStanh(Module):
     def __init__(self, offset):
-        self.counter = 0
+        self.counter = offset
         self.offset = offset
 
     def tick(self, Si, mn):
