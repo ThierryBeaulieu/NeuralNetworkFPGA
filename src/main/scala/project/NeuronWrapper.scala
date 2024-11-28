@@ -2,7 +2,6 @@ package project
 
 import chisel3._
 import _root_.circt.stage.ChiselStage
-import scala.io.Source
 import chisel3.util._
 
 /** NeuronWrapper
@@ -13,10 +12,15 @@ import chisel3.util._
   *   AxiStreamExternalIf
   */
 class NeuronWrapper extends Module {
-  val sAxis = Wire(new AxiStreamSlaveIf(8))
-  val slaveIO =
+  val sAxis1 = Wire(new AxiStreamSlaveIf(8))
+  val slaveIO1 =
     IO(new AxiStreamExternalIf(8))
-  slaveIO.suggestName("s_axis").connect(sAxis)
+  slaveIO1.suggestName("s_axis1").connect(sAxis1)
+
+  val sAxis2 = Wire(new AxiStreamSlaveIf(8))
+  val slaveIO2 =
+    IO(new AxiStreamExternalIf(8))
+  slaveIO2.suggestName("s_axis2").connect(sAxis2)
 
   val mAxis = Wire(new AxiStreamMasterIf(16))
   val masterIO = IO(Flipped(new AxiStreamExternalIf(16)))
@@ -25,12 +29,6 @@ class NeuronWrapper extends Module {
     .connect(mAxis)
 
   val neuron = Module(new Neuron(8))
-  private val weightsCSV = readCSV("hardcoded_weights.csv")
-  val weights = RegInit(
-    VecInit.tabulate(1, 8) { (x, y) =>
-      weightsCSV(x)(y).S(8.W)
-    }
-  )
 
   val io = IO(new Bundle {
     val outputB2SValues = Output(Vec(8, UInt(1.W)))
@@ -38,29 +36,24 @@ class NeuronWrapper extends Module {
     val outputANDValues = Output(Vec(8, SInt(2.W)))
     val outputTreeAdder = Output(SInt((8 + 1).W))
     val outputStream = Output(UInt(1.W))
+
+    val image = Output(Vec(8, 0.U(8.W)))
+    val weights = Output(Vec(8, 0.U(8.W)))
   })
 
   for (i <- 0 until 8) {
     io.outputB2SValues(i) := 0.U
     io.outputB2ISValues(i) := 0.S
     io.outputANDValues(i) := 0.S
+    io.image(i) := 0.U
+    io.weights(i) := 0.S
   }
+
   io.outputTreeAdder := 0.S
   io.outputStream := 0.U
 
-  def readCSV(filePath: String): Array[Array[Int]] = {
-    val source = Source.fromResource(filePath)
-    val data = source
-      .getLines()
-      .map { line =>
-        line.split(",").map(_.trim.toInt)
-      }
-      .toArray
-    source.close()
-    data
-  }
-
-  sAxis.tready := RegInit(true.B)
+  sAxis1.tready := RegInit(true.B)
+  sAxis2.tready := RegInit(true.B)
   mAxis.data.tvalid := RegInit(false.B)
   mAxis.data.tlast := RegInit(false.B)
   mAxis.data.tdata := RegInit(0.U(16.W))
@@ -73,7 +66,10 @@ class NeuronWrapper extends Module {
   val state = RegInit(State.receiving)
 
   val image = RegInit(VecInit(Seq.fill(8)(0.U(8.W))))
-  val index = RegInit(0.U(3.W))
+  val weights = RegInit(VecInit(Seq.fill(8)(0.S(8.W))))
+
+  val indexImage = RegInit(0.U(3.W))
+  val indexWeight = RegInit(0.U(3.W))
 
   val counter = RegInit(0.U(16.W))
 
@@ -81,20 +77,34 @@ class NeuronWrapper extends Module {
 
   def setImageAndWeight() = {
     neuron.io.inputPixels := image
-    neuron.io.inputWeights := weights(0)
+    neuron.io.inputWeights := weights
   }
   setImageAndWeight()
+
+  val weightReady = RegInit(false.B)
+  val imageReady = RegInit(false.B)
 
   switch(state) {
     // Step 1. Fill the image with 401 pixels
     is(State.receiving) {
-      when(sAxis.data.tvalid) {
-        image(index) := sAxis.data.tdata
-        index := index + 1.U
-        when(sAxis.data.tlast) {
-          state := State.handling
-          sAxis.tready := false.B
+      when(sAxis1.data.tvalid) {
+        image(indexImage) := sAxis1.data.tdata
+        indexImage := indexImage + 1.U
+        when(sAxis1.data.tlast) {
+          imageReady := true.B
+          sAxis1.tready := false.B
         }
+      }
+      when(sAxis2.data.tvalid) {
+        weights(indexWeight) := (sAxis1.data.tdata).asSInt
+        indexWeight := indexWeight + 1.U
+        when(sAxis1.data.tlast) {
+          weightReady := true.B
+          sAxis1.tready := false.B
+        }
+      }
+      when(imageReady === true.B && weightReady === true.B) {
+        state := State.handling
       }
     }
     // Step 2. Process the information for 1024 cycles
@@ -119,7 +129,10 @@ class NeuronWrapper extends Module {
         mAxis.data.tdata := counter
         // reinitialize everything
         image := VecInit(Seq.fill(8)(0.U(8.W)))
-        index := 0.U
+        imageReady := false.B
+        weightReady := false.B
+        indexImage := 0.U
+        indexWeight := 0.U
         counter := RegInit(0.U(16.W))
 
         minCycles := 0.U
