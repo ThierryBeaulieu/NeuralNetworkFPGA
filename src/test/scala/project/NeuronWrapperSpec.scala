@@ -58,4 +58,42 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
       // print(f"{${dut.masterIO.tlast.peek().litValue}}")
     }
   }
+
+  "NeuronWrapper should work with pixels averaging 128" in {
+    simulate(new NeuronWrapper) { dut =>
+      // Reset the DUT
+      dut.reset.poke(true.B)
+      dut.clock.step(1)
+      dut.reset.poke(false.B)
+
+      val imageTest = Seq(128, 128, 128, 128, 128, 128, 128, 128)
+
+      dut.slaveIO.tready.expect(true.B)
+      for (i <- 0 until imageTest.length) {
+        dut.slaveIO.tvalid.poke(true.B)
+        dut.slaveIO.tdata.poke(imageTest(i))
+        dut.slaveIO.tlast.poke(
+          if (i == imageTest.length - 1) true.B else false.B
+        )
+        if (i != imageTest.length - 1) {
+          dut.clock.step(1)
+        }
+      }
+
+      // handling
+      for (_ <- 0 until 1024) {
+        dut.clock.step(1)
+      }
+
+      // sending
+      dut.masterIO.tready.poke(true.B)
+      dut.clock.step(1)
+
+      dut.masterIO.tdata.expect(511.U)
+      dut.masterIO.tlast.expect(true.B)
+
+      // print(f"[${dut.masterIO.tdata.peek().litValue}]")
+      // print(f"{${dut.masterIO.tlast.peek().litValue}}")
+    }
+  }
 }
