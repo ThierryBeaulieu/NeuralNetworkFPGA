@@ -7,12 +7,15 @@ import math
 
 enablePlot = False
 
+
 class LFSR:
     def __init__(self, seed, taps):
         "Linear-Feedback shift register"
         self.state = seed
         self.taps = taps
-        self.max_bits = seed.bit_length()  # Determine the bit length of the initial seed
+        self.max_bits = (
+            seed.bit_length()
+        )  # Determine the bit length of the initial seed
 
     def next_bit(self):
         "Generate a random bit based on the seed and the taps"
@@ -29,28 +32,31 @@ class LFSR:
         "Generate a number with the specified number of bits. Range [0, 255]"
         return random.randint(0, 255)
 
+
 class Module:
     @abstractmethod
     def tick(self):
         pass
 
+
 class B2SUnipolar(Module):
     def __init__(self):
         "Binary 2 stochastic converter in unipolar format"
-        self.seed = 0b11110111
+        self.seed = np.random.randint(0, 255, dtype=int)
         self.taps = [7, 5, 3, 1]
         self.lfsr = LFSR(self.seed, self.taps)
 
-    def tick(self, value: np.uint8):
+    def tick(self, value):
         """
         Converts a binary into a unipolar probability.
 
         Input : value [0, 255]
         Output : {0, 1}
         """
-        value = np.uint8(value)
+        value = value * 256
         generatedBits = self.lfsr.next_number(self.seed.bit_length())
         return int(value > generatedBits)
+
 
 class B2SBipolar(Module):
     def __init__(self):
@@ -78,14 +84,15 @@ class B2SBipolar(Module):
 
 class B2ISBipolar(Module):
 
-    def __init__(self):
+    def __init__(self, m: int, weightValue):
         """
         Binary to integral stochastic convertor
         """
-        self.bpB2S = B2SBipolar()
-        
+        self.m = m
+        self.x = ((weightValue / self.m) + 1) / 2
+        self.bpB2Ss = [B2SUnipolar() for _ in range(self.m)]
 
-    def tick(self, weightValue):
+    def tick(self):
         """
         Takes a weight [-128, 127] and converts it
         to an integral stochastic stream using m=1 B2S.
@@ -93,11 +100,14 @@ class B2ISBipolar(Module):
         Input : weightValue [-127, 128]
         Output : {-1, 1}
         """
-        result = 0
-        #for i in range(0, 128):
-        #    res = self.bpB2S.tick(weightValue)
-        #    result += res
-        return self.bpB2S.tick(weightValue)
+        res = 0
+        for b2s in self.bpB2Ss:
+            bit = b2s.tick(self.x)
+            res += bit
+
+        S = 2 * res - self.m
+        return S
+
 
 class BitwiseOperatorAND(Module):
     def tick(self, integralValue, bit):
@@ -111,18 +121,20 @@ class BitwiseOperatorAND(Module):
         if bit >= 1:
             return integralValue
         return 0
-    
+
+
 class IntegralAdder(Module):
     def tick(self, value1, value2):
         """
-        Takes two values of the integral stream and 
+        Takes two values of the integral stream and
         adds them together.
 
         Input : value1 {-m1, m1}, value2 {-m2, m2}
         Output : {-(m1+m2), 1,..,m1+m2}
         """
         return value1 + value2
-    
+
+
 class CounterUnipolar(Module):
     def __init__(self):
         self.nbTick = 0
@@ -134,7 +146,7 @@ class CounterUnipolar(Module):
         WARNING: This isn't synthesizable in FPGA. This
         should be done using python by using incoming data
         from FPGA
-        
+
         Input: stochasticBit {0, 1}
         Output: uint8 [0, 255]
         """
@@ -142,10 +154,11 @@ class CounterUnipolar(Module):
         self.sum = self.sum + stochasticBit
         if self.nbTick >= 1024:
             self.nbTick = 0
-            res = self.sum / 4 # floating point
+            res = self.sum / 4  # floating point
             self.sum = 0
             return res
-        
+
+
 class NStanh(Module):
     def __init__(self, offset):
         self.counter = offset
@@ -168,7 +181,8 @@ class NStanh(Module):
             return 1
         else:
             return 0
-        
+
+
 class Neuron(Module):
 
     def __init__(self, weightIndex: int, weights=None, n=4, m=8):
