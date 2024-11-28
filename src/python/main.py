@@ -8,7 +8,7 @@ from neuralnetwork import B2SBipolar
 from neuralnetwork import B2SUnipolar
 from neuralnetwork import BitwiseOperatorAND
 from neuralnetwork import CounterUnipolar
-from neuralnetwork import NStanh
+from neuralnetwork import NStanh, IntegralAdder
 
 
 class Test:
@@ -61,24 +61,27 @@ class Test:
         b2IS = B2ISBipolar(m=128)
         bitwiseAND = BitwiseOperatorAND()
 
-        weights = np.array([-128, 0, 127], dtype=np.int8)
+        weights = np.array([-128, -64, 0, 64, 127], dtype=np.int8)
         pixels = np.array([0, 16, 32, 64, 128, 255], dtype=np.uint8)
 
-        for i in range(0, len(pixels)):
-            weight = weights[0]
-            stream = []
-            for _ in range(0, 1024):
-                sBinary = b2S.tick(pixels[i] / 256)
-                sInteger = b2IS.tick(weight)
-                res = bitwiseAND.tick(sInteger, sBinary)
-                stream.append(res)
+        for weight in weights:
+            for i in range(0, len(pixels)):
+                stream = []
+                for _ in range(0, 2048):
+                    sBinary = b2S.tick(pixels[i])
+                    sInteger = b2IS.tick(weight)
+                    res = bitwiseAND.tick(sInteger, sBinary)
+                    stream.append(res)
 
-            sum = 0
-            for element in stream:
-                sum = sum + element
-            # Equivalent of W * x
-            multiplicationResult = sum / len(stream)
-            print(f"Pixel {pixels[i]} weight {weight} mul {multiplicationResult}")
+                sum = 0
+                for element in stream:
+                    sum = sum + element
+                # Equivalent of W * x
+                multiplicationResult = sum / len(stream)
+                multiplicationResult *= 255
+                print(
+                    f"Pixel {pixels[i]} weight {weight} mul {multiplicationResult} true: {pixels[i]*weight}"
+                )
 
     def UnipolarCounterTest(self):
         print("### Unipolar Counter test")
@@ -96,50 +99,48 @@ class Test:
 
     def NStanhTest1(self):
         """
-        m = 2
-        offset = 4
+        m = 128
+        offset = 256
         n = 4
         """
-        nStanh = NStanh(8)
-        bipolar = B2ISBipolar(m=128)
         output = []
-        input = np.arange(-128, 127, 1)
+        # input = np.arange(-128,-10, 4) + np.arange(-10,10,0.5) + np.arange(10,127, 4)
+        input = np.arange(-2, 2, 0.02)
         s = []
-        n = 8
+        n = 4
+        m = 128
+        offset = m * n / 2
+        nStanh = NStanh(offset)
+        bipolar = B2ISBipolar(m=m)
         # practical model
         for i in range(0, len(input)):
             stream = []
             bipolarValues = []
-            for _ in range(0, 1024):
-                si1 = bipolar.tick(input[i])
-                si = si1
-                m = 128
+            for _ in range(0, 4096):
+                si = bipolar.tick(input[i])
                 bipolarValues.append(si)
-                stream.append(2 * nStanh.tick(si, n * m) - 1)
-                bipolarValues.append(si)
+                stream.append(nStanh.tick(si, n * m))
 
             sum = 0
             for j in range(0, len(stream)):
                 sum = sum + stream[j]
+            tanOutput = 2 * (sum / len(stream)) - 1
 
-            probability = 0
+            tanInputValue = 0
             for j in range(0, len(bipolarValues)):
-                probability = probability + bipolarValues[j]
+                tanInputValue += bipolarValues[j]
 
-            sum = sum / len(stream)
-            probability = probability / len(bipolarValues)
-            probability /= 64
-            s.append(probability)
-            output.append(sum)
+            tanInputValue /= len(bipolarValues)
+            s.append(tanInputValue)
+            output.append(tanOutput)
 
         # theorical model
-        th_input = np.arange(-2.0, 2.1, 0.1)
-        th_ouput = np.tanh(n * th_input / 2)
+        th_ouput = np.tanh(n * np.array(input) / 2)
 
         enablePlot = True
         if enablePlot:
             plt.scatter(s, output, marker="o", label="NStanh(s)")
-            plt.plot(th_input, th_ouput, color="orange", label="tanh(s)")
+            plt.plot(input, th_ouput, color="orange", label="tanh(s)")
             plt.xlabel("s")
             plt.ylabel("ouput")
             plt.legend()
@@ -1581,6 +1582,31 @@ class Test:
         print(f"Practical {(2 * output) - 1} Theorical {th_ouput}")
         print(f"Bipolar {bipolarValues}")
 
+    def IntegrationTestX3(self):
+        b2S = B2SUnipolar()
+        b2IS = B2ISBipolar(m=128)
+        bitwiseAND = BitwiseOperatorAND()
+        adder = IntegralAdder()
+        # weights = np.array([-128, -64, -32, -16, 0, 16, 32, 64, 127], dtype=np.int8)
+        # pixels = np.array([0, 16, 32, 64, 128, 255], dtype=np.uint8)
+        weights = np.array([-128, -64], dtype=np.int8)
+        pixels = np.array([0, 16], dtype=np.uint8)
+        stream = []
+        for _ in range(0, 1024):
+            weightInteger0 = b2IS.tick(weights[0])
+            pixelBit0 = b2S.tick(pixels[0])
+            mulInteger0 = bitwiseAND.tick(weightInteger0, pixelBit0)
+            weightInteger1 = b2IS.tick(weights[1])
+            pixelBit1 = b2S.tick(pixels[1])
+            mulInteger1 = bitwiseAND.tick(weightInteger1, pixelBit1)
+            stream.append(adder.tick(mulInteger0, mulInteger1))
+        sum = 0
+        for element in stream:
+            sum += element
+        print(
+            f"Weights {weights}, Pixels {pixels}, true value {np.dot(weights, pixels)} approx : {sum*255 / (len(stream))}"
+        )
+
 
 if __name__ == "__main__":
     test = Test()
@@ -1604,3 +1630,11 @@ if __name__ == "__main__":
     # test.TheoreticalValues()
     # test.IntegrationTestX()
     # test.IntegrationTestX2()
+    # test.IntegrationTestX3()
+
+    ## Clem Test
+    test.B2ISTest0()
+    test.B2ISTest()
+    test.BitwiseANDTest()
+    test.IntegrationTestX()
+    test.NStanhTest1()

@@ -40,6 +40,10 @@ class Module:
 
 
 class B2SUnipolar(Module):
+    """
+    Takes an integer in [0,255] and converts it to Stochastic Stream in Unipolar format
+    """
+
     def __init__(self):
         "Binary 2 stochastic converter in unipolar format"
         self.seed = np.random.randint(0, 255, dtype=int)
@@ -53,7 +57,6 @@ class B2SUnipolar(Module):
         Input : value [0, 255]
         Output : {0, 1}
         """
-        value = value * 256
         generatedBits = self.lfsr.next_number(self.seed.bit_length())
         return int(value > generatedBits)
 
@@ -94,19 +97,19 @@ class B2ISBipolar(Module):
     def tick(self, weightValue):
         """
         Takes a weight [-128, 127] and converts it
-        to an integral stochastic stream using m=1 B2S.
+        to an integral stochastic stream using self.m B2S.
 
         Input : weightValue [-127, 128]
-        Output : {-1, 1}
+        Output : [m, m]
         """
-        x = ((weightValue / self.m) + 1) / 2
+        x = weightValue + self.m
         res = 0
         for b2s in self.bpB2Ss:
             bit = b2s.tick(x)
             res += bit
 
-        S = 2 * res - self.m
-        return S
+        s = 2 * res - self.m
+        return s
 
 
 class BitwiseOperatorAND(Module):
