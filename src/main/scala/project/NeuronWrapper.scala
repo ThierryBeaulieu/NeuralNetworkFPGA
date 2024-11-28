@@ -37,6 +37,8 @@ class NeuronWrapper extends Module {
     val outputTreeAdder = Output(SInt((8 + 1).W))
     val outputStream = Output(UInt(1.W))
 
+    val outputState = Output(UInt(1.W))
+
     val image = Output(Vec(8, UInt(8.W)))
     val weights = Output(Vec(8, SInt(8.W)))
   })
@@ -51,6 +53,7 @@ class NeuronWrapper extends Module {
 
   io.outputTreeAdder := 0.S
   io.outputStream := 0.U
+  io.outputState := 0.U
 
   sAxis1.tready := RegInit(true.B)
   sAxis2.tready := RegInit(true.B)
@@ -88,6 +91,7 @@ class NeuronWrapper extends Module {
     // Step 1. Fill the image with 401 pixels
     is(State.receiving) {
       when(sAxis1.data.tvalid) {
+        io.outputState := 1.U
         image(indexImage) := sAxis1.data.tdata
         indexImage := indexImage + 1.U
         when(sAxis1.data.tlast) {
@@ -96,24 +100,30 @@ class NeuronWrapper extends Module {
         }
       }
       when(sAxis2.data.tvalid) {
-        weights(indexWeight) := (sAxis1.data.tdata).asSInt
+        io.outputState := 1.U
+        weights(indexWeight) := (sAxis2.data.tdata).asSInt
         indexWeight := indexWeight + 1.U
-        when(sAxis1.data.tlast) {
+        when(sAxis2.data.tlast) {
           weightReady := true.B
-          sAxis1.tready := false.B
+          sAxis2.tready := false.B
+          state := State.handling
         }
       }
       when(imageReady === true.B && weightReady === true.B) {
+        io.image := image
+        io.weights := weights
         state := State.handling
       }
     }
     // Step 2. Process the information for 1024 cycles
     is(State.handling) {
+      io.outputState := 2.U
       io.outputB2SValues := neuron.io.outputB2SValues
       io.outputB2ISValues := neuron.io.outputB2ISValues
       io.outputANDValues := neuron.io.outputANDValues
       io.outputTreeAdder := neuron.io.outputTreeAdder
       io.outputStream := neuron.io.outputStream
+
       io.image := image
       io.weights := weights
 

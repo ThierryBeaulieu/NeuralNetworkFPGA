@@ -54,26 +54,38 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
       dut.clock.step(1)
       dut.reset.poke(false.B)
 
-      val imageTest = Seq(128, 128, 128, 128, 128, 128, 128, 128)
+      // val imageTest = Seq(128, 128, 128, 128, 128, 128, 128, 128)
       val weightTest = Seq(127, 127, 127, 127, 127, 127, 127, 127)
 
       dut.slaveIO1.tready.expect(true.B)
       dut.slaveIO2.tready.expect(true.B)
 
-      for (i <- 0 until imageTest.length) {
-        dut.slaveIO1.tvalid.poke(true.B)
-        dut.slaveIO1.tdata.poke(imageTest(i))
-        dut.slaveIO1.tlast.poke(
-          if (i == imageTest.length - 1) true.B else false.B
-        )
+      // for (i <- 0 until imageTest.length) {
+      //   dut.slaveIO1.tvalid.poke(true.B)
+      //   dut.slaveIO1.tdata.poke(imageTest(i))
+      //   dut.slaveIO1.tlast.poke(
+      //     if (i == imageTest.length - 1) true.B else false.B
+      //   )
+      //   println("image")
+      //   for (i <- 0 until 8) {
+      //     print(f"[${dut.io.image(i).peek().litValue}]")
+      //   }
+      //   if (i !== (imageTest.length - 1)) {
+      //     dut.clock.step(1)
+      //   }
+      // }
 
+      for (i <- 0 until weightTest.length) {
         dut.slaveIO2.tvalid.poke(true.B)
         dut.slaveIO2.tdata.poke(weightTest(i))
         dut.slaveIO2.tlast.poke(
           if (i == weightTest.length - 1) true.B else false.B
         )
-
-        if (i != imageTest.length - 1) {
+        println("weights")
+        for (i <- 0 until 8) {
+          print(f"[${dut.io.weights(i).peek().litValue}]")
+        }
+        if (i !== (weightTest.length - 1)) {
           dut.clock.step(1)
         }
       }
@@ -88,13 +100,6 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
         print(f"[${dut.io.weights(i).peek().litValue}]")
       }
 
-      for (i <- 0 until weightTest.length) {
-
-        if (i != weightTest.length - 1) {
-          dut.clock.step(1)
-        }
-      }
-
       /*
         val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
         val outputB2ISValues = Output(Vec(nbData, SInt(2.W)))
@@ -104,6 +109,7 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
 
       // handling
       for (_ <- 0 until 1024) {
+        // println(f"output state ${dut.io.outputState.peek().litValue}")
         // print(f"[${dut.io.outputStream.peek().litValue}]")
         dut.clock.step(1)
       }
