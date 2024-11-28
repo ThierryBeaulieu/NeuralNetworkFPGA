@@ -14,16 +14,6 @@ import chisel3.util._
   */
 class NeuronWrapper extends Module {
 
-  val io = IO(new Bundle {
-    val outputState = Output(UInt(2.W))
-
-    // debugging
-    val outputStream = Output(UInt(1.W))
-  })
-
-  io.outputState := 0.U
-  io.outputStream := 0.U
-
   val neuron = Module(new Neuron(8))
   private val weightsCSV = readCSV("hardcoded_weights.csv")
   val weights = RegInit(
@@ -83,9 +73,7 @@ class NeuronWrapper extends Module {
   switch(state) {
     // Step 1. Fill the image with 401 pixels
     is(State.receiving) {
-      io.outputState := 1.U
       when(sAxis.data.tvalid) {
-        io.outputState := 5.U
         image(index) := sAxis.data.tdata
         index := index + 1.U
         when(sAxis.data.tlast) {
@@ -96,8 +84,6 @@ class NeuronWrapper extends Module {
     }
     // Step 2. Process the information for 1024 cycles
     is(State.handling) {
-      io.outputState := 2.U
-
       counter := counter + neuron.io.outputStream
 
       minCycles := (minCycles + 1.U)
@@ -108,7 +94,6 @@ class NeuronWrapper extends Module {
     // State 3. Return the information
     is(State.sending) {
       when(mAxis.tready) {
-        io.outputState := 3.U
         mAxis.data.tlast := true.B
         mAxis.data.tvalid := true.B
         mAxis.data.tdata := counter
