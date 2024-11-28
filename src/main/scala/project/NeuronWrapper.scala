@@ -1,6 +1,7 @@
 package project
 
 import chisel3._
+import _root_.circt.stage.ChiselStage
 import scala.io.Source
 import chisel3.util._
 
@@ -108,27 +109,36 @@ class NeuronWrapper extends Module {
     }
     // State 3. Return the information
     is(State.sending) {
-      io.outputState := 3.U
       when(mAxis.tready) {
-        when(dataSent) {
-          mAxis.data.tlast := true.B
-          mAxis.data.tvalid := false.B
+        io.outputState := 3.U
+        mAxis.data.tdata := 125.U
+        mAxis.data.tlast := true.B
+        mAxis.data.tvalid := true.B
+        mAxis.data.tdata := counter
+        // reinitialize everything
+        image := VecInit(Seq.fill(8)(0.U(8.W)))
+        index := 0.U
+        counter := RegInit(0.U(10.W))
+        dataSent := false.B
 
-          // reinitialize everything
-          image := VecInit(Seq.fill(8)(0.U(8.W)))
-          index := 0.U
-          counter := RegInit(0.U(10.W))
-
-          minCycles := 0.U
-          state := State.receiving
-          transferCount := 0.U
-        }.otherwise {
-          mAxis.data.tlast := false.B
-          mAxis.data.tvalid := true.B
-          mAxis.data.tdata := counter
-          dataSent := true.B
-        }
+        minCycles := 0.U
+        state := State.receiving
+        transferCount := 0.U
       }
     }
   }
+}
+
+object NeuronWrapper extends App {
+  ChiselStage.emitSystemVerilogFile(
+    new NeuronWrapper,
+    args = Array(
+      "--target-dir",
+      "generated/project/"
+    ),
+    firtoolOpts = Array(
+      "-disable-all-randomization",
+      "-strip-debug-info"
+    )
+  )
 }
