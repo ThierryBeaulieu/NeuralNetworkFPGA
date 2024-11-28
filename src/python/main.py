@@ -2,169 +2,16 @@ from abc import ABC, abstractmethod
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.typing import NDArray
-import random
-
-enablePlot = False
-
-class LFSR:
-    def __init__(self, seed, taps):
-        "Linear-Feedback shift register"
-        self.state = seed
-        self.taps = taps
-        self.max_bits = seed.bit_length()  # Determine the bit length of the initial seed
-
-    def next_bit(self):
-        "Generate a random bit based on the seed and the taps"
-        # XOR the tapped bits to get the new bit
-        new_bit = 0
-        for tap in self.taps:
-            new_bit ^= (self.state >> (tap - 1)) & 1  # XOR bit values at tap positions
-
-        # Shift left and add the new bit to the LSB
-        self.state = ((self.state << 1) | new_bit) & ((1 << self.max_bits) - 1)
-        return new_bit
-
-    def next_number(self, bits=8):
-        "Generate a number with the specified number of bits. Range [0, 255]"
-        return random.randint(0, 255)
-
-class Module:
-    @abstractmethod
-    def tick(self):
-        pass
-
-class B2SUnipolar(Module):
-    def __init__(self):
-        "Binary 2 stochastic converter in unipolar format"
-        self.seed = 0b11110111
-        self.taps = [7, 5, 3, 1]
-        self.lfsr = LFSR(self.seed, self.taps)
-
-    def tick(self, value: np.uint8):
-        """
-        Converts a binary into a unipolar probability.
-
-        Input : value [0, 255]
-        Output : {0, 1}
-        """
-        value = np.uint8(value)
-        generatedBits = self.lfsr.next_number(self.seed.bit_length())
-        return int(value > generatedBits)
-
-class B2SBipolar(Module):
-    def __init__(self):
-        "Binary 2 stochastic converter in bipolar format"
-        self.seed = 0b11110111
-        self.taps = [7, 5, 3, 1]
-        self.lfsr = LFSR(self.seed, self.taps)
-
-    def tick(self, value: np.int8):
-        """
-        Converts a binary into a probability.
-
-        Input : value [-128, 127]
-        Output : {-1, 1}
-        """
-        value = np.int8(value)
-        generatedBits = self.lfsr.next_number(self.seed.bit_length())
-        generatedBits = self.twos(generatedBits)
-        return int(value > generatedBits) * 2 - 1
-
-    def twos(self, bits):
-        "shifts the range from [0,255] to [-128, 127]"
-        return bits - 128
+from neuralnetwork import Neuron
+from neuralnetwork import B2ISBipolar
+from neuralnetwork import B2SBipolar
+from neuralnetwork import B2SUnipolar
+from neuralnetwork import BitwiseOperatorAND
+from neuralnetwork import CounterUnipolar
+from neuralnetwork import NStanh
 
 
-class B2ISBipolar(Module):
-
-    def __init__(self):
-        """
-        Binary to integral stochastic convertor
-        """
-        self.bpB2S = B2SBipolar()
-        
-
-    def tick(self, weightValue):
-        """
-        Takes a weight [-128, 127] and converts it
-        to an integral stochastic stream using m=1 B2S.
-
-        Input : weightValue [-127, 128]
-        Output : {-1, 1}
-        """
-        return self.bpB2S.tick(weightValue)
-
-class BitwiseOperatorAND(Module):
-    def tick(self, integralValue, bit):
-        """
-        Takes a value in the integral stream and returns
-        a 0 or the integral value according to the bit
-
-        Input : integralValue {-m,...,m} bit {0, 1}
-        Output : {0, integralValue}
-        """
-        if bit >= 1:
-            return integralValue
-        return 0
-    
-class IntegralAdder(Module):
-    def tick(self, value1, value2):
-        """
-        Takes two values of the integral stream and 
-        adds them together.
-
-        Input : value1 {-m1, m1}, value2 {-m2, m2}
-        Output : {-(m1+m2), 1,..,m1+m2}
-        """
-        return value1 + value2
-    
-class CounterUnipolar(Module):
-    def __init__(self):
-        self.nbTick = 0
-        self.sum = 0
-
-    def tick(self, stochasticBit):
-        """
-        Accumulate incoming binary stochastic stream.
-        WARNING: This isn't synthesizable in FPGA. This
-        should be done using python by using incoming data
-        from FPGA
-        
-        Input: stochasticBit {0, 1}
-        Output: uint8 [0, 255]
-        """
-        self.nbTick = self.nbTick + 1
-        self.sum = self.sum + stochasticBit
-        if self.nbTick >= 1024:
-            self.nbTick = 0
-            res = self.sum / 4 # floating point
-            self.sum = 0
-            return res
-        
-class NStanh(Module):
-    def __init__(self, offset):
-        self.counter = 0
-        self.offset = offset
-
-    def tick(self, Si, mn):
-        """
-        NStanh function. Using a FSM, we simulate NStanh
-
-        Input: Si {-m,...,m}, mn {1*n,2*n,4*n...}
-        Output: {0, 1}
-        """
-        self.counter = self.counter + Si
-        # print(f"NStanh counter {self.counter}")
-        if self.counter > (mn - 1):
-            self.counter = mn - 1
-        if self.counter < 0:
-            self.counter = 0
-        if self.counter > self.offset:
-            return 1
-        else:
-            return 0
-        
-class Test(Module):
+class Test():
     def B2ISTest(self):
         print("### B2SITest")
         B2IS = B2ISBipolar()
@@ -437,7 +284,7 @@ class Test(Module):
                 output.append(sum)
 
             # theorical model
-            th_input = np.arange(-4.0, 4.1, 0.1)
+            th_input = np.arange(-8.0, 8.1, 0.1)
             th_ouput = np.tanh(n * th_input / 2)
 
             enablePlot = True
@@ -458,17 +305,17 @@ class Test(Module):
             offset = 128
             n = 4
             """
-            nStanh = NStanh(128)
+            nStanh = NStanh(256)
             bipolar = B2ISBipolar()
             output = []
-            input = np.arange(-128, 127, 1)
+            input = np.arange(-128, 128, 1)
             s = []
             n = 4
             # practical model
             for i in range(0, len(input)):
                 stream = []
                 bipolarValues = []
-                for _ in range(0, 128):
+                for _ in range(0, 64):
 
                     si = 0
                     for _ in range(0, 401):
@@ -490,9 +337,15 @@ class Test(Module):
                 probability = probability / len(bipolarValues)
                 s.append(probability)
                 output.append(sum)
+            
+            counter = 0
+            for i in range(0,len(output)):
+                if output[i] == 1:
+                    counter += 1
+            print(f"counter of {counter}")
 
             # theorical model
-            th_input = np.arange(-401.0, 401.1, 0.1)
+            th_input = np.arange(-401.0, 401.0, 1.0)
             th_ouput = np.tanh(n * th_input / 2)
 
             enablePlot = True
@@ -502,7 +355,68 @@ class Test(Module):
                 plt.xlabel('s')
                 plt.ylabel('ouput')
                 plt.legend()
-                plt.title('Approximation de NStanh avec m = 401 et offset = 128')
+                plt.title('Approximation de NStanh avec m = 401 et offset = 256')
+                plt.show()
+
+    def NStanhTest6(self):
+            """
+            La valeur du offset est toujours (m * n) / 2
+            n peut varier, mais par expérience, on obtient de bon résultats avec m = 4 
+            m = 8
+            offset = 16
+            n = 4
+            """
+            n = 16 # Tant que c'est un multiple de deux c'est correct
+            m = 8
+            nStanh = NStanh((m * n) / 2) # m * n / 2 (c'est le nombre d'états qu'il y a, le 0 est donc mi-chemin)
+            bipolar = B2ISBipolar()
+            output = []
+            input = np.arange(-128, 127, 1)
+            s = []
+            # practical model
+            for i in range(0, len(input)):
+                stream = []
+                bipolarValues = []
+                for _ in range(0, 1024):
+                    si1 = bipolar.tick(input[i])
+                    si2 = bipolar.tick(input[i])
+                    si3 = bipolar.tick(input[i])
+                    si4 = bipolar.tick(input[i])
+                    si5 = bipolar.tick(input[i])
+                    si6 = bipolar.tick(input[i])
+                    si7 = bipolar.tick(input[i])
+                    si8 = bipolar.tick(input[i])
+                    si = si1 + si2 + si3 + si4 + si5 + si6 + si7 + si8
+                    bipolarValues.append(si)
+                    # Le 2 * nStanh - 1 permet d'avoir
+                    stream.append(2 * nStanh.tick(si, n * m) - 1)
+                    bipolarValues.append(si)
+
+                sum = 0
+                for j in range(0, len(stream)):
+                    sum = sum + stream[j]
+
+                probability = 0
+                for j in range(0, len(bipolarValues)):
+                    probability = probability + bipolarValues[j]
+
+                sum = sum / len(stream)
+                probability = probability / len(bipolarValues)
+                s.append(probability)
+                output.append(sum)
+
+            # theorical model
+            th_input = np.arange(-8.0, 8.1, 0.1)
+            th_ouput = np.tanh(n * th_input / 2)
+
+            enablePlot = True
+            if enablePlot:
+                plt.scatter(s, output, marker='o', label='NStanh(s)')
+                plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
+                plt.xlabel('s')
+                plt.ylabel('ouput')
+                plt.legend()
+                plt.title('Approximation de NStanh avec m = 8 et offset = 16')
                 plt.show()
 
     def IntegrationTest1(self):
@@ -592,7 +506,46 @@ class Test(Module):
 
         print(f"percentage of correctness {correct / 100}")
 
+    def NeuralNetworkPr1(self):
+        print("### Neural Network Practical Value 1")
+        image = [255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 68, 70, 72, 70, 58, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 98, 220, 254, 248, 238, 254, 246, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 26, 164, 254, 218, 140, 88, 68, 172, 254, 232, 26, 0, 0, 0, 0, 0, 0, 0, 2, 46, 202, 248, 118, 18, 0, 0, 0, 40, 230, 254, 38, 0, 0, 0, 0, 0, 0, 0, 72, 240, 254, 154, 0, 0, 0, 0, 0, 40, 234, 236, 28, 0, 0, 0, 0, 0, 0, 34, 200, 254, 194, 72, 2, 0, 0, 0, 0, 116, 254, 138, 0, 0, 0, 0, 0, 0, 42, 200, 254, 206, 42, 0, 0, 0, 0, 0, 0, 184, 218, 38, 0, 0, 0, 0, 0, 10, 178, 254, 254, 226, 100, 0, 0, 0, 0, 0, 94, 240, 118, 0, 0, 0, 0, 0, 0, 34, 250, 242, 198, 224, 54, 0, 0, 0, 0, 32, 212, 186, 14, 0, 0, 0, 0, 0, 0, 10, 178, 254, 156, 84, 0, 0, 0, 0, 24, 186, 178, 38, 0, 0, 0, 0, 0, 0, 0, 0, 30, 108, 254, 226, 190, 186, 186, 184, 216, 212, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 130, 198, 254, 254, 254, 188, 56, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 74, 82, 78, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        pixels = image
+
+        results = np.zeros(10)
+        neurons = [Neuron(i) for i in range(10)]
+        for i in range(0, 10):
+            neuron = neurons[i]
+            counter = 0
+            nbCycles = 1024
+            for _ in range(0, nbCycles):
+                counter += neuron.tick(pixels)
+            print(f"counter {counter}")
+            probability = counter / nbCycles
+            results[i] = probability
+        print(f"results: {results}")
+        prediction = results.argmax() + 1
+        print(f"Prediction {prediction}")
+
+        
+    def NeuralNetworkTh1(self):
+        print("### Neural Network Theoretical Values")
+        # x = np.load("resources/x.npy")
+        
+        # x = np.load("images.npy")
+        image = np.array([255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 68, 70, 72, 70, 58, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 98, 220, 254, 248, 238, 254, 246, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 26, 164, 254, 218, 140, 88, 68, 172, 254, 232, 26, 0, 0, 0, 0, 0, 0, 0, 2, 46, 202, 248, 118, 18, 0, 0, 0, 40, 230, 254, 38, 0, 0, 0, 0, 0, 0, 0, 72, 240, 254, 154, 0, 0, 0, 0, 0, 40, 234, 236, 28, 0, 0, 0, 0, 0, 0, 34, 200, 254, 194, 72, 2, 0, 0, 0, 0, 116, 254, 138, 0, 0, 0, 0, 0, 0, 42, 200, 254, 206, 42, 0, 0, 0, 0, 0, 0, 184, 218, 38, 0, 0, 0, 0, 0, 10, 178, 254, 254, 226, 100, 0, 0, 0, 0, 0, 94, 240, 118, 0, 0, 0, 0, 0, 0, 34, 250, 242, 198, 224, 54, 0, 0, 0, 0, 32, 212, 186, 14, 0, 0, 0, 0, 0, 0, 10, 178, 254, 156, 84, 0, 0, 0, 0, 24, 186, 178, 38, 0, 0, 0, 0, 0, 0, 0, 0, 30, 108, 254, 226, 190, 186, 186, 184, 216, 212, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 130, 198, 254, 254, 254, 188, 56, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 74, 82, 78, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+        weights = np.loadtxt("resources/weights.csv", delimiter=",").astype(np.int8)
+    
+        fpga_out = (np.dot(image.astype(np.int16), weights.T.astype(np.int16)) >> 8).astype(np.int8)
+        # Ça ne sert à rien d'appliquer la fonction NStanh
+        pred = fpga_out.argmax() + 1
+
+        print("FPGA Ouput: ", fpga_out)
+        print("Prediction: ", pred)
+
     def TheoreticalValues(self):
+        print("Theoretical Values")
+        # todo, the values aren't pass in a tanh function
         # x = np.load("resources/x.npy")
         y = np.load("resources/y.npy")
         x = np.load("images.npy")
@@ -604,6 +557,7 @@ class Test(Module):
             image = x[imageIndex]
 
             fpga_out = (np.dot(image.astype(np.int16), weights.T.astype(np.int16)) >> 8).astype(np.int8)
+
             pred = fpga_out.argmax() + 1
 
             if pred == y[imageIndex]:
@@ -614,39 +568,58 @@ class Test(Module):
         #print(f"accuracy : {counter / 401}")
         np.save("practical.npy", practical)
               
-class Neuron(Module):
+    def IntegrationTestX(self):
+            """
+            La valeur du offset est toujours (m * n) / 2
+            n peut varier, mais par expérience, on obtient de bon résultats avec m = 4 
+            m = 8
+            offset = 16
+            n = 4
+            """
+            n = 4 # Tant que c'est un multiple de deux c'est correct
+            output = []
+            input = np.arange(-128, 127, 1)
 
-    def __init__(self, weightIndex: int):
-        """
-        Single Neuron from a neural network
-        """
-        self.weights = np.loadtxt("resources/weights.csv", delimiter=",")
-        self.weights = self.weights[weightIndex]
-        self.b2ISBipolar = B2ISBipolar()
-        self.b2sUnipolar = B2SUnipolar()
-        self.nstanh = NStanh(offset=(128))
-        self.bitwiseAND = BitwiseOperatorAND()
+            s = []
+            # practical model
+            for i in range(0, len(input)):
+                m = 8
+                weights = np.full(m, input[i])
+                pixels = np.zeros_like(weights) + 255
+                neuron = Neuron(0, weights=weights, n=n, m=m)
+                stream = []
+                bipolarValues = []
+                for _ in range(0, 1024):
+                    # Le 2 * nStanh - 1 permet d'avoir
+                    stream.append(2 * neuron.tick(pixels) - 1)
+                    bipolarValues.append(neuron.lastSi)
 
-    def tick(self, pixels):
-        """
-        Neuron. Takes i=4 W1, W2,...,Wi weights and v1, v2,...,vi pixels.
-        The pixels are an array of int8 and the weights too.
+                sum = 0
+                for j in range(0, len(stream)):
+                    sum = sum + stream[j]
 
-        Input: pixels int8
-        Output: {0, 1}
-        """
-        si = 0
-        for i in range(0, len(pixels)):
-            bipolar = self.b2ISBipolar.tick(self.weights[i])
-            unipolar = self.b2sUnipolar.tick(pixels[i])
-            bitwiseAND = self.bitwiseAND.tick(bipolar, unipolar)
-            si += bitwiseAND
-        n = 4
-        m = len(self.weights)
-        sthanRes = self.nstanh.tick (si, m * n)
-        # print(f"unipolar {unipolar} bipolar {bipolar} bitwiseAND {bitwiseAND} si {si} NStanh {sthanRes}")
-        return sthanRes
+                probability = 0
+                for j in range(0, len(bipolarValues)):
+                    probability = probability + bipolarValues[j]
 
+                sum = sum / len(stream)
+                probability = probability / len(bipolarValues)
+                s.append(probability)
+                output.append(sum)
+
+            # theorical model
+            th_input = np.arange(-8.0, 8.1, 0.1)
+            th_ouput = np.tanh(n * th_input / 2)
+
+            enablePlot = True
+            if enablePlot:
+                plt.scatter(s, output, marker='o', label='NStanh(s)')
+                plt.plot(th_input, th_ouput, color="orange", label='tanh(s)')
+                plt.xlabel('s')
+                plt.ylabel('ouput')
+                plt.legend()
+                plt.title('Approximation de NStanh avec m = 8 et offset = 16')
+                plt.show()
 
 test = Test()
 # test.B2ISTest()
@@ -658,7 +631,10 @@ test = Test()
 # test.NStanhTest3()
 # test.NStanhTest4()
 # test.NStanhTest5()
+# test.NStanhTest6()
 # test.IntegrationTest1()
-test.IntegrationTest2()
+# test.IntegrationTest2()
+# test.NeuralNetworkTh1()
+# test.NeuralNetworkPr1()
 # test.TheoreticalValues()
-# test.NeuralNetwork()
+test.IntegrationTestX()

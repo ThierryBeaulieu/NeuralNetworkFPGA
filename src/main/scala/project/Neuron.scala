@@ -29,10 +29,13 @@ class Neuron(nbData: Int) extends Module {
   val io = IO(new Bundle {
     val inputPixels = Input(Vec(nbData, UInt(8.W)))
     val inputWeights = Input(Vec(nbData, SInt(8.W)))
+    
     val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
     val outputB2ISValues = Output(Vec(nbData, SInt(2.W)))
     val outputANDValues = Output(Vec(nbData, SInt(2.W)))
     val outputTreeAdder = Output(SInt((nbData + 1).W))
+
+    // end of debugging purposes
     val outputStream = Output(UInt(1.W))
   })
 
