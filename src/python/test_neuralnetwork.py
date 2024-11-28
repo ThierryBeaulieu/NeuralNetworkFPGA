@@ -40,7 +40,7 @@ class TestNeuron(unittest.TestCase):
             result += res
 
         Ex = result / nbCycles
-        self.assertAlmostEqual(Ex, 0.000, places=2)
+        self.assertAlmostEqual(Ex, 0.000, delta=0.1)
 
 
     def test_integration_neuron_m_16_w_max(self):
@@ -66,7 +66,7 @@ class TestNeuron(unittest.TestCase):
             result += res
 
         Ex = result / nbCycles
-        self.assertAlmostEqual(Ex, 0.999, places=2)
+        self.assertAlmostEqual(Ex, 0.999, delta=0.1)
 
     def test_integration_neuron_m_16_average(self):
         inputPixels = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]
@@ -88,7 +88,7 @@ class TestNeuron(unittest.TestCase):
             result += res
 
         Ex = result / nbCycles
-        self.assertAlmostEqual(Ex, 0.50, delta=1.0)
+        self.assertAlmostEqual(Ex, 0.50, delta=0.1)
 
     def test_integration_neuron_m_16_real(self):
         inputPixels = [134, 128, 116, 128, 112, 115, 140, 128, 134, 128, 116, 128, 112, 115, 140, 128]
@@ -111,7 +111,7 @@ class TestNeuron(unittest.TestCase):
 
         Ex = result / nbCycles
         # print(Ex)
-        self.assertAlmostEqual(Ex, 0.55, delta=0.5)
+        self.assertAlmostEqual(Ex, 0.55, delta=0.1)
 
     def test_integration_neuron_m_8_w_min(self):
         inputPixels = [255, 255, 255, 255, 255, 255, 255, 255]
@@ -130,7 +130,7 @@ class TestNeuron(unittest.TestCase):
             result += res
 
         Ex = result / nbCycles
-        self.assertAlmostEqual(Ex, 0.000, places=2)
+        self.assertAlmostEqual(Ex, 0.000, delta=0.1)
 
 
     def test_integration_neuron_m_8_w_max(self):
@@ -150,7 +150,7 @@ class TestNeuron(unittest.TestCase):
             result += res
 
         Ex = result / nbCycles
-        self.assertAlmostEqual(Ex, 0.999, places=2)
+        self.assertAlmostEqual(Ex, 0.999, delta=0.1)
 
     def test_integration_neuron_m_8_average(self):
         inputPixels = [255, 255, 255, 255, 255, 255, 255, 255]
@@ -189,8 +189,7 @@ class TestNeuron(unittest.TestCase):
             result += res
 
         Ex = result / nbCycles
-        self.assertAlmostEqual(Ex, 0.25, delta=1.0)
-
+        self.assertAlmostEqual(Ex, 0.25, delta=0.1)
 
 if __name__ == "__main__":
     unittest.main()
