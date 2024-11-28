@@ -63,10 +63,10 @@ class NeuronWrapper extends Module {
   mAxis.data.tkeep := RegInit("b1".U)
 
   object State extends ChiselEnum {
-    val receiving, handling, sending = Value
+    val receivingData1, receivingData2, handling, sending = Value
   }
 
-  val state = RegInit(State.receiving)
+  val state = RegInit(State.receivingData1)
 
   val image = RegInit(VecInit(Seq.fill(8)(0.U(8.W))))
   val weights = RegInit(VecInit(Seq.fill(8)(0.S(8.W))))
@@ -84,35 +84,28 @@ class NeuronWrapper extends Module {
   }
   setImageAndWeight()
 
-  val weightReady = RegInit(false.B)
-  val imageReady = RegInit(false.B)
-
   switch(state) {
     // Step 1. Fill the image with 401 pixels
-    is(State.receiving) {
+    is(State.receivingData1) {
       when(sAxis1.data.tvalid) {
         io.outputState := 1.U
         image(indexImage) := sAxis1.data.tdata
         indexImage := indexImage + 1.U
         when(sAxis1.data.tlast) {
-          imageReady := true.B
           sAxis1.tready := false.B
+          state := State.receivingData2
         }
       }
+    }
+    is(State.receivingData2) {
       when(sAxis2.data.tvalid) {
         io.outputState := 1.U
         weights(indexWeight) := (sAxis2.data.tdata).asSInt
         indexWeight := indexWeight + 1.U
         when(sAxis2.data.tlast) {
-          weightReady := true.B
           sAxis2.tready := false.B
           state := State.handling
         }
-      }
-      when(imageReady === true.B && weightReady === true.B) {
-        io.image := image
-        io.weights := weights
-        state := State.handling
       }
     }
     // Step 2. Process the information for 1024 cycles
@@ -141,14 +134,12 @@ class NeuronWrapper extends Module {
         mAxis.data.tdata := counter
         // reinitialize everything
         image := VecInit(Seq.fill(8)(0.U(8.W)))
-        imageReady := false.B
-        weightReady := false.B
         indexImage := 0.U
         indexWeight := 0.U
         counter := RegInit(0.U(16.W))
 
         minCycles := 0.U
-        state := State.receiving
+        state := State.receivingData1
       }
     }
   }
