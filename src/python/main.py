@@ -40,12 +40,12 @@ class Test:
 
     def B2STest(self):
         print("### B2STest")
-        B2S = B2SUnipolar()
+        b2S = B2SUnipolar()
         pixels = np.array([0, 16, 32, 64, 128, 255], dtype=np.uint8)
         for i in range(0, len(pixels)):
             stream = []
             for _ in range(0, 1024):
-                stream.append(B2S.tick(pixels[i]))
+                stream.append(b2S.tick(pixels[i]))
             ones = 0
             zeros = 0
             for element in stream:
@@ -57,19 +57,19 @@ class Test:
 
     def BitwiseANDTest(self):
         print("### Bitwise Adder")
-        B2S = B2SUnipolar()
-        B2IS = B2ISBipolar()
+        b2S = B2SUnipolar()
+        b2IS = B2ISBipolar(m=128)
         bitwiseAND = BitwiseOperatorAND()
 
         weights = np.array([-128, 0, 127], dtype=np.int8)
         pixels = np.array([0, 16, 32, 64, 128, 255], dtype=np.uint8)
 
         for i in range(0, len(pixels)):
-            weight = weights[2]
+            weight = weights[0]
             stream = []
             for _ in range(0, 1024):
-                sBinary = B2S.tick(pixels[i])
-                sInteger = B2IS.tick(weight)
+                sBinary = b2S.tick(pixels[i] / 256)
+                sInteger = b2IS.tick(weight)
                 res = bitwiseAND.tick(sInteger, sBinary)
                 stream.append(res)
 
@@ -101,7 +101,7 @@ class Test:
         n = 4
         """
         nStanh = NStanh(8)
-        bipolar = B2ISBipolar()
+        bipolar = B2ISBipolar(m=128)
         output = []
         input = np.arange(-128, 127, 1)
         s = []
@@ -112,9 +112,8 @@ class Test:
             bipolarValues = []
             for _ in range(0, 1024):
                 si1 = bipolar.tick(input[i])
-                si2 = bipolar.tick(input[i])
-                si = si1 + si2
-                m = 2
+                si = si1
+                m = 128
                 bipolarValues.append(si)
                 stream.append(2 * nStanh.tick(si, n * m) - 1)
                 bipolarValues.append(si)
@@ -129,6 +128,7 @@ class Test:
 
             sum = sum / len(stream)
             probability = probability / len(bipolarValues)
+            probability /= 64
             s.append(probability)
             output.append(sum)
 
@@ -1585,11 +1585,11 @@ class Test:
 if __name__ == "__main__":
     test = Test()
     # test.B2ISTest0()
-    test.B2ISTest()
+    # test.B2ISTest()
     # test.B2STest()
     # test.BitwiseANDTest()
     # test.UnipolarCounterTest()
-    # test.NStanhTest1()
+    test.NStanhTest1()
     # test.NStanhTest2()
     # test.NStanhTest3()
     # test.NStanhTest4()
