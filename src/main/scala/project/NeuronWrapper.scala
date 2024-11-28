@@ -32,6 +32,22 @@ class NeuronWrapper extends Module {
     }
   )
 
+  val io = IO(new Bundle {
+    val outputB2SValues = Output(Vec(8, UInt(1.W)))
+    val outputB2ISValues = Output(Vec(8, SInt(2.W)))
+    val outputANDValues = Output(Vec(8, SInt(2.W)))
+    val outputTreeAdder = Output(SInt((8 + 1).W))
+    val outputStream = Output(UInt(1.W))
+  })
+
+  for (i <- 0 until 8) {
+    io.outputB2SValues(i) := 0.U
+    io.outputB2ISValues(i) := 0.S
+    io.outputANDValues(i) := 0.S
+  }
+  io.outputTreeAdder := 0.S
+  io.outputStream := 0.U
+
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
     val data = source
@@ -83,8 +99,13 @@ class NeuronWrapper extends Module {
     }
     // Step 2. Process the information for 1024 cycles
     is(State.handling) {
-      counter := counter + neuron.io.outputStream
+      io.outputB2SValues := neuron.io.outputB2SValues
+      io.outputB2ISValues := neuron.io.outputB2ISValues
+      io.outputANDValues := neuron.io.outputANDValues
+      io.outputTreeAdder := neuron.io.outputTreeAdder
+      io.outputStream := neuron.io.outputStream
 
+      counter := counter + neuron.io.outputStream
       minCycles := (minCycles + 1.U)
       when(minCycles === (1024.U - 1.U)) {
         state := State.sending

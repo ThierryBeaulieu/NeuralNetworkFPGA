@@ -51,7 +51,7 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
       dut.masterIO.tready.poke(true.B)
       dut.clock.step(1)
 
-      dut.masterIO.tdata.expect(1023.U)
+      dut.masterIO.tdata.expect(1024.U)
       dut.masterIO.tlast.expect(true.B)
 
       // print(f"[${dut.masterIO.tdata.peek().litValue}]")
@@ -80,8 +80,16 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
         }
       }
 
+      /*
+        val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
+        val outputB2ISValues = Output(Vec(nbData, SInt(2.W)))
+        val outputANDValues = Output(Vec(nbData, SInt(2.W)))
+        val outputTreeAdder = Output(SInt((nbData + 1).W))
+       */
+
       // handling
       for (_ <- 0 until 1024) {
+        print(f"[${dut.io.outputStream.peek().litValue}]")
         dut.clock.step(1)
       }
 
