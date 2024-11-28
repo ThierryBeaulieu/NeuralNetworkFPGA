@@ -419,6 +419,94 @@ class Test():
                 plt.title('Approximation de NStanh avec m = 8 et offset = 16')
                 plt.show()
 
+    def NStanhTest7(self):
+            """
+            La valeur du offset est toujours (m * n) / 2
+            n peut varier, mais par expérience, on obtient de bon résultats avec m = 4 
+            m = 401
+            offset = 128
+            n = 4
+            """
+            pixels = np.full(127, 128)
+            weights = np.full(127, 0)
+            n = 8
+            m = 127
+            nStanh = NStanh(offset = (n * m) / 2)
+            bipolar = B2ISBipolar()
+            unipolar = B2SUnipolar()
+            bitwiseAnd = BitwiseOperatorAND()
+
+            results = []
+            for _ in range(0, 20):
+                bitstream = []
+                for _ in range(0, 1024):
+                    bpTot = 0
+                    up = unipolar.tick(128)
+                    for i in range(0, len(pixels)):
+                        bpTot += bipolar.tick(0)
+                        
+                    andResult = bitwiseAnd.tick(bit=up, integralValue=bpTot)
+                    bitstream.append(andResult)
+
+                Ex = np.average(bitstream)
+                results.append(Ex)
+
+            target_value = 0.25
+            
+            plt.figure(figsize=(10, 5))
+            plt.plot(results, marker='o', linestyle='-', color='b', label='Values')  # Line plot
+            plt.title('Variation des valeurs obtenus avec un neuron à 4 entrées. n = 8, m = 2. cycles = 1024', fontsize=14)
+            plt.xlabel('Tentative n#', fontsize=12)
+            plt.ylabel('NStanh(s)', fontsize=12)
+            plt.axhline(y=target_value, color='r', linestyle='--', label=f'Valeur théorique : {target_value}')  # Horizontal line
+            plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+            plt.legend()
+            plt.show()
+
+    def NStanhTest8(self):
+            """
+            La valeur du offset est toujours (m * n) / 2
+            n peut varier, mais par expérience, on obtient de bon résultats avec m = 4 
+            m = 401
+            offset = 128
+            n = 8
+            """
+            n = 16
+            m = 8
+            nStanh = NStanh(offset = (n * m) / 2)
+            bipolar = B2ISBipolar()
+
+            input = np.arange(-128, 128, 1)
+
+            results = []
+            for i in input:
+                nstanh_res = []
+                for _ in range(0, 1024):
+                    bp = m * bipolar.tick(i)
+                    nstanh = nStanh.tick(Si=bp, mn= m * n)
+                    nstanh_res.append(nstanh)
+
+                s = np.average(nstanh_res)
+                results.append(s)
+            
+            # theoretical
+            th_input = input
+            th_output = (1 + np.tanh((n * th_input) / (256))) / 2
+            th_input = th_input / 256
+
+            enablePlot = True
+            if enablePlot:
+                plt.scatter(th_input, results, marker='o', label='NStanh(s)')
+                plt.plot(th_input, th_output, color="orange", label=' (1 + tanh(s))/2')
+                plt.xlabel('s')
+                plt.ylabel('nstanh(s)')
+                plt.legend()
+                plt.title('Approximation de NStanh avec m = 8, n = 16')
+                plt.show()
+            
+
+
+
     def IntegrationTest1(self):
         print("### Integration Test")
         th_weight = [[-128, -128], [-64, -64], [-32, -32], [32, -32], [32, -64], [0, 0], [32, 32], [64, 64], [127, 127]]
@@ -664,10 +752,12 @@ test = Test()
 # test.NStanhTest4()
 # test.NStanhTest5()
 # test.NStanhTest6()
+test.NStanhTest7()
+# test.NStanhTest8()
 # test.IntegrationTest1()
 # test.IntegrationTest2()
 # test.NeuralNetworkTh1()
 # test.NeuralNetworkPr1()
 # test.TheoreticalValues()
 # test.IntegrationTestX()
-test.IntegrationTestX2()
+# test.IntegrationTestX2()

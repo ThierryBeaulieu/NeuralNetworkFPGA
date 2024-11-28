@@ -93,6 +93,10 @@ class B2ISBipolar(Module):
         Input : weightValue [-127, 128]
         Output : {-1, 1}
         """
+        result = 0
+        #for i in range(0, 128):
+        #    res = self.bpB2S.tick(weightValue)
+        #    result += res
         return self.bpB2S.tick(weightValue)
 
 class BitwiseOperatorAND(Module):
