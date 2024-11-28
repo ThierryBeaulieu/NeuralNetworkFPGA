@@ -13,15 +13,6 @@ import chisel3.util._
   *   AxiStreamExternalIf
   */
 class NeuronWrapper extends Module {
-
-  val neuron = Module(new Neuron(8))
-  private val weightsCSV = readCSV("hardcoded_weights.csv")
-  val weights = RegInit(
-    VecInit.tabulate(1, 8) { (x, y) =>
-      weightsCSV(x)(y).S(8.W)
-    }
-  )
-
   val sAxis = Wire(new AxiStreamSlaveIf(8))
   val slaveIO =
     IO(new AxiStreamExternalIf(8))
@@ -32,6 +23,14 @@ class NeuronWrapper extends Module {
   masterIO
     .suggestName("m_axis")
     .connect(mAxis)
+
+  val neuron = Module(new Neuron(8))
+  private val weightsCSV = readCSV("hardcoded_weights.csv")
+  val weights = RegInit(
+    VecInit.tabulate(1, 8) { (x, y) =>
+      weightsCSV(x)(y).S(8.W)
+    }
+  )
 
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
