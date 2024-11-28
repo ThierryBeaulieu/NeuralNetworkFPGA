@@ -84,15 +84,14 @@ class B2SBipolar(Module):
 
 class B2ISBipolar(Module):
 
-    def __init__(self, m: int, weightValue):
+    def __init__(self, m: int):
         """
         Binary to integral stochastic convertor
         """
         self.m = m
-        self.x = ((weightValue / self.m) + 1) / 2
         self.bpB2Ss = [B2SUnipolar() for _ in range(self.m)]
 
-    def tick(self):
+    def tick(self, weightValue):
         """
         Takes a weight [-128, 127] and converts it
         to an integral stochastic stream using m=1 B2S.
@@ -100,9 +99,10 @@ class B2ISBipolar(Module):
         Input : weightValue [-127, 128]
         Output : {-1, 1}
         """
+        x = ((weightValue / self.m) + 1) / 2
         res = 0
         for b2s in self.bpB2Ss:
-            bit = b2s.tick(self.x)
+            bit = b2s.tick(x)
             res += bit
 
         S = 2 * res - self.m
