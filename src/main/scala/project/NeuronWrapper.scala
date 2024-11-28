@@ -25,7 +25,7 @@ class NeuronWrapper extends Module {
   io.outputStream := 0.U
 
   val neuron = Module(new Neuron(8))
-  private val weightsCSV = readCSV("weights.csv")
+  private val weightsCSV = readCSV("hardcoded_weights.csv")
   val weights = RegInit(
     VecInit.tabulate(1, 8) { (x, y) =>
       weightsCSV(x)(y).S(8.W)

@@ -51,7 +51,7 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
       dut.masterIO.tready.poke(true.B)
       dut.clock.step(1)
 
-      dut.masterIO.tdata.expect(376.U)
+      dut.masterIO.tdata.expect(1023.U)
       dut.masterIO.tlast.expect(true.B)
 
       // print(f"[${dut.masterIO.tdata.peek().litValue}]")
