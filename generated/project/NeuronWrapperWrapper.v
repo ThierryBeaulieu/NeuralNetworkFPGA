@@ -1,7 +1,7 @@
 module NeuronWrapperWrapper(
 (* mark_debug = "true" *) input        clock,
 (* mark_debug = "true" *) input        reset,
-(* mark_debug = "true" *) input  [7:0] s_axis_tdata,
+(* mark_debug = "true" *) input  [15:0] s_axis_tdata,
 (* mark_debug = "true" *) input        s_axis_tkeep,
 (* mark_debug = "true" *) input        s_axis_tvalid,
 (* mark_debug = "true" *) input        s_axis_tlast,
