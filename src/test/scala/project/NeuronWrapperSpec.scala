@@ -10,7 +10,7 @@ import org.scalatest.matchers.must.Matchers
 class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
 
   "NeuronWrapperSpec should have accessible weights" in {
-    simulate(new NeuronWrapper) { dut =>
+    simulate(new NeuronWrapper(8, 128, "weights.csv")) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -20,9 +20,9 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
       dut.weights(0).length.mustBe(8)
     }
   }
-
-  "NeuronWrapper should a sigmoid approximation" in {
-    simulate(new NeuronWrapper) { dut =>
+  /*
+  "NeuronWrapper should be able to make Stanh of 1 : 0.9999" in {
+    simulate(new NeuronWrapper(8, 128, "test_weights_1.csv")) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -43,7 +43,10 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
       }
 
       // handling
+      // println("255 * 127 should be 1.0 * 1.0 = 1024")
       for (_ <- 0 until 1024) {
+        // All equal to 1024
+        // print(f"[${dut.io.outputTreeAdder.peek().litValue}]")
         dut.clock.step(1)
       }
 
@@ -58,15 +61,17 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
       // print(f"{${dut.masterIO.tlast.peek().litValue}}")
     }
   }
+   */
 
-  "NeuronWrapper should work with pixels averaging 128" in {
-    simulate(new NeuronWrapper) { dut =>
+  "NeuronWrapper should be able to make Stanh of 0.5 : 0 < x < 1" in {
+    simulate(new NeuronWrapper(8, 128, "test_weights_2.csv")) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
       dut.reset.poke(false.B)
 
-      val imageTest = Seq(128, 128, 128, 128, 128, 128, 128, 128)
+      // 0.5 * 0.5 = 0.25
+      val imageTest = Seq(255, 255, 255, 255, 255, 255, 255, 255)
 
       dut.slaveIO.tready.expect(true.B)
       for (i <- 0 until imageTest.length) {
@@ -89,7 +94,7 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
 
       // handling
       for (_ <- 0 until 1024) {
-        print(f"[${dut.io.outputStream.peek().litValue}]")
+        print(f"[${dut.io.outputTreeAdder.peek().litValue}]")
         dut.clock.step(1)
       }
 

@@ -9,7 +9,7 @@ import org.scalatest.matchers.must.Matchers
 
 class NeuronSpec extends AnyFreeSpec with Matchers {
   "Neuron should produce a unipolar stream for a pixel=255" in {
-    simulate(new Neuron(2)) { dut =>
+    simulate(new Neuron(2, 128)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -31,7 +31,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should produce a unipolar stream for a pixel=0" in {
-    simulate(new Neuron(2)) { dut =>
+    simulate(new Neuron(2, 128)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -53,7 +53,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should produce a unipolar stream for a pixel=128" in {
-    simulate(new Neuron(2)) { dut =>
+    simulate(new Neuron(2, 128)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -76,7 +76,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should produce a bipolar stream for a m=8" in {
-    simulate(new Neuron(8)) { dut =>
+    simulate(new Neuron(8, 128)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -98,7 +98,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should produce a multiplied values that averaged Weights * pixel" in {
-    simulate(new Neuron(8)) { dut =>
+    simulate(new Neuron(8, 128)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -120,7 +120,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should have a tree adder that generates a value summing all the values" in {
-    simulate(new Neuron(8)) { dut =>
+    simulate(new Neuron(8, 128)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)

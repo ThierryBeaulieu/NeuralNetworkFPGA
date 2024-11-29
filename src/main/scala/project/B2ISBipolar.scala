@@ -11,7 +11,7 @@ import chisel3._
 class B2ISBipolar(m: Int) extends Module {
   val io = IO(new Bundle {
     val inputWeight = Input(SInt(8.W))
-    val outputStream = Output(SInt(9.W))
+    val outputStream = Output(SInt((m + 1).W))
     val outputVal = Output(SInt(8.W))
   })
 

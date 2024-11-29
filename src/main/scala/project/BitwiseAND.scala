@@ -12,11 +12,11 @@ import chisel3._
   * @param outputStream
   *   stochastic stream {-m, 0, m}
   */
-class BitwiseAND extends Module {
+class BitwiseAND(m: Int) extends Module {
   val io = IO(new Bundle {
-    val inputInteger = Input(SInt(9.W))
+    val inputInteger = Input(SInt((m + 1).W))
     val inputBit = Input(UInt(1.W))
-    val outputStream = Output(SInt(9.W))
+    val outputStream = Output(SInt((m + 1).W))
   })
 
   // Using a Mux

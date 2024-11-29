@@ -1,9 +1,10 @@
 package project
 
 import chisel3._
+import chisel3.util._
+import chisel3.util.log2Ceil
 import _root_.circt.stage.ChiselStage
 import scala.io.Source
-import chisel3.util._
 
 /** NeuronWrapper
   *
@@ -12,7 +13,7 @@ import chisel3.util._
   * @param masterIO
   *   AxiStreamExternalIf
   */
-class NeuronWrapper extends Module {
+class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
   val sAxis = Wire(new AxiStreamSlaveIf(8))
   val slaveIO =
     IO(new AxiStreamExternalIf(8))
@@ -24,19 +25,19 @@ class NeuronWrapper extends Module {
     .suggestName("m_axis")
     .connect(mAxis)
 
-  val neuron = Module(new Neuron(8))
-  private val weightsCSV = readCSV("hardcoded_weights.csv")
+  val neuron = Module(new Neuron(nbData, m))
+  private val weightsCSV = readCSV(csvSelected)
   val weights = RegInit(
-    VecInit.tabulate(1, 8) { (x, y) =>
+    VecInit.tabulate(1, nbData) { (x, y) =>
       weightsCSV(x)(y).S(8.W)
     }
   )
 
   val io = IO(new Bundle {
-    val outputB2SValues = Output(Vec(8, UInt(1.W)))
-    val outputB2ISValues = Output(Vec(8, SInt(2.W)))
-    val outputANDValues = Output(Vec(8, SInt(2.W)))
-    val outputTreeAdder = Output(SInt((8 + 1).W))
+    val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
+    val outputB2ISValues = Output(Vec(nbData, SInt(9.W)))
+    val outputANDValues = Output(Vec(nbData, SInt(9.W)))
+    val outputTreeAdder = Output(SInt((9 + log2Ceil(nbData)).W))
     val outputStream = Output(UInt(1.W))
   })
 
@@ -72,7 +73,7 @@ class NeuronWrapper extends Module {
 
   val state = RegInit(State.receiving)
 
-  val image = RegInit(VecInit(Seq.fill(8)(0.U(8.W))))
+  val image = RegInit(VecInit(Seq.fill(nbData)(0.U(8.W))))
   val index = RegInit(0.U(3.W))
 
   val counter = RegInit(0.U(16.W))
@@ -131,7 +132,7 @@ class NeuronWrapper extends Module {
 
 object NeuronWrapper extends App {
   ChiselStage.emitSystemVerilogFile(
-    new NeuronWrapper,
+    new NeuronWrapper(8, 128, "weights.csv"),
     args = Array(
       "--target-dir",
       "generated/project/"

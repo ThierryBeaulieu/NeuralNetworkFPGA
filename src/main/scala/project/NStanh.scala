@@ -14,13 +14,13 @@ import chisel3.util.log2Ceil
   * @param outputStream
   *   the unipolar value {0, 1}
   */
-class NStanh(n: Int, m: Int) extends Module {
-  val m_offset = RegInit(0.S)
+class NStanh(n: Int, m: Int, nbData: Int) extends Module {
+  val m_offset = RegInit(((m * n) / 2).S(16.W))
   val m_MN = RegInit((n * m).S)
-  val m_counter = RegInit(0.S(10.W))
+  val m_counter = RegInit(((m * n) / 2).S(16.W))
 
   val io = IO(new Bundle {
-    val inputSi = Input(SInt((9 + log2Ceil(m)).W))
+    val inputSi = Input(SInt((9 + log2Ceil(nbData)).W))
     val outputStream = Output(UInt(1.W))
   })
 

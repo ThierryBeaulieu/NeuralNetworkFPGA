@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from numpy.typing import NDArray
 from neuralnetwork import Neuron
 from neuralnetwork import B2ISBipolar
-from neuralnetwork import B2SBipolar
 from neuralnetwork import B2SUnipolar
 from neuralnetwork import BitwiseOperatorAND
 from neuralnetwork import CounterUnipolar
@@ -1615,7 +1614,7 @@ if __name__ == "__main__":
     # test.B2STest()
     # test.BitwiseANDTest()
     # test.UnipolarCounterTest()
-    test.NStanhTest1()
+    # test.NStanhTest1()
     # test.NStanhTest2()
     # test.NStanhTest3()
     # test.NStanhTest4()
@@ -1633,8 +1632,8 @@ if __name__ == "__main__":
     # test.IntegrationTestX3()
 
     ## Clem Test
-    test.B2ISTest0()
-    test.B2ISTest()
-    test.BitwiseANDTest()
+    # test.B2ISTest0()
+    # test.B2ISTest()
+    # test.BitwiseANDTest()
     test.IntegrationTestX()
-    test.NStanhTest1()
+    # test.NStanhTest1()

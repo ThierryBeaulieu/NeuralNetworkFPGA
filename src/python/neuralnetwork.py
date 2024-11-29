@@ -174,7 +174,7 @@ class Neuron(Module):
         self.n = n
         self.m = m
 
-        self.b2ISBipolar = B2ISBipolar()
+        self.b2ISBipolar = B2ISBipolar(m=128)
         self.b2sUnipolar = B2SUnipolar()
         self.bitwiseAND = BitwiseOperatorAND()
         self.nstanh = NStanh(offset=(m * n / 2))

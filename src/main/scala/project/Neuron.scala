@@ -20,13 +20,18 @@ import chisel3.util.log2Ceil
   * @param outputStream
   *   unipolar stream {0, 1}
   */
-class Neuron(nbPixels: Int) extends Module {
-  private val b2SUnipolar = Seq.fill(nbPixels)(Module(new B2SUnipolar(34)))
+class Neuron(nbPixels: Int, m: Int) extends Module {
+  val randomSeeds = Seq.fill(nbPixels)(scala.util.Random.nextInt(255) + 1)
+
+  private val b2SUnipolar =
+    randomSeeds.map(seed => Module(new B2SUnipolar(seed)))
   private val b2ISBipolar =
-    Seq.fill(nbPixels)(Module(new B2ISBipolar(nbPixels)))
-  private val bitwiseAND = Seq.fill(nbPixels)(Module(new BitwiseAND))
+    Seq.fill(nbPixels)(Module(new B2ISBipolar(m)))
+  private val bitwiseAND = Seq.fill(nbPixels)(Module(new BitwiseAND(m)))
   private val treeAdder = Module(new TreeAdder(nbPixels = nbPixels))
-  private val nStanh = Module(new NStanh(n = 4, m = nbPixels))
+  private val nStanh = Module(
+    new NStanh(n = 4, m = m, nbData = nbPixels)
+  )
 
   val io = IO(new Bundle {
     val inputPixels = Input(Vec(nbPixels, UInt(8.W)))
@@ -57,7 +62,7 @@ class Neuron(nbPixels: Int) extends Module {
     b2ISBipolar(i).io.inputWeight := io.inputWeights(i)
     regB2IS(i) := b2ISBipolar(i).io.outputStream
     // debugging
-    io.outputB2ISValues(i) := regB2IS(i)
+    io.outputB2ISValues(i) := b2ISBipolar(i).io.outputStream
   }
 
   // Step 3. Pixel & Weight

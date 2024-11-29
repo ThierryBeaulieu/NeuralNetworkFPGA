@@ -10,7 +10,7 @@ import org.scalatest.matchers.must.Matchers
 class BitwiseANDSpec extends AnyFreeSpec with Matchers {
 
   "Should produce return a stream of bipolar values with bit = 1" in {
-    simulate(new BitwiseAND) { dut =>
+    simulate(new BitwiseAND(m = 8)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -44,7 +44,7 @@ class BitwiseANDSpec extends AnyFreeSpec with Matchers {
   }
 
   "Should produce return a stream of bipolar values with bit = 0" in {
-    simulate(new BitwiseAND) { dut =>
+    simulate(new BitwiseAND(m = 8)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -78,7 +78,7 @@ class BitwiseANDSpec extends AnyFreeSpec with Matchers {
   }
 
   "Should produce return a stream of bipolar values with bit {0, 1}" in {
-    simulate(new BitwiseAND) { dut =>
+    simulate(new BitwiseAND(m = 8)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -121,7 +121,7 @@ class BitwiseANDSpec extends AnyFreeSpec with Matchers {
   }
 
   "Should produce return a stream of bipolar values between -m and m if m=128" in {
-    simulate(new BitwiseAND) { dut =>
+    simulate(new BitwiseAND(m = 8)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
