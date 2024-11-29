@@ -64,14 +64,14 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
    */
 
   "NeuronWrapper should be able to make Stanh of 0.5 : 0 < x < 1" in {
-    simulate(new NeuronWrapper(8, 128, "test_weights_2.csv")) { dut =>
+    simulate(new NeuronWrapper(8, 128, "weights.csv")) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
       dut.reset.poke(false.B)
 
       // 0.5 * 0.5 = 0.25
-      val imageTest = Seq(255, 255, 255, 255, 255, 255, 255, 255)
+      val imageTest = Seq(255, 0, 0, 0, 0, 0, 0, 0)
 
       dut.slaveIO.tready.expect(true.B)
       for (i <- 0 until imageTest.length) {
@@ -93,16 +93,14 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
        */
 
       // handling
-      for (_ <- 0 until 1024) {
-        print(f"[${dut.io.outputTreeAdder.peek().litValue}]")
-        dut.clock.step(1)
-      }
+      dut.clock.step(2)
+      print(f"[${dut.io.outputTreeAdder.peek().litValue}]")
 
       // sending
       dut.masterIO.tready.poke(true.B)
       dut.clock.step(1)
 
-      dut.masterIO.tdata.expect(511.U)
+      dut.masterIO.tdata.expect(511.S)
       dut.masterIO.tlast.expect(true.B)
 
       // print(f"[${dut.masterIO.tdata.peek().litValue}]")

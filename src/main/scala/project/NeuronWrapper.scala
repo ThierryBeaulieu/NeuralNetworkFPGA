@@ -14,9 +14,9 @@ import scala.io.Source
   *   AxiStreamExternalIf
   */
 class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
-  val sAxis = Wire(new AxiStreamSlaveIf(8))
+  val sAxis = Wire(new AxiStreamSlaveIf(16))
   val slaveIO =
-    IO(new AxiStreamExternalIf(8))
+    IO(new AxiStreamExternalIf(16))
   slaveIO.suggestName("s_axis").connect(sAxis)
 
   val mAxis = Wire(new AxiStreamMasterIf(16))
@@ -64,8 +64,8 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
   sAxis.tready := RegInit(true.B)
   mAxis.data.tvalid := RegInit(false.B)
   mAxis.data.tlast := RegInit(false.B)
-  mAxis.data.tdata := RegInit(0.U(16.W))
-  mAxis.data.tkeep := RegInit("b1".U)
+  mAxis.data.tdata := RegInit(0.S(16.W))
+  mAxis.data.tkeep := RegInit("b11".U)
 
   object State extends ChiselEnum {
     val receiving, handling, sending = Value
@@ -75,10 +75,6 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
 
   val image = RegInit(VecInit(Seq.fill(nbData)(0.U(8.W))))
   val index = RegInit(0.U(3.W))
-
-  val counter = RegInit(0.U(16.W))
-
-  val minCycles = RegInit(0.U(10.W))
 
   def setImageAndWeight() = {
     neuron.io.inputPixels := image
@@ -90,7 +86,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
     // Step 1. Fill the image with 401 pixels
     is(State.receiving) {
       when(sAxis.data.tvalid) {
-        image(index) := sAxis.data.tdata
+        image(index) := sAxis.data.tdata.asUInt(7, 0)
         index := index + 1.U
         when(sAxis.data.tlast) {
           state := State.handling
@@ -105,25 +101,17 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
       io.outputANDValues := neuron.io.outputANDValues
       io.outputTreeAdder := neuron.io.outputTreeAdder
       io.outputStream := neuron.io.outputStream
-
-      counter := counter + neuron.io.outputStream
-      minCycles := (minCycles + 1.U)
-      when(minCycles === (1024.U - 1.U)) {
-        state := State.sending
-      }
     }
     // State 3. Return the information
     is(State.sending) {
       when(mAxis.tready) {
         mAxis.data.tlast := true.B
         mAxis.data.tvalid := true.B
-        mAxis.data.tdata := counter
+        mAxis.data.tdata := neuron.io.outputTreeAdder
         // reinitialize everything
         image := VecInit(Seq.fill(8)(0.U(8.W)))
         index := 0.U
-        counter := RegInit(0.U(16.W))
 
-        minCycles := 0.U
         state := State.receiving
       }
     }

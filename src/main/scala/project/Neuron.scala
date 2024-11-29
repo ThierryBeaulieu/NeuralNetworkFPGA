@@ -80,6 +80,8 @@ class Neuron(nbPixels: Int, m: Int) extends Module {
   // debugging
   io.outputTreeAdder := treeAdder.io.outputStream
 
+  
+
   // Step 5. Passing Stream to NStanh
   nStanh.io.inputSi := treeAdder.io.outputStream
   // debugging

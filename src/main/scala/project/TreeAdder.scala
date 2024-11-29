@@ -1,7 +1,6 @@
 package project
 
 import chisel3._
-import chisel3.util.log2Ceil
 
 /** Takes a value in the integral stream and returns a 0 or the integral value
   * according to the bit
@@ -15,7 +14,7 @@ import chisel3.util.log2Ceil
 class TreeAdder(nbPixels: Int) extends Module {
   val io = IO(new Bundle {
     val inputStream = Input(Vec(nbPixels, SInt(9.W)))
-    val outputStream = Output(SInt((9 + log2Ceil(nbPixels)).W))
+    val outputStream = Output(SInt(16.W))
   })
 
   io.outputStream := io.inputStream.reduceTree((a, b) => (a +& b))
