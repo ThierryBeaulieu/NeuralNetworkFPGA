@@ -11,14 +11,15 @@ import chisel3._
 class B2ISBipolar(m: Int) extends Module {
   val io = IO(new Bundle {
     val inputWeight = Input(SInt(8.W))
-    val outputStream = Output(SInt(3.W))
+    val outputStream = Output(SInt(9.W))
     val outputVal = Output(SInt(8.W))
   })
 
   val x = ((128.S * io.inputWeight) / m.S) + 128.S
   io.outputVal := x
 
-  val randomSeeds = Seq.fill(m)(scala.util.Random.nextInt(256))
+  val randomSeeds = Seq.fill(m)(scala.util.Random.nextInt(255) + 1)
+
   val b2SUnipolar = randomSeeds.map(seed => Module(new B2SUnipolar(seed)))
 
   for (i <- 0 until m) {
