@@ -1,6 +1,7 @@
 package project
 
 import chisel3._
+import chisel3.util.log2Ceil
 
 /** NStanh function. Using a FSM, we simulate NStanh
   *
@@ -19,7 +20,7 @@ class NStanh(n: Int, m: Int) extends Module {
   val m_counter = RegInit(0.S(10.W))
 
   val io = IO(new Bundle {
-    val inputSi = Input(SInt((m + 1).W))
+    val inputSi = Input(SInt((9 + log2Ceil(m)).W))
     val outputStream = Output(UInt(1.W))
   })
 
