@@ -14,9 +14,9 @@ import chisel3._
   */
 class BitwiseAND extends Module {
   val io = IO(new Bundle {
-    val inputInteger = Input(SInt(2.W))
+    val inputInteger = Input(SInt(9.W))
     val inputBit = Input(UInt(1.W))
-    val outputStream = Output(SInt(2.W))
+    val outputStream = Output(SInt(9.W))
   })
 
   // Using a Mux
