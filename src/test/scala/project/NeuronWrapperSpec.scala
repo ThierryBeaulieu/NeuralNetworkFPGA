@@ -71,7 +71,7 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
       dut.reset.poke(false.B)
 
       // 0.5 * 0.5 = 0.25
-      val imageTest = Seq(255, 0, 0, 0, 0, 0, 0, 0)
+      val imageTest = Seq(255, 255, 0, 0, 0, 0, 0, 0)
 
       dut.slaveIO.tready.expect(true.B)
       for (i <- 0 until imageTest.length) {
@@ -94,7 +94,19 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
 
       // handling
       dut.clock.step(2)
-      print(f"[${dut.io.outputTreeAdder.peek().litValue}]")
+
+      var sum = 0
+      val nb_cycles = 1024
+      for (_ <- 0 until nb_cycles) {
+        sum += dut.io.outputTreeAdder.peek().litValue.toInt
+        dut.clock.step(1)
+      }
+
+      println(f"sum : ${sum / 1024} should equal 200")
+      // print(f"B2S[${dut.io.outputB2SValues(1).peek().litValue}]")
+      // print(f"B2IS[${dut.io.outputB2ISValues(1).peek().litValue}]")
+      // print(f"AND[${dut.io.outputANDValues(1).peek().litValue}]")
+      // print(f"Tree Adder[${dut.io.outputTreeAdder.peek().litValue}]")
 
       // sending
       dut.masterIO.tready.poke(true.B)
