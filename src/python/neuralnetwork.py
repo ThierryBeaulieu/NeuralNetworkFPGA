@@ -60,31 +60,6 @@ class B2SUnipolar(Module):
         generatedBits = self.lfsr.next_number(self.seed.bit_length())
         return int(value > generatedBits)
 
-
-class B2SBipolar(Module):
-    def __init__(self):
-        "Binary 2 stochastic converter in bipolar format"
-        self.seed = 0b11110111
-        self.taps = [7, 5, 3, 1]
-        self.lfsr = LFSR(self.seed, self.taps)
-
-    def tick(self, value: np.int8):
-        """
-        Converts a binary into a probability.
-
-        Input : value [-128, 127]
-        Output : {-1, 1}
-        """
-        value = np.int8(value)
-        generatedBits = self.lfsr.next_number(self.seed.bit_length())
-        generatedBits = self.twos(generatedBits)
-        return int(value > generatedBits) * 2 - 1
-
-    def twos(self, bits):
-        "shifts the range from [0,255] to [-128, 127]"
-        return bits - 128
-
-
 class B2ISBipolar(Module):
 
     def __init__(self, m: int):

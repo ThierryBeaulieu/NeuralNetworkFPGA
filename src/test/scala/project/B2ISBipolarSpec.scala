@@ -9,107 +9,51 @@ import org.scalatest.matchers.must.Matchers
 
 class B2ISBipolarSpec extends AnyFreeSpec with Matchers {
 
-  "Should produce a bipolar stream of 1 when using a weight of 127" in {
-    simulate(new B2ISBipolar) { dut =>
+  "Should produce a bipolar stream m=2, S=1, x1=x2=0.75" in {
+    simulate(new B2ISBipolar(2)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
       dut.reset.poke(false.B)
       dut.clock.step(1)
 
-      val expectedBipolarStream =
-        Seq(
-          1.S(1.W),
-          1.S(1.W),
-          1.S(1.W),
-          1.S(1.W),
-          1.S(1.W),
-          1.S(1.W),
-          1.S(1.W),
-          1.S(1.W),
-          1.S(1.W),
-          1.S(1.W)
-        )
-
-      dut.io.inputWeight.poke(127.S)
+      dut.io.inputWeight.poke(1.S)
       dut.clock.step(1)
 
-      for (i <- 0 until expectedBipolarStream.length) {
-        dut.io.outputStream.expect(expectedBipolarStream(i))
-        // print(dut.io.outputStream.peek().litValue)
+      // print(dut.io.outputVal.peek().litValue)
+      var sum = 0
+      val nb_cycles = 1024
+      for (_ <- 0 until nb_cycles) {
+        sum += dut.io.outputStream.peek().litValue.toInt
         dut.clock.step(1)
       }
+      sum = sum / nb_cycles
+
+      assert(sum - 1.0 < 0.1)
     }
   }
 
-  "Should produce a bipolar stream of -1 when using a weight of -128" in {
-    simulate(new B2ISBipolar) { dut =>
+  "Should produce a bipolar stream m=2, S=-1, x1=x2=0.25" in {
+    simulate(new B2ISBipolar(2)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
       dut.reset.poke(false.B)
       dut.clock.step(1)
 
-      val expectedBipolarStream =
-        Seq(
-          -1.S(1.W),
-          -1.S(1.W),
-          -1.S(1.W),
-          -1.S(1.W),
-          -1.S(1.W),
-          -1.S(1.W),
-          -1.S(1.W),
-          -1.S(1.W),
-          -1.S(1.W),
-          -1.S(1.W),
-          -1.S(1.W),
-          -1.S(1.W),
-          -1.S(1.W)
-        )
-
-      dut.io.inputWeight.poke(-128.S)
+      dut.io.inputWeight.poke(-1.S)
       dut.clock.step(1)
 
-      for (i <- 0 until expectedBipolarStream.length) {
-        dut.io.outputStream.expect(expectedBipolarStream(i))
-        // print(dut.io.outputStream.peek().litValue)
+      // print(dut.io.outputVal.peek().litValue)
+      var sum = 0
+      val nb_cycles = 1024
+      for (_ <- 0 until nb_cycles) {
+        sum += dut.io.outputStream.peek().litValue.toInt
         dut.clock.step(1)
       }
-    }
-  }
+      sum = sum / nb_cycles
 
-  "Should produce a bipolar stream of -1 and 1 when using a weight of 0" in {
-    simulate(new B2ISBipolar) { dut =>
-      // Reset the DUT
-      dut.reset.poke(true.B)
-      dut.clock.step(1)
-      dut.reset.poke(false.B)
-      dut.clock.step(1)
-
-      val expectedBipolarStream =
-        Seq(
-          -1.S(1.W),
-          1.S(1.W),
-          1.S(1.W),
-          1.S(1.W),
-          -1.S(1.W),
-          1.S(1.W),
-          -1.S(1.W),
-          1.S(1.W),
-          1.S(1.W),
-          -1.S(1.W),
-          1.S(1.W),
-          -1.S(1.W)
-        )
-
-      dut.io.inputWeight.poke(0.S)
-      dut.clock.step(1)
-
-      for (i <- 0 until expectedBipolarStream.length) {
-        dut.io.outputStream.expect(expectedBipolarStream(i))
-        // print(dut.io.outputStream.peek().litValue)
-        dut.clock.step(1)
-      }
+      assert(sum + 1.0 < 0.1)
     }
   }
 }

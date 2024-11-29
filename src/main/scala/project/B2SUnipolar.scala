@@ -9,14 +9,15 @@ import chisel3.util.random.LFSR
   * @param outputStream
   *   the unipolar value {0, 1}
   */
-class B2SUnipolar extends Module {
+class B2SUnipolar(seed: Int) extends Module {
   val io = IO(new Bundle {
-    val inputPixel = Input(UInt(8.W))
+    val inputValue = Input(UInt(8.W))
     val outputStream = Output(UInt(1.W))
   })
-  val randomNumber: UInt = LFSR(8, true.B, Some(34))
 
-  when(randomNumber < io.inputPixel) {
+  val randomNumber: UInt = LFSR(8, true.B, Some(seed))
+
+  when(randomNumber < io.inputValue) {
     io.outputStream := 1.U
   }.otherwise {
     io.outputStream := 0.U
