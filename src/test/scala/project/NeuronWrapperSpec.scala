@@ -93,20 +93,13 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
        */
 
       // handling
-      dut.clock.step(2)
-
-      var sum = 0
-      val nb_cycles = 1024
-      for (_ <- 0 until nb_cycles) {
-        sum += dut.io.outputTreeAdder.peek().litValue.toInt
-        dut.clock.step(1)
-      }
-
-      println(f"sum : ${sum / 1024} should equal 200")
       // print(f"B2S[${dut.io.outputB2SValues(1).peek().litValue}]")
       // print(f"B2IS[${dut.io.outputB2ISValues(1).peek().litValue}]")
       // print(f"AND[${dut.io.outputANDValues(1).peek().litValue}]")
-      // print(f"Tree Adder[${dut.io.outputTreeAdder.peek().litValue}]")
+      for (_ <- 0 until 10) {
+        print(f"Tree Adder[${dut.io.outputTreeAdder.peek().litValue}]")
+        dut.clock.step(1)
+      }
 
       // sending
       dut.masterIO.tready.poke(true.B)

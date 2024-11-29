@@ -101,6 +101,8 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
       io.outputANDValues := neuron.io.outputANDValues
       io.outputTreeAdder := neuron.io.outputTreeAdder
       io.outputStream := neuron.io.outputStream
+
+      state := State.sending
     }
     // State 3. Return the information
     is(State.sending) {
@@ -120,7 +122,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
 
 object NeuronWrapper extends App {
   ChiselStage.emitSystemVerilogFile(
-    new NeuronWrapper(8, 128, "weights.csv"),
+    new NeuronWrapper(401, 128, "weights.csv"),
     args = Array(
       "--target-dir",
       "generated/project/"
