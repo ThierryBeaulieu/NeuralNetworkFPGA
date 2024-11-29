@@ -19,28 +19,28 @@ import chisel3._
   * @param outputStream
   *   unipolar stream {0, 1}
   */
-class Neuron(nbData: Int) extends Module {
-  private val b2SUnipolar = Seq.fill(nbData)(Module(new B2SUnipolar(34)))
-  private val b2ISBipolar = Seq.fill(nbData)(Module(new B2ISBipolar(128)))
-  private val bitwiseAND = Seq.fill(nbData)(Module(new BitwiseAND))
-  private val treeAdder = Module(new TreeAdder(nbStream = nbData))
-  private val nStanh = Module(new NStanh(n = 4, m = nbData))
+class Neuron(nbPixels: Int) extends Module {
+  private val b2SUnipolar = Seq.fill(nbPixels)(Module(new B2SUnipolar(34)))
+  private val b2ISBipolar = Seq.fill(nbPixels)(Module(new B2ISBipolar(128)))
+  private val bitwiseAND = Seq.fill(nbPixels)(Module(new BitwiseAND))
+  private val treeAdder = Module(new TreeAdder(nbPixels = nbPixels))
+  private val nStanh = Module(new NStanh(n = 4, m = nbPixels))
 
   val io = IO(new Bundle {
-    val inputPixels = Input(Vec(nbData, UInt(8.W)))
-    val inputWeights = Input(Vec(nbData, SInt(8.W)))
+    val inputPixels = Input(Vec(nbPixels, UInt(8.W)))
+    val inputWeights = Input(Vec(nbPixels, SInt(8.W)))
 
-    val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
-    val outputB2ISValues = Output(Vec(nbData, SInt(2.W)))
-    val outputANDValues = Output(Vec(nbData, SInt(2.W)))
-    val outputTreeAdder = Output(SInt((nbData + 1).W))
+    val outputB2SValues = Output(Vec(nbPixels, UInt(1.W)))
+    val outputB2ISValues = Output(Vec(nbPixels, SInt(9.W)))
+    val outputANDValues = Output(Vec(nbPixels, SInt(9.W)))
+    val outputTreeAdder = Output(SInt((nbPixels + 1).W))
 
     // end of debugging purposes
     val outputStream = Output(UInt(1.W))
   })
 
   // Step 1. Pixel Unipolar Conversion
-  val regB2S = RegInit(VecInit(Seq.fill(nbData)(0.U(1.W))))
+  val regB2S = RegInit(VecInit(Seq.fill(nbPixels)(0.U(1.W))))
   for (i <- 0 until regB2S.length) {
     b2SUnipolar(i).io.inputValue := io.inputPixels(i)
     regB2S(i) := b2SUnipolar(i).io.outputStream
@@ -48,7 +48,7 @@ class Neuron(nbData: Int) extends Module {
   }
 
   // Step 2. Weight Bipolar Conversion
-  val regB2IS = RegInit(VecInit(Seq.fill(nbData)(0.S(2.W))))
+  val regB2IS = RegInit(VecInit(Seq.fill(nbPixels)(0.S(9.W))))
   for (i <- 0 until regB2IS.length) {
     b2ISBipolar(i).io.inputWeight := io.inputWeights(i)
     regB2IS(i) := b2ISBipolar(i).io.outputStream
@@ -56,7 +56,7 @@ class Neuron(nbData: Int) extends Module {
   }
 
   // Step 3. Pixel & Weight
-  val regAND = RegInit(VecInit(Seq.fill(nbData)(0.S(2.W))))
+  val regAND = RegInit(VecInit(Seq.fill(nbPixels)(0.S(9.W))))
   for (i <- 0 until regAND.length) {
     bitwiseAND(i).io.inputInteger := regB2IS(i)
     bitwiseAND(i).io.inputBit := regB2S(i)

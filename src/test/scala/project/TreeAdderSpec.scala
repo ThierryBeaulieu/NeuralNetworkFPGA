@@ -10,7 +10,7 @@ import org.scalatest.matchers.must.Matchers
 class TreeAdderSpec extends AnyFreeSpec with Matchers {
 
   "Should add 4 {1} bipolar stochastic stream to get 4" in {
-    simulate(new TreeAdder(nbStream = 4)) { dut =>
+    simulate(new TreeAdder(nbPixels = 4)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -30,7 +30,7 @@ class TreeAdderSpec extends AnyFreeSpec with Matchers {
   }
 
   "Should add 4 {-1} bipolar stochastic stream to get -4" in {
-    simulate(new TreeAdder(nbStream = 4)) { dut =>
+    simulate(new TreeAdder(nbPixels = 4)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -50,7 +50,7 @@ class TreeAdderSpec extends AnyFreeSpec with Matchers {
   }
 
   "Should add 6 bipolar stochastic stream together" in {
-    simulate(new TreeAdder(nbStream = 6)) { dut =>
+    simulate(new TreeAdder(nbPixels = 6)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -65,6 +65,50 @@ class TreeAdderSpec extends AnyFreeSpec with Matchers {
       dut.io.inputStream(3).poke(-1.S)
       dut.io.inputStream(4).poke(1.S)
       dut.io.inputStream(5).poke(-1.S)
+      dut.clock.step(1)
+
+      dut.io.outputStream.expect(expectedUnipolarStream)
+    }
+  }
+
+  "Should add 6 bipolar stochastic stream together with a sum of 6 * -128" in {
+    simulate(new TreeAdder(nbPixels = 6)) { dut =>
+      // Reset the DUT
+      dut.reset.poke(true.B)
+      dut.clock.step(1)
+      dut.reset.poke(false.B)
+      dut.clock.step(1)
+
+      val expectedUnipolarStream = -768.S(12.W)
+      // incoming bipolar stochastic stream
+      dut.io.inputStream(0).poke(-128.S)
+      dut.io.inputStream(1).poke(-128.S)
+      dut.io.inputStream(2).poke(-128.S)
+      dut.io.inputStream(3).poke(-128.S)
+      dut.io.inputStream(4).poke(-128.S)
+      dut.io.inputStream(5).poke(-128.S)
+      dut.clock.step(1)
+
+      dut.io.outputStream.expect(expectedUnipolarStream)
+    }
+  }
+
+  "Should add 6 bipolar stochastic stream together with a sum of 6 * 128" in {
+    simulate(new TreeAdder(nbPixels = 6)) { dut =>
+      // Reset the DUT
+      dut.reset.poke(true.B)
+      dut.clock.step(1)
+      dut.reset.poke(false.B)
+      dut.clock.step(1)
+
+      val expectedUnipolarStream = 768.S(12.W)
+      // incoming bipolar stochastic stream
+      dut.io.inputStream(0).poke(128.S)
+      dut.io.inputStream(1).poke(128.S)
+      dut.io.inputStream(2).poke(128.S)
+      dut.io.inputStream(3).poke(128.S)
+      dut.io.inputStream(4).poke(128.S)
+      dut.io.inputStream(5).poke(128.S)
       dut.clock.step(1)
 
       dut.io.outputStream.expect(expectedUnipolarStream)

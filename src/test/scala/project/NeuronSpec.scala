@@ -9,7 +9,7 @@ import org.scalatest.matchers.must.Matchers
 
 class NeuronSpec extends AnyFreeSpec with Matchers {
   "Neuron should generate stream with a single B2S" in {
-    simulate(new Neuron(nbData = 1)) { dut =>
+    simulate(new Neuron(nbPixels = 1)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -43,7 +43,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should generate stream with multiple B2S" in {
-    simulate(new Neuron(nbData = 2)) { dut =>
+    simulate(new Neuron(nbPixels = 2)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -102,7 +102,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should generate bipolar stream with a single B2ISBipolar" in {
-    simulate(new Neuron(nbData = 1)) { dut =>
+    simulate(new Neuron(nbPixels = 1)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -137,7 +137,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should generate bipolar stream with multiple B2ISBipolar" in {
-    simulate(new Neuron(nbData = 3)) { dut =>
+    simulate(new Neuron(nbPixels = 3)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -220,7 +220,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should apply the Bitwise AND operator on a single pair of streams" in {
-    simulate(new Neuron(nbData = 1)) { dut =>
+    simulate(new Neuron(nbPixels = 1)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -253,7 +253,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should apply the Bitwise AND operator on a multiple pair of streams" in {
-    simulate(new Neuron(nbData = 3)) { dut =>
+    simulate(new Neuron(nbPixels = 3)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -330,7 +330,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should have the TreeAdder work for only one stream" in {
-    simulate(new Neuron(nbData = 1)) { dut =>
+    simulate(new Neuron(nbPixels = 1)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -365,7 +365,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should have the TreeAdder reduce a set of streams" in {
-    simulate(new Neuron(nbData = 4)) { dut =>
+    simulate(new Neuron(nbPixels = 4)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -409,7 +409,7 @@ class NeuronSpec extends AnyFreeSpec with Matchers {
   }
 
   "Neuron should convert pixel and weights into a unipolar stream" in {
-    simulate(new Neuron(nbData = 4)) { dut =>
+    simulate(new Neuron(nbPixels = 4)) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
