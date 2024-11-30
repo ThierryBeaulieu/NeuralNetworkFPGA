@@ -125,7 +125,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
 
 object NeuronWrapper extends App {
   ChiselStage.emitSystemVerilogFile(
-    new NeuronWrapper(8, 128, "weights.csv"),
+    new NeuronWrapper(8, 128, "weights_reduce.csv"),
     args = Array(
       "--target-dir",
       "generated/project/",

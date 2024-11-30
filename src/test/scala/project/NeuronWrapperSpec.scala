@@ -10,19 +10,21 @@ import org.scalatest.matchers.must.Matchers
 class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
 
   "NeuronWrapperSpec should have accessible weights" in {
-    simulate(new NeuronWrapper(8, 128, "weights.csv")) { dut =>
+    simulate(new NeuronWrapper(8, 128, "weights_reduce_test.csv")) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
       dut.reset.poke(false.B)
 
       dut.weights.length.mustBe(10)
-      dut.weights(0).length.mustBe(64)
+      dut.weights(0).length.mustBe(8)
+
+      print(dut.weights(0)(0).peek().litValue)
     }
   }
 
   "NeuronWrapper should be able to make Stanh of 0.5 : 0 < x < 1" in {
-    simulate(new NeuronWrapper(8, 128, "weights.csv")) { dut =>
+    simulate(new NeuronWrapper(8, 128, "weights_reduce_test.csv")) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
