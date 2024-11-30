@@ -2,7 +2,6 @@ package project
 
 import chisel3._
 import chisel3.util._
-import chisel3.util.log2Ceil
 import _root_.circt.stage.ChiselStage
 import scala.io.Source
 
@@ -25,29 +24,18 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
     .suggestName("m_axis")
     .connect(mAxis)
 
+  val io = IO(new Bundle {
+    val outputTreeAdder = Output(SInt((16).W))
+  })
+
   val neuron = Module(new Neuron(nbData, m))
-  private val weightsCSV = readCSV(csvSelected)
+
+  val weightsCSV = readCSV(csvSelected)
   val weights = RegInit(
-    VecInit.tabulate(1, nbData) { (x, y) =>
+    VecInit.tabulate(10, nbData) { (x, y) =>
       weightsCSV(x)(y).S(8.W)
     }
   )
-
-  val io = IO(new Bundle {
-    val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
-    val outputB2ISValues = Output(Vec(nbData, SInt(9.W)))
-    val outputANDValues = Output(Vec(nbData, SInt(9.W)))
-    val outputTreeAdder = Output(SInt((9 + log2Ceil(nbData)).W))
-    val outputStream = Output(UInt(1.W))
-  })
-
-  for (i <- 0 until 8) {
-    io.outputB2SValues(i) := 0.U
-    io.outputB2ISValues(i) := 0.S
-    io.outputANDValues(i) := 0.S
-  }
-  io.outputTreeAdder := 0.S
-  io.outputStream := 0.U
 
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
@@ -66,6 +54,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
   mAxis.data.tlast := RegInit(false.B)
   mAxis.data.tdata := RegInit(0.S(16.W))
   mAxis.data.tkeep := RegInit("b11".U)
+  io.outputTreeAdder := 0.S
 
   object State extends ChiselEnum {
     val receiving, handling, sending = Value
@@ -76,9 +65,13 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
   val image = RegInit(VecInit(Seq.fill(nbData)(0.U(8.W))))
   val index = RegInit(0.U(3.W))
 
+  val row = RegInit(0.U(4.W))
+  val resultAdder = RegInit(VecInit(Seq.fill(10)(0.S(16.W))))
+  val transferCounter = RegInit(0.U(4.W))
+
   def setImageAndWeight() = {
     neuron.io.inputPixels := image
-    neuron.io.inputWeights := weights(0)
+    neuron.io.inputWeights := weights(row)
   }
   setImageAndWeight()
 
@@ -96,25 +89,35 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
     }
     // Step 2. Process the information for 1024 cycles
     is(State.handling) {
-      io.outputB2SValues := neuron.io.outputB2SValues
-      io.outputB2ISValues := neuron.io.outputB2ISValues
-      io.outputANDValues := neuron.io.outputANDValues
       io.outputTreeAdder := neuron.io.outputTreeAdder
-      io.outputStream := neuron.io.outputStream
-
-      state := State.sending
+      resultAdder(row) := neuron.io.outputTreeAdder
+      row := row + 1.U
+      when(row === (10.U - 1.U)) {
+        state := State.sending
+      }
     }
     // State 3. Return the information
     is(State.sending) {
       when(mAxis.tready) {
-        mAxis.data.tlast := true.B
-        mAxis.data.tvalid := true.B
-        mAxis.data.tdata := neuron.io.outputTreeAdder
-        // reinitialize everything
-        image := VecInit(Seq.fill(8)(0.U(8.W)))
-        index := 0.U
+        when(transferCounter === (10.U - 1.U)) {
+          mAxis.data.tlast := true.B
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := neuron.io.outputTreeAdder
+          // reinitialize everything
+          image := VecInit(Seq.fill(nbData)(0.U(8.W)))
+          index := 0.U
 
-        state := State.receiving
+          row := 0.U
+          resultAdder := VecInit(Seq.fill(10)(0.S(16.W)))
+          transferCounter := 0.U
+
+          state := State.receiving
+        }.otherwise {
+          mAxis.data.tlast := false.B
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := resultAdder(transferCounter)
+          transferCounter := transferCounter + 1.U
+        }
       }
     }
   }
@@ -125,7 +128,11 @@ object NeuronWrapper extends App {
     new NeuronWrapper(8, 128, "weights.csv"),
     args = Array(
       "--target-dir",
-      "generated/project/"
+      "generated/project/",
+      "--log-level",
+      "debug",
+      "--log-file",
+      "neuron_wrapper.log"
     ),
     firtoolOpts = Array(
       "-disable-all-randomization",
