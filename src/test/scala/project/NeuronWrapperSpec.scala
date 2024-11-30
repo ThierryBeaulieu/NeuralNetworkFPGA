@@ -44,7 +44,18 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
           dut.clock.step(1)
         }
       }
+
+      println("valeur weights")
+      for (i <- 0 until 8) {
+        print(dut.io.outputWeight(i).peek().litValue)
+      }
+
       dut.clock.step(1)
+
+      println("valeur pixels")
+      for (i <- 0 until 8) {
+        print(dut.io.outputImage(i).peek().litValue)
+      }
 
       /*
         val outputB2SValues = Output(Vec(nbData, UInt(1.W)))
@@ -57,8 +68,15 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
       // print(f"B2S[${dut.io.outputB2SValues(1).peek().litValue}]")
       // print(f"B2IS[${dut.io.outputB2ISValues(1).peek().litValue}]")
       // print(f"AND[${dut.io.outputANDValues(1).peek().litValue}]")
-      for (_ <- 0 until 10) {
-        print(f"Tree Adder[${dut.io.outputTreeAdder.peek().litValue}]")
+      // ça ne devrait pas être le cas, on devriat attend 10? avant de lae faire?
+      for (_ <- 0 until 20) {
+        println("valeur weights")
+        for (i <- 0 until 8) {
+          print(dut.io.outputWeight(i).peek().litValue)
+        }
+        // Pourquoi les wieghts n'affichent rien
+
+        println(f"Tree Adder[${dut.io.outputTreeAdder.peek().litValue}]")
         dut.clock.step(1)
       }
 

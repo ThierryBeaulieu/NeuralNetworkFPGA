@@ -1,18 +1,16 @@
 package project
 
-package project
-
 import chisel3._
 import chisel3.simulator.EphemeralSimulator._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-// testOnly project.BitwiseANDSpec
+// testOnly project.MemoryTestSpec
 
 class MemoryTestSpec extends AnyFreeSpec with Matchers {
 
   "Should have the weights stored in memory" in {
-    simulate(new MemoryTest("weights.csv")) { dut =>
+    simulate(new MemoryTest("weights_reduce_test.csv")) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)
@@ -20,13 +18,15 @@ class MemoryTestSpec extends AnyFreeSpec with Matchers {
       dut.clock.step(1)
 
       dut.weights.length.mustBe(10)
-      dut.weights(0).length.mustBe(401)
+      dut.weights(0).length.mustBe(8)
+
+      print(dut.io.outputWeight.peek().litValue)
 
     }
   }
 
   "content of the memory should be correct" in {
-    simulate(new MemoryTest("weights.csv")) { dut =>
+    simulate(new MemoryTest("weights_reduce_test.csv")) { dut =>
       // Reset the DUT
       dut.reset.poke(true.B)
       dut.clock.step(1)

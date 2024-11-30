@@ -1,7 +1,5 @@
 package project
 
-package project
-
 import chisel3._
 import _root_.circt.stage.ChiselStage
 import scala.io.Source
@@ -9,11 +7,11 @@ import scala.io.Source
 class MemoryTest(csvSelected: String) extends Module {
 
   val io = IO(new Bundle {
-    val outputTreeAdder = Output(SInt((16).W))
+    val outputWeight = Output(SInt((8).W))
   })
 
   private val weightsCSV = readCSV(csvSelected)
-  val weights = VecInit.tabulate(10, 401) { (x, y) =>
+  val weights = VecInit.tabulate(10, 8) { (x, y) =>
     weightsCSV(x)(y).S(8.W)
   }
 
@@ -29,7 +27,7 @@ class MemoryTest(csvSelected: String) extends Module {
     data
   }
 
-  io.outputTreeAdder := 0.S
+  io.outputWeight := weights(2)(3)
 
   object State extends ChiselEnum {
     val receiving, handling, sending = Value

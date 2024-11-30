@@ -26,16 +26,17 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
 
   val io = IO(new Bundle {
     val outputTreeAdder = Output(SInt((16).W))
+    val outputImage = Output(Vec(nbData, UInt(8.W)))
+    val outputWeight = Output(Vec(nbData, SInt(16.W)))
+
   })
 
   val neuron = Module(new Neuron(nbData, m))
 
   val weightsCSV = readCSV(csvSelected)
-  val weights = RegInit(
-    VecInit.tabulate(10, nbData) { (x, y) =>
-      weightsCSV(x)(y).S(8.W)
-    }
-  )
+  val weights = VecInit.tabulate(10, nbData) { (x, y) =>
+    weightsCSV(x)(y).S(8.W)
+  }
 
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
@@ -55,6 +56,8 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
   mAxis.data.tdata := RegInit(0.S(16.W))
   mAxis.data.tkeep := RegInit("b11".U)
   io.outputTreeAdder := 0.S
+  io.outputImage := VecInit(Seq.fill(8)(0.U(8.W)))
+  io.outputWeight := VecInit(Seq.fill(8)(0.S(16.W)))
 
   object State extends ChiselEnum {
     val receiving, handling, sending = Value
@@ -69,12 +72,8 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
   val resultAdder = RegInit(VecInit(Seq.fill(10)(0.S(16.W))))
   val transferCounter = RegInit(0.U(4.W))
 
-  def setImageAndWeight() = {
-    neuron.io.inputPixels := image
-    neuron.io.inputWeights := weights(row)
-  }
-  setImageAndWeight()
-
+  neuron.io.inputPixels := image
+  neuron.io.inputWeights := weights(row)
   switch(state) {
     // Step 1. Fill the image with 401 pixels
     is(State.receiving) {
@@ -89,6 +88,8 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
     }
     // Step 2. Process the information for 1024 cycles
     is(State.handling) {
+      io.outputWeight := neuron.io.inputWeights
+      io.outputImage := neuron.io.inputPixels
       io.outputTreeAdder := neuron.io.outputTreeAdder
       resultAdder(row) := neuron.io.outputTreeAdder
       row := row + 1.U
@@ -125,14 +126,10 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
 
 object NeuronWrapper extends App {
   ChiselStage.emitSystemVerilogFile(
-    new NeuronWrapper(8, 128, "weights_reduce.csv"),
+    new NeuronWrapper(8, 128, "weights_reduce_test.csv"),
     args = Array(
       "--target-dir",
-      "generated/project/",
-      "--log-level",
-      "debug",
-      "--log-file",
-      "neuron_wrapper.log"
+      "generated/project/"
     ),
     firtoolOpts = Array(
       "-disable-all-randomization",

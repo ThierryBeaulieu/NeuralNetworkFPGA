@@ -33,6 +33,7 @@ class Neuron(nbPixels: Int, m: Int) extends Module {
     val inputPixels = Input(Vec(nbPixels, UInt(8.W)))
     val inputWeights = Input(Vec(nbPixels, SInt(8.W)))
 
+    val outputB2is = Input(Vec())
     val outputTreeAdder = Output(SInt((16).W))
   })
 
