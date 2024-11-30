@@ -76,6 +76,8 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
   val image = RegInit(VecInit(Seq.fill(nbData)(0.U(8.W))))
   val index = RegInit(0.U(3.W))
 
+  val results = RegInit(VecInit(Seq.fill(nbData)(0.S(16.W))))
+
   def setImageAndWeight() = {
     neuron.io.inputPixels := image
     neuron.io.inputWeights := weights(0)
@@ -101,7 +103,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
       io.outputANDValues := neuron.io.outputANDValues
       io.outputTreeAdder := neuron.io.outputTreeAdder
       io.outputStream := neuron.io.outputStream
-
+      results(0) := neuron.io.outputTreeAdder
       state := State.sending
     }
     // State 3. Return the information
@@ -109,7 +111,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
       when(mAxis.tready) {
         mAxis.data.tlast := true.B
         mAxis.data.tvalid := true.B
-        mAxis.data.tdata := neuron.io.outputTreeAdder
+        mAxis.data.tdata := results(0)
         // reinitialize everything
         image := VecInit(Seq.fill(8)(0.U(8.W)))
         index := 0.U
