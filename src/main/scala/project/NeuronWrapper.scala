@@ -97,7 +97,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
         index := index + 1.U
         when(sAxis.data.tlast) {
           state := State.handling
-          sAxis.tready := false.B
+          // sAxis.tready := false.B
         }
       }
     }
@@ -110,6 +110,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
       io.outputPixels := neuron.io.inputPixels
       io.outputWeights := neuron.io.inputWeights
 
+      // sAxis.tready := false.B
       results(row) := neuron.io.outputTreeAdder
       row := row + 1.U
       when(row === (10.U - 1.U)) {
@@ -129,7 +130,6 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
           row := 0.U
           transferCount := 0.U
           results := VecInit(Seq.fill(10)(0.S(16.W)))
-          sAxis.tready := true.B
 
           state := State.receiving
         }.otherwise {
