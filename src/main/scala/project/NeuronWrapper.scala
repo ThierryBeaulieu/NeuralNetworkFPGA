@@ -28,7 +28,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
   val neuron = Module(new Neuron(nbData, m))
   private val weightsCSV = readCSV(csvSelected)
   val weights = RegInit(
-    VecInit.tabulate(1, nbData) { (x, y) =>
+    VecInit.tabulate(10, nbData) { (x, y) =>
       weightsCSV(x)(y).S(8.W)
     }
   )
@@ -39,12 +39,16 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
     val outputANDValues = Output(Vec(nbData, SInt(9.W)))
     val outputTreeAdder = Output(SInt((9 + log2Ceil(nbData)).W))
     val outputStream = Output(UInt(1.W))
+    val outputPixels = Output(Vec(nbData, UInt(8.W)))
+    val outputWeights = Output(Vec(nbData, SInt(8.W)))
   })
 
   for (i <- 0 until 8) {
     io.outputB2SValues(i) := 0.U
     io.outputB2ISValues(i) := 0.S
     io.outputANDValues(i) := 0.S
+    io.outputWeights(i) := 0.S
+    io.outputPixels(i) := 0.U
   }
   io.outputTreeAdder := 0.S
   io.outputStream := 0.U
@@ -76,11 +80,14 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
   val image = RegInit(VecInit(Seq.fill(nbData)(0.U(8.W))))
   val index = RegInit(0.U(3.W))
 
-  val results = RegInit(VecInit(Seq.fill(nbData)(0.S(16.W))))
+  val results = RegInit(VecInit(Seq.fill(10)(0.S(16.W))))
+  val row = RegInit(0.U(4.W))
+
+  val transferCount = RegInit(0.U(4.W))
 
   def setImageAndWeight() = {
     neuron.io.inputPixels := image
-    neuron.io.inputWeights := weights(0)
+    neuron.io.inputWeights := weights(row)
   }
   setImageAndWeight()
 
@@ -103,20 +110,34 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
       io.outputANDValues := neuron.io.outputANDValues
       io.outputTreeAdder := neuron.io.outputTreeAdder
       io.outputStream := neuron.io.outputStream
-      results(0) := neuron.io.outputTreeAdder
-      state := State.sending
+      io.outputPixels := neuron.io.inputPixels
+      io.outputWeights := neuron.io.inputWeights
+
+      results(row) := neuron.io.outputTreeAdder
+      row := row + 1.U
+      when(row === (10.U - 1.U)) {
+        state := State.sending
+      }
     }
     // State 3. Return the information
     is(State.sending) {
       when(mAxis.tready) {
-        mAxis.data.tlast := true.B
-        mAxis.data.tvalid := true.B
-        mAxis.data.tdata := results(0)
-        // reinitialize everything
-        image := VecInit(Seq.fill(8)(0.U(8.W)))
-        index := 0.U
-
-        state := State.receiving
+        when(transferCount === (10.U - 1.U)) {
+          mAxis.data.tlast := true.B
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := results(transferCount)
+          // reinitialize everything
+          image := VecInit(Seq.fill(8)(0.U(8.W)))
+          index := 0.U
+          row := 0.U
+          state := State.receiving
+          results := VecInit(Seq.fill(10)(0.S(16.W)))
+        }.otherwise {
+          transferCount := transferCount + 1.U
+          mAxis.data.tlast := false.B
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := results(transferCount)
+        }
       }
     }
   }
