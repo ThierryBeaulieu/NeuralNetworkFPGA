@@ -38,7 +38,6 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
     val outputB2ISValues = Output(Vec(nbData, SInt(9.W)))
     val outputANDValues = Output(Vec(nbData, SInt(9.W)))
     val outputTreeAdder = Output(SInt((9 + log2Ceil(nbData)).W))
-    val outputStream = Output(UInt(1.W))
     val outputPixels = Output(Vec(nbData, UInt(8.W)))
     val outputWeights = Output(Vec(nbData, SInt(8.W)))
   })
@@ -51,7 +50,6 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
     io.outputPixels(i) := 0.U
   }
   io.outputTreeAdder := 0.S
-  io.outputStream := 0.U
 
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
@@ -109,7 +107,6 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
       io.outputB2ISValues := neuron.io.outputB2ISValues
       io.outputANDValues := neuron.io.outputANDValues
       io.outputTreeAdder := neuron.io.outputTreeAdder
-      io.outputStream := neuron.io.outputStream
       io.outputPixels := neuron.io.inputPixels
       io.outputWeights := neuron.io.inputWeights
 
@@ -130,11 +127,13 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
           image := VecInit(Seq.fill(8)(0.U(8.W)))
           index := 0.U
           row := 0.U
-          state := State.receiving
+          transferCount := 0.U
           results := VecInit(Seq.fill(10)(0.S(16.W)))
+          sAxis.tready := true.B
+
+          state := State.receiving
         }.otherwise {
           transferCount := transferCount + 1.U
-          mAxis.data.tlast := false.B
           mAxis.data.tvalid := true.B
           mAxis.data.tdata := results(transferCount)
         }

@@ -29,9 +29,6 @@ class Neuron(nbPixels: Int, m: Int) extends Module {
     Seq.fill(nbPixels)(Module(new B2ISBipolar(m)))
   private val bitwiseAND = Seq.fill(nbPixels)(Module(new BitwiseAND(m)))
   private val treeAdder = Module(new TreeAdder(nbPixels = nbPixels))
-  private val nStanh = Module(
-    new NStanh(n = 4, m = m, nbData = nbPixels)
-  )
 
   val io = IO(new Bundle {
     val inputPixels = Input(Vec(nbPixels, UInt(8.W)))
@@ -43,8 +40,6 @@ class Neuron(nbPixels: Int, m: Int) extends Module {
     val outputANDValues = Output(Vec(nbPixels, SInt(9.W)))
     val outputTreeAdder = Output(SInt((9 + log2Ceil(nbPixels)).W))
     // end of debugging purposes
-
-    val outputStream = Output(UInt(1.W))
   })
 
   // Step 1. Pixel Unipolar Conversion
@@ -74,9 +69,4 @@ class Neuron(nbPixels: Int, m: Int) extends Module {
 
   // debugging
   io.outputTreeAdder := treeAdder.io.outputStream
-
-  // Step 5. Passing Stream to NStanh
-  nStanh.io.inputSi := treeAdder.io.outputStream
-  // debugging
-  io.outputStream := nStanh.io.outputStream
 }

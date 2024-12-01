@@ -22,60 +22,64 @@ class NeuronWrapperSpec extends AnyFreeSpec with Matchers {
       // sending
       val imageTest = Seq(255, 255, 0, 0, 0, 0, 0, 0)
 
-      dut.slaveIO.tready.expect(true.B)
-      for (i <- 0 until imageTest.length) {
-        dut.slaveIO.tvalid.poke(true.B)
-        dut.slaveIO.tdata.poke(imageTest(i))
-        dut.slaveIO.tlast.poke(
-          if (i == imageTest.length - 1) true.B else false.B
-        )
-        if (i == imageTest.length - 1) {
-          dut.masterIO.tready.poke(true.B)
+      for (i <- 0 until 2) {
+        println(f"itération ${i}")
+        dut.slaveIO.tready.expect(true.B)
+        for (i <- 0 until imageTest.length) {
+          dut.slaveIO.tvalid.poke(true.B)
+          dut.slaveIO.tdata.poke(imageTest(i))
+          dut.slaveIO.tlast.poke(
+            if (i == imageTest.length - 1) true.B else false.B
+          )
+          if (i == imageTest.length - 1) {
+            dut.masterIO.tready.poke(true.B)
+          }
+          dut.clock.step(1)
         }
-        dut.clock.step(1)
+
+        // processing each 10 elements
+        for (_ <- 0 until 10) {
+          println("")
+          print("pixels")
+          for (i <- 0 until 8) {
+            print(f"[${dut.io.outputPixels(i).peek().litValue}]")
+          }
+          println("")
+          print("weights")
+          for (i <- 0 until 8) {
+            print(f"[${dut.io.outputWeights(i).peek().litValue}]")
+          }
+          println("")
+          print("B2IS")
+          for (i <- 0 until 8) {
+            print(f"[${dut.io.outputB2ISValues(i).peek().litValue}]")
+          }
+          println("")
+          print("B2S")
+          for (i <- 0 until 8) {
+            print(f"[${dut.io.outputB2SValues(i).peek().litValue}]")
+          }
+          println("")
+          print("AND")
+          for (i <- 0 until 8) {
+            print(f"[${dut.io.outputANDValues(i).peek().litValue}]")
+          }
+          println("")
+          print("tree adder")
+          print(f"[${dut.io.outputTreeAdder.peek().litValue}]")
+          dut.clock.step(1)
+        }
+
+        // handling
+        println("")
+        print("Result : ")
+        for (_ <- 0 until 10) {
+          // print(f"[${dut.io.outputTreeAdder.peek().litValue}]")
+          print(f"(${dut.masterIO.tdata.peek().litValue})")
+          dut.clock.step(1)
+        }
       }
 
-      // processing each 10 elements
-      for (_ <- 0 until 10) {
-        println("")
-        print("pixels")
-        for (i <- 0 until 8) {
-          print(f"[${dut.io.outputPixels(i).peek().litValue}]")
-        }
-        println("")
-        print("weights")
-        for (i <- 0 until 8) {
-          print(f"[${dut.io.outputWeights(i).peek().litValue}]")
-        }
-        println("")
-        print("B2IS")
-        for (i <- 0 until 8) {
-          print(f"[${dut.io.outputB2ISValues(i).peek().litValue}]")
-        }
-        println("")
-        print("B2S")
-        for (i <- 0 until 8) {
-          print(f"[${dut.io.outputB2SValues(i).peek().litValue}]")
-        }
-        println("")
-        print("AND")
-        for (i <- 0 until 8) {
-          print(f"[${dut.io.outputANDValues(i).peek().litValue}]")
-        }
-        println("")
-        print("tree adder")
-        print(f"[${dut.io.outputTreeAdder.peek().litValue}]")
-        dut.clock.step(1)
-      }
-
-      // handling
-      println("")
-      print("Result : ")
-      for (_ <- 0 until 10) {
-        // print(f"[${dut.io.outputTreeAdder.peek().litValue}]")
-        print(f"(${dut.masterIO.tdata.peek().litValue})")
-        dut.clock.step(1)
-      }
     }
 
   }
