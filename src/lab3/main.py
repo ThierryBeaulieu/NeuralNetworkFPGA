@@ -20,7 +20,7 @@ def compute(imageIndex, w_precision, i_precision):
     ## WEIGHT PRECISION [2, 4, 6, 8, 10, 12, 14]
     weightPrecision0 = w_precision - 2
     theta0_Int8 = np.array([x * 2**weightPrecision0 for x in theta0]).astype(np.int32) # << 2
-
+    np.savetxt("theta0_Int8.csv", theta0_Int8, delimiter=",")
 
     ## Step 2. Represent the Images In a Fixed Point Representation
     images = np.load("x.npy")
@@ -66,7 +66,7 @@ def compute(imageIndex, w_precision, i_precision):
     ## WEIGHT PRECISION [1, 3, 5, 7, 9, 11, 13]
     weightPrecision1 = w_precision - 3
     theta1_Int8 = np.array([x * 2**weightPrecision1 for x in theta1]).astype(np.int32) # << 2
-
+    np.savetxt("theta1_Int8.csv", theta1_Int8, delimiter=",")
 
     ## Step 6. We Make the Dot Product Between Image Int8 and Weight Int8
     hiddenLayer1_Int8 = np.dot(sig0_Int8.astype(np.int64), theta1_Int8.T.astype(np.int64)).astype(np.int64) # [5,15]
@@ -97,16 +97,16 @@ if __name__ == "__main__":
 
     weights_precision = [4, 6, 8, 10, 12, 14, 16]
     images_precision = [4, 8]
-    # compute(1, 16, 8)    
+    compute(1, 8, 8)    
 
-    for image_precision in images_precision:
-        for weight_precision in weights_precision:
-            imageMatched = 0
-            nb_images = 5000
-            for i in range(0, nb_images):
-                imageMatched += compute(i, weight_precision, image_precision)
-
-            result = (imageMatched/float(nb_images)) * 100
-            print(f"Weight {weight_precision} Image {image_precision} Precision {result}%")
+    # for image_precision in images_precision:
+    #     for weight_precision in weights_precision:
+    #         imageMatched = 0
+    #         nb_images = 5000
+    #         for i in range(0, nb_images):
+    #             imageMatched += compute(i, weight_precision, image_precision)
+# 
+    #         result = (imageMatched/float(nb_images)) * 100
+    #         print(f"Weight {weight_precision} Image {image_precision} Precision {result}%")
 
 
