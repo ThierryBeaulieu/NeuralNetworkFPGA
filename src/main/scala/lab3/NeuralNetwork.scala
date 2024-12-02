@@ -26,20 +26,44 @@ object State extends ChiselEnum {
     Value
 }
 
+object NNHelper {
+  def initializeIO(sAxis: AxiStreamSlaveIf, mAxis: AxiStreamMasterIf) = {
+    sAxis.tready := RegInit(true.B)
+    mAxis.data.tvalid := RegInit(false.B)
+    mAxis.data.tlast := RegInit(false.B)
+    mAxis.data.tdata := RegInit(0.S(16.W))
+    mAxis.data.tkeep := RegInit("b11".U)
+  }
+
+  def connectMaster(masterIO: AxiStreamExternalIf, mAxis: AxiStreamMasterIf) = {
+    masterIO
+      .suggestName("m_axis")
+      .connect(mAxis)
+  }
+
+  def connectSlave(slaveIO: AxiStreamExternalIf, sAxis: AxiStreamSlaveIf) = {
+    slaveIO.suggestName("s_axis").connect(sAxis)
+  }
+
+}
+
 class NeuralNetwork extends Module {
+  val io = IO(new Bundle {
+    val slaveIO = new AxiStreamExternalIf(8)
+    val masterIO = Flipped(new AxiStreamExternalIf(8))
+  })
+
+  val sAxis: AxiStreamSlaveIf = Wire(new AxiStreamSlaveIf(8))
+  val mAxis: AxiStreamMasterIf = Wire(new AxiStreamMasterIf(8))
+
+  NNHelper.connectMaster(io.masterIO, mAxis)
+  NNHelper.connectSlave(io.slaveIO, sAxis)
+  NNHelper.initializeIO(sAxis, mAxis)
 
   val theta_Int8_csv = Utility.readCSV("lab3/theta0_Int8.csv")
   val theta0 = RegInit(VecInit.tabulate(25, 401) { (x, y) =>
     theta_Int8_csv(x)(y).S(8.W)
   })
-  printf("\ntheta0_Int8\n")
-
-  // Print the contents of theta0
-  for (i <- 0 until 1) {
-    for (j <- 0 until 401) {
-      printf(p"theta0($i)($j) = ${theta0(i)(j)}\n")
-    }
-  }
 
   val state = RegInit(State.receiving)
 
