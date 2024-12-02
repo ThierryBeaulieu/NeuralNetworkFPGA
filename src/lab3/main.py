@@ -48,8 +48,8 @@ for i in range(0, 5000):
     hiddenLayer0Precision = 4
     hiddenLayer0_Float = np.array([x/2**hiddenLayer0Precision for x in hiddenLayer0_UInt8]).astype(float) # << 2
 
-    # [2, 6]
-    sigmoid0Precision = 6
+    # [2, 14]
+    sigmoid0Precision = 14
     sig0_Float_tmp = np.array([sigmoid(x) for x in hiddenLayer0_Float]).astype(float) # [0, 1]
     sig0_Float = np.hstack((1, sig0_Float_tmp))
     sig0_UInt8 = np.array([x * 2**sigmoid0Precision for x in sig0_Float]).astype(np.int8)
@@ -67,14 +67,15 @@ for i in range(0, 5000):
 
 
     ## Step 6. We Make the Dot Product Between Image UInt8 and Weight UInt8
-    hiddenLayer1_UInt8 = np.dot(sig0_UInt8, theta1_UInt8.T) # [5,7]
+    hiddenLayer1_UInt8 = np.dot(sig0_UInt8, theta1_UInt8.T) # [5,15]
 
 
     ## Step 7. Apply the Sigmoid To the Result
-    hiddenLayer1Precision = 7
+    hiddenLayer1Precision = 15
     hiddenLayer1_Float = np.array([x/2**hiddenLayer1Precision for x in hiddenLayer1_UInt8]).astype(float) # << 2
 
-    sigmoid1Precision = 6
+    # [2, 14]
+    sigmoid1Precision = 14
     sig1_Float = np.array([sigmoid(x) for x in hiddenLayer1_Float]).astype(float) # [0, 1]
     sig1_UInt8 = np.array([x * 2**sigmoid1Precision for x in sig1_Float]).astype(np.int8)
 
