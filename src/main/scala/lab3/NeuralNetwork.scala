@@ -5,8 +5,7 @@ import _root_.circt.stage.ChiselStage
 import scala.io.Source
 import chisel3.util._
 
-class NeuralNetwork extends Module {
-
+object Utility {
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
     val data = source
@@ -19,10 +18,27 @@ class NeuralNetwork extends Module {
     data
   }
 
-  object State extends ChiselEnum {
-    val receiving, firstHiddenLayer, firstSigmoid, secondHiddenLayer,
-        secondSigmoid, sending =
-      Value
+}
+
+object State extends ChiselEnum {
+  val receiving, firstHiddenLayer, firstSigmoid, secondHiddenLayer,
+      secondSigmoid, sending =
+    Value
+}
+
+class NeuralNetwork extends Module {
+
+  val theta_Int8_csv = Utility.readCSV("lab3/theta0_Int8.csv")
+  val theta0 = RegInit(VecInit.tabulate(25, 401) { (x, y) =>
+    theta_Int8_csv(x)(y).S(8.W)
+  })
+  printf("\ntheta0_Int8\n")
+
+  // Print the contents of theta0
+  for (i <- 0 until 1) {
+    for (j <- 0 until 401) {
+      printf(p"theta0($i)($j) = ${theta0(i)(j)}\n")
+    }
   }
 
   val state = RegInit(State.receiving)
