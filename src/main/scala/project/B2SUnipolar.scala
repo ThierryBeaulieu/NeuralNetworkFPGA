@@ -1,7 +1,7 @@
 package project
 
 import chisel3._
-import chisel3.util.random.LFSR
+import chisel3.util.random.GaloisLFSR
 
 /** Converts a binary into a unipolar probability.
   * @param inputStream
@@ -15,7 +15,9 @@ class B2SUnipolar(seed: Int) extends Module {
     val outputStream = Output(UInt(1.W))
   })
 
-  val randomNumber: UInt = LFSR(8, true.B, Some(seed))
+  seed + 1
+
+  val randomNumber: UInt = GaloisLFSR.maxPeriod(8)
 
   when(randomNumber < io.inputValue) {
     io.outputStream := 1.U
