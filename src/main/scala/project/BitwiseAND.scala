@@ -1,6 +1,7 @@
 package project
 
 import chisel3._
+import chisel3.util.log2Ceil
 
 /** Takes a value in the integral stream and returns a 0 or the integral value
   * according to the bit
@@ -14,9 +15,9 @@ import chisel3._
   */
 class BitwiseAND(m: Int) extends Module {
   val io = IO(new Bundle {
-    val inputInteger = Input(SInt((m + 1).W))
+    val inputInteger = Input(SInt((log2Ceil(m) + 1).W))
     val inputBit = Input(UInt(1.W))
-    val outputStream = Output(SInt((m + 1).W))
+    val outputStream = Output(SInt((log2Ceil(m) + 1).W))
   })
 
   // Using a Mux

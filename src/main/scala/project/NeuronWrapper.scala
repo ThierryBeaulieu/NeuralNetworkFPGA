@@ -28,7 +28,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
   val neuron = Module(new Neuron(nbData, m))
   private val weightsCSV = readCSV(csvSelected)
   val weights = RegInit(
-    VecInit.tabulate(1, nbData) { (x, y) =>
+    VecInit.tabulate(10, nbData) { (x, y) =>
       weightsCSV(x)(y).S(8.W)
     }
   )
@@ -38,16 +38,18 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
     val outputB2ISValues = Output(Vec(nbData, SInt(9.W)))
     val outputANDValues = Output(Vec(nbData, SInt(9.W)))
     val outputTreeAdder = Output(SInt((9 + log2Ceil(nbData)).W))
-    val outputStream = Output(UInt(1.W))
+    val outputPixels = Output(Vec(nbData, UInt(8.W)))
+    val outputWeights = Output(Vec(nbData, SInt(8.W)))
   })
 
   for (i <- 0 until 8) {
     io.outputB2SValues(i) := 0.U
     io.outputB2ISValues(i) := 0.S
     io.outputANDValues(i) := 0.S
+    io.outputWeights(i) := 0.S
+    io.outputPixels(i) := 0.U
   }
   io.outputTreeAdder := 0.S
-  io.outputStream := 0.U
 
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
@@ -76,9 +78,14 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
   val image = RegInit(VecInit(Seq.fill(nbData)(0.U(8.W))))
   val index = RegInit(0.U(3.W))
 
+  val results = RegInit(VecInit(Seq.fill(10)(0.S(16.W))))
+  val row = RegInit(0.U(4.W))
+
+  val transferCount = RegInit(0.U(4.W))
+
   def setImageAndWeight() = {
     neuron.io.inputPixels := image
-    neuron.io.inputWeights := weights(0)
+    neuron.io.inputWeights := weights(row)
   }
   setImageAndWeight()
 
@@ -90,7 +97,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
         index := index + 1.U
         when(sAxis.data.tlast) {
           state := State.handling
-          sAxis.tready := false.B
+          // sAxis.tready := false.B
         }
       }
     }
@@ -100,19 +107,36 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
       io.outputB2ISValues := neuron.io.outputB2ISValues
       io.outputANDValues := neuron.io.outputANDValues
       io.outputTreeAdder := neuron.io.outputTreeAdder
-      io.outputStream := neuron.io.outputStream
+      io.outputPixels := neuron.io.inputPixels
+      io.outputWeights := neuron.io.inputWeights
+
+      // sAxis.tready := false.B
+      results(row) := neuron.io.outputTreeAdder
+      row := row + 1.U
+      when(row === (10.U - 1.U)) {
+        state := State.sending
+      }
     }
     // State 3. Return the information
     is(State.sending) {
       when(mAxis.tready) {
-        mAxis.data.tlast := true.B
-        mAxis.data.tvalid := true.B
-        mAxis.data.tdata := neuron.io.outputTreeAdder
-        // reinitialize everything
-        image := VecInit(Seq.fill(8)(0.U(8.W)))
-        index := 0.U
+        when(transferCount === (10.U - 1.U)) {
+          mAxis.data.tlast := true.B
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := results(transferCount)
+          // reinitialize everything
+          image := VecInit(Seq.fill(8)(0.U(8.W)))
+          index := 0.U
+          row := 0.U
+          transferCount := 0.U
+          results := VecInit(Seq.fill(10)(0.S(16.W)))
 
-        state := State.receiving
+          state := State.receiving
+        }.otherwise {
+          transferCount := transferCount + 1.U
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := results(transferCount)
+        }
       }
     }
   }
@@ -120,7 +144,7 @@ class NeuronWrapper(nbData: Int, m: Int, csvSelected: String) extends Module {
 
 object NeuronWrapper extends App {
   ChiselStage.emitSystemVerilogFile(
-    new NeuronWrapper(8, 128, "weights.csv"),
+    new NeuronWrapper(8, 128, "weights_reduce.csv"),
     args = Array(
       "--target-dir",
       "generated/project/"

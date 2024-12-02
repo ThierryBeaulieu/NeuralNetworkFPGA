@@ -1,6 +1,7 @@
 package project
 
 import chisel3._
+import chisel3.util.log2Ceil
 
 /** Converts a binary into a probability.
   * @param inputStream
@@ -8,10 +9,10 @@ import chisel3._
   * @param outputStream
   *   the bipolar value {-1, 1}
   */
-class B2ISBipolar(m: Int) extends Module {
+class B2ISBipolar(m: Int) extends Module { // m always equal to 128
   val io = IO(new Bundle {
     val inputWeight = Input(SInt(8.W))
-    val outputStream = Output(SInt((m + 1).W))
+    val outputStream = Output(SInt((log2Ceil(m) + 1).W))
     val outputVal = Output(SInt(8.W))
   })
 
