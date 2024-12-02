@@ -18,7 +18,10 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
       dut.reset.poke(false.B)
 
       dut.clock.step(1)
+      dut.theta0.length.mustBe(25)
+      dut.theta0(0).length.mustBe(401)
 
+      // todo create some data to test it
     }
   }
 

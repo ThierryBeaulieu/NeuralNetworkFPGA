@@ -95,7 +95,11 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
         }
       }
     }
-    is(State.firstSigmoid) {}
+    is(State.firstSigmoid) {
+      for (i <- 0 until 25) {
+        printf(p"${hiddenLayer0_result(i)}, ")
+      }
+    }
     is(State.secondSigmoid) {}
     is(State.sending) {}
   }
