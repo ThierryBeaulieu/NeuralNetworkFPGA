@@ -50,11 +50,11 @@ object NetworkHelper {
 }
 
 class HiddenLayer0(theta0: Vec[Vec[SInt]], sum: Vec[SInt]) extends Module {
-  var col = 1
+  var col = 0
 
   def handlePixel(pixel: SInt) = {
     for (row <- 0 until 25) {
-      sum(row) := sum(row) + pixel * theta0(row)(col)
+      sum(row) := (sum(row) + (pixel * theta0(row)(col)))
     }
     if (col == (25 - 1)) {
       col = 0
@@ -89,7 +89,9 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   switch(state) {
     is(State.receiving) {
       when(sAxis.data.tvalid) {
-        hiddenLayer0.handlePixel(sAxis.data.tdata)
+        val pixel: SInt = sAxis.data.tdata
+        // printf(p"${pixel}, ")
+        hiddenLayer0.handlePixel(pixel)
         when(sAxis.data.tlast) {
           state := State.firstSigmoid
         }

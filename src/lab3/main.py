@@ -38,7 +38,7 @@ def compute(imageIndex, w_precision, i_precision):
     ## IMAGE PRECISION
     imagePrecision = i_precision - 2
     image_Int8 = np.array([x * 2**imagePrecision for x in xp]).astype(np.int8) # << 2
-
+    np.save("image_Int8.npy", image_Int8)
 
     ## Step 3. We Make the Dot Product Between Image Int8 and Weight Int8
     hiddenLayer0_Int8 = np.dot(image_Int8.astype(np.int64), theta0_Int8.T.astype(np.int64)).astype(np.int64)# [4,6]
