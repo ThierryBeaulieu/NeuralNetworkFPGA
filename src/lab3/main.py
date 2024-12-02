@@ -19,7 +19,7 @@ def compute(imageIndex, w_precision, i_precision):
 
     ## WEIGHT PRECISION [2, 4, 6, 8, 10, 12, 14]
     weightPrecision0 = w_precision - 2
-    theta0_Int8 = np.array([x * 2**weightPrecision0 for x in theta0]).astype(np.int16) # << 2
+    theta0_Int8 = np.array([x * 2**weightPrecision0 for x in theta0]).astype(np.int32) # << 2
 
 
     ## Step 2. Represent the Images In a Fixed Point Representation
@@ -35,11 +35,11 @@ def compute(imageIndex, w_precision, i_precision):
 
     ## IMAGE PRECISION
     imagePrecision = i_precision - 2
-    image_Int8 = np.array([x * 2**imagePrecision for x in xp]).astype(np.int16) # << 2
+    image_Int8 = np.array([x * 2**imagePrecision for x in xp]).astype(np.int8) # << 2
 
 
     ## Step 3. We Make the Dot Product Between Image Int8 and Weight Int8
-    hiddenLayer0_Int8 = np.dot(image_Int8, theta0_Int8.T) # [4,6]
+    hiddenLayer0_Int8 = np.dot(image_Int8.astype(np.int64), theta0_Int8.T.astype(np.int64)).astype(np.int64)# [4,6]
 
 
     ## Step 4. Apply the Sigmoid To the Result Hidden Layer 0
@@ -53,24 +53,24 @@ def compute(imageIndex, w_precision, i_precision):
     # print(f"sig0Float result {sig0_Float_tmp}")
     
     sig0_Float = np.hstack((1, sig0_Float_tmp))
-    sig0_Int8 = np.array([x * 2**sigmoid0Precision for x in sig0_Float]).astype(np.int16)
+    sig0_Int8 = np.array([x * 2**sigmoid0Precision for x in sig0_Float]).astype(np.int32)
     # print(f"sig0Int8 result {sig0_Int8}")
 
     ## Step 5. Represent the Theta_1 Weights In a Fixed Point Representation
 
-    # [3, 1]
+    # [3, 13]
     if debug:
         print(f"theta1 min {np.min(theta1)}") # -4.030847
         print(f"theta1 max {np.max(theta1)}") # 3.2115848
 
     ## WEIGHT PRECISION [1, 3, 5, 7, 9, 11, 13]
     weightPrecision1 = w_precision - 3
-    theta1_Int8 = np.array([x * 2**weightPrecision1 for x in theta1]).astype(np.int64) # << 2
+    theta1_Int8 = np.array([x * 2**weightPrecision1 for x in theta1]).astype(np.int32) # << 2
 
 
     ## Step 6. We Make the Dot Product Between Image Int8 and Weight Int8
-    hiddenLayer1_Int8 = np.dot(sig0_Int8, theta1_Int8.T) # [5,15]
-    # print(f"hiddenLayer1Float {hiddenLayer1_Int8/2**15}")
+    hiddenLayer1_Int8 = np.dot(sig0_Int8.astype(np.int64), theta1_Int8.T.astype(np.int64)).astype(np.int64) # [5,15]
+    # print(f"hiddenLayer1Float {hiddenLayer1_Int8/2**27}")
 
     ## Step 7. Apply the Sigmoid To the Result
     ## WEIGHT PRECISION
@@ -94,10 +94,10 @@ def compute(imageIndex, w_precision, i_precision):
 
 
 if __name__ == "__main__":
-    # compute(1)
 
     weights_precision = [4, 6, 8, 10, 12, 14, 16]
     images_precision = [4, 8]
+    # compute(1, 16, 8)    
 
     for image_precision in images_precision:
         for weight_precision in weights_precision:
