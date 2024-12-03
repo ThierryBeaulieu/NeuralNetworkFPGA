@@ -5,9 +5,12 @@ debug = False
 
 ## Step 0. Define Sigmoid Function And Load Assets
 def sigmoid(x):
+    print(x.astype(np.int8))
     x = x / 2**5
     res = 1 / (1 + np.exp(-x))
-    return int(res * 2**7) 
+    value = int(res * 2**7)
+    print(f"[x{x}, v{value}]")
+    return value
 
 
 y = np.load("y.npy")

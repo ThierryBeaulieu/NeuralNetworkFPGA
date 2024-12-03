@@ -20,11 +20,6 @@ object Utility {
 
 }
 
-object State extends ChiselEnum {
-  val receiving, firstSigmoid, secondSigmoid, sending =
-    Value
-}
-
 object NetworkHelper {
   def initializeIO(
       sAxis: AxiStreamSlaveIf,
@@ -82,22 +77,19 @@ class Sigmoid0(
       memory: SyncReadMem[SInt],
       sigmoidResult: Vec[SInt]
   ) = {
+
     for (i <- 0 until hiddenLayerRes.length) {
       // printf(p"${hiddenLayerRes(i)}")
-      when((hiddenLayerRes(i) >> 7) > 128.S) {
-        sigmoidResult(i + 1) := 1.S
-      }.elsewhen((hiddenLayerRes(i) >> 7) < -128.S) {
+      printf("\n")
+      when((hiddenLayerRes(i) >> 7).asSInt > (math.pow(2, 7).toInt - 1).S) {
+        sigmoidResult(i + 1) := (math.pow(2, 7).toInt - 1).S
+      }.elsewhen((hiddenLayerRes(i) >> 7).asSInt < -(math.pow(2, 7).toInt).S) {
         sigmoidResult(i + 1) := 0.S
       }.otherwise {
         // [3, 5]
-        printf(p"\n[h : ${hiddenLayerRes(i).asUInt(14, 7)}]")
-        val tmp = (memory
-          .read(hiddenLayerRes(i).asUInt(14, 7))) * math
-          .pow(2, 5)
-          .toInt
-          .asSInt
+        val tmp = memory.read(hiddenLayerRes(i).asUInt(14, 7))
         sigmoidResult(i + 1) := tmp
-        printf(p"[s : ${tmp}]")
+        printf(p"[h: ${hiddenLayerRes(i).asUInt(14, 7)}, s : ${tmp.asSInt}], ")
       }
     }
   }
@@ -108,7 +100,7 @@ class MemoryManager extends Module {
     val baseMax = (math.pow(2, 8)).toInt
     memory.write(0.U, 1.S)
     for (i <- -(baseMax / 2) until (baseMax / 2).toInt) {
-      val x: Double = i / math.pow(2, 5).toDouble
+      val x: Double = (i / math.pow(2, 5).toDouble)
       memory.write(
         (i.S).asUInt,
         sigmoid(x)
@@ -123,6 +115,10 @@ class MemoryManager extends Module {
   }
 }
 
+object State extends ChiselEnum {
+  val receiving, firstSigmoid, secondSigmoid, sending =
+    Value
+}
 class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   val io = IO(new Bundle {
     val slaveIO = new AxiStreamExternalIf(inputWidth)
@@ -150,7 +146,7 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   val state = RegInit(State.receiving)
   val hiddenLayer0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(32.W))))
   val sigmoid0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(26)(0.S(8.W))))
-  sigmoid0_result(0) := 1.S * (math.pow(2, 6)).toInt.asSInt
+  sigmoid0_result(0) := (math.pow(2, 7).toInt - 1).S
   var col = RegInit(0.U(9.W))
   val hiddenLayer0 = Module(new HiddenLayer0(theta0, hiddenLayer0_result))
   val sigmoidMemory = SyncReadMem((math.pow(2, 8)).toInt, SInt(8.W))
@@ -189,7 +185,6 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
       }
     }
     is(State.secondSigmoid) {
-
       for (i <- 0 until 26) {
         printf(p"[${sigmoid0_result(i)}]")
       }
