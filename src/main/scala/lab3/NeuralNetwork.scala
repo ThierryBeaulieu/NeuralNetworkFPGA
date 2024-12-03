@@ -71,18 +71,17 @@ class Sigmoid0(
 ) extends Module {
   def handleSigmoid() = {
     for (i <- 0 until hiddenLayerRes.length) {
-      sigmoidResult(i) := memory.read(hiddenLayerRes(i).asUInt)
+      sigmoidResult(i) := memory.read(hiddenLayerRes(i).asUInt(24, 17))
     }
   }
 }
 
-object MemoryManager {
+class MemoryManager extends Module {
   def initSigmoid(memory: SyncReadMem[SInt]) = {
-    val baseMax = (math.pow(2, 16)).toInt
+    val baseMax = (math.pow(2, 8)).toInt
     memory.write(0.U, 1.S)
     for (i <- -(baseMax / 2) until (baseMax / 2).toInt) {
-      val x: Double = i / math.pow(2, 11).toDouble
-      // printf(p"[${x}, ${sigmoid(x)}], ")
+      val x: Double = i * math.pow(2, 5).toDouble
       memory.write(
         (i.S).asUInt,
         sigmoid(x)
@@ -92,7 +91,7 @@ object MemoryManager {
 
   def sigmoid(x: Double): SInt = {
     val result = (1 / (1 + math.exp(-x)))
-    val resultSInt = (result * math.pow(2, 14)).toInt.asSInt(16.W)
+    val resultSInt = (result * math.pow(2, 6)).toInt.asSInt(8.W)
     resultSInt
   }
 }
@@ -117,14 +116,15 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
 
   val state = RegInit(State.receiving)
   val hiddenLayer0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(32.W))))
-  val sigmoid0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(16.W))))
+  val sigmoid0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(8.W))))
   var col = RegInit(0.U(9.W))
   val hiddenLayer0 = Module(new HiddenLayer0(theta0, hiddenLayer0_result, col))
-  val sigmoidMemory = SyncReadMem((math.pow(2, 16)).toInt, SInt(8.W))
+  val sigmoidMemory = SyncReadMem((math.pow(2, 8)).toInt, SInt(8.W))
   val sigmoid0 = Module(
     new Sigmoid0(hiddenLayer0_result, sigmoidMemory, sigmoid0_result)
   )
-  MemoryManager.initSigmoid(sigmoidMemory)
+  val memoryManager = Module(new MemoryManager())
+  memoryManager.initSigmoid(sigmoidMemory)
 
   switch(state) {
     is(State.receiving) {
@@ -138,9 +138,13 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
     }
     is(State.firstSigmoid) {
       sigmoid0.handleSigmoid()
-
+      state := State.secondSigmoid
     }
-    is(State.secondSigmoid) {}
+    is(State.secondSigmoid) {
+      for (i <- 0 until 25) {
+        printf(p"${sigmoid0_result(i)}")
+      }
+    }
     is(State.sending) {}
   }
 
