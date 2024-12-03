@@ -77,7 +77,7 @@ def compute(imageIndex, w_precision, i_precision):
 
     ## Step 6. We Make the Dot Product Between Image Int8 and Weight Int8
     # sigmoid [2, 6] * [3, 5] = [5, 11]
-    hiddenLayer1_Int8 = np.dot(sig0_Int8.astype(np.int64), theta1_Int8.T.astype(np.int64)).astype(np.int64) # [5,15]
+    hiddenLayer1_Int8 = np.dot(sig0_Int8.astype(np.int32), theta1_Int8.T.astype(np.int32)).astype(np.int32) # [5,15]
     # print(f"hiddenLayer1Float {hiddenLayer1_Int8/2**27}")
 
     ## Step 7. Apply the Sigmoid To the Result
