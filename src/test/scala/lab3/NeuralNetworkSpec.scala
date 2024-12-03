@@ -42,10 +42,11 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0)
 
-      for (i <- 0 until 1) {
-        println(f"processing ${i}")
+      for (_ <- 0 until 2) {
+        // println(f"processing ${j}")
         dut.io.slaveIO.tready.expect(true.B)
         for (i <- 0 until 401) {
+          print("poking ")
           dut.io.slaveIO.tvalid.poke(true.B)
           dut.io.slaveIO.tdata.poke(imageTest(i))
           if (i == 400) {
