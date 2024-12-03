@@ -51,15 +51,17 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
         }
         dut.clock.step(1)
       }
+      // processing
+      dut.clock.step(30)
 
-      dut.clock.step(1)
+      val expectedValues = Seq(0, 0, 0, 0, 0, 0, 0, 0, 0, 127)
 
-      dut.clock.step(1)
-      // In the state Sigmoid
-      dut.clock.step(260)
-      // dot product
-
-      dut.clock.step(1)
+      dut.io.masterIO.tready.poke(true.B)
+      for (i <- 0 until 10) {
+        dut.io.masterIO.tvalid.expect(true.B)
+        dut.io.masterIO.tdata.expect(expectedValues(i))
+        dut.clock.step(1)
+      }
     }
   }
 }

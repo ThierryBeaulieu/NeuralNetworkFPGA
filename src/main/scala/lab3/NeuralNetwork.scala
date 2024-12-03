@@ -190,6 +190,7 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   val fetchingData = RegInit(true.B)
   val sigmoid1 = Module(new Sigmoid1())
   val sigmoid1_result: Vec[SInt] = RegInit(VecInit(Seq.fill(10)(0.S(8.W))))
+  val transferCount: UInt = RegInit(0.U(4.W))
 
   switch(state) {
     is(State.receiving) {
@@ -240,15 +241,39 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
       when(!fetchingData) {
         state := State.sending
         fetchingData := true.B
-        printf("\nresult")
-        for (i <- 0 until 10) {
-          printf(p"[${sigmoid1_result(i)}]")
-        }
-        printf("\n")
+        // printf("\nresult")
+        // for (i <- 0 until 10) {
+        //   printf(p"[${sigmoid1_result(i)}]")
+        // }
+        // printf("\n")
       }
     }
     is(State.sending) {
-      // send the data
+      printf("HHHHEEERREEEEEE")
+      when(mAxis.tready) {
+        when(transferCount === (10.U - 1.U)) {
+          mAxis.data.tlast := true.B
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := sigmoid1_result(transferCount)
+          // reinitialize everything
+          state := State.receiving
+          hiddenLayer0_result := VecInit(Seq.fill(25)(0.S(32.W)))
+          sigmoid0_result := VecInit(Seq.fill(26)(0.S(8.W)))
+          sigmoid0_result(0) := (math.pow(2, 7).toInt - 1).S
+          col := 0.U(9.W)
+          hiddenLayer1_result := VecInit(Seq.fill(10)(0.S(32.W)))
+          col2 := 0.U(5.W)
+          fetchingData := true.B
+          sigmoid1_result := VecInit(Seq.fill(10)(0.S(8.W)))
+          transferCount := 0.U(4.W)
+
+          state := State.receiving
+        }.otherwise {
+          transferCount := transferCount + 1.U
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := sigmoid1_result(transferCount)
+        }
+      }
     }
   }
 
