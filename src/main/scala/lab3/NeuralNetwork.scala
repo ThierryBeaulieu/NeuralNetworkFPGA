@@ -64,6 +64,39 @@ class HiddenLayer0(theta0: Vec[Vec[SInt]], sum: Vec[SInt], col: UInt)
   }
 }
 
+class Sigmoid0(
+    hiddenLayerRes: Vec[SInt],
+    memory: SyncReadMem[SInt],
+    sigmoidResult: Vec[SInt]
+) extends Module {
+  def handleSigmoid() = {
+    for (i <- 0 until hiddenLayerRes.length) {
+      sigmoidResult(i) := memory.read(hiddenLayerRes(i).asUInt)
+    }
+  }
+}
+
+object MemoryManager {
+  def initSigmoid(memory: SyncReadMem[SInt]) = {
+    val baseMax = (math.pow(2, 16)).toInt
+    memory.write(0.U, 1.S)
+    for (i <- -(baseMax / 2) until (baseMax / 2).toInt) {
+      val x: Double = i / math.pow(2, 11).toDouble
+      // printf(p"[${x}, ${sigmoid(x)}], ")
+      memory.write(
+        (i.S).asUInt,
+        sigmoid(x)
+      )
+    }
+  }
+
+  def sigmoid(x: Double): SInt = {
+    val result = (1 / (1 + math.exp(-x)))
+    val resultSInt = (result * math.pow(2, 14)).toInt.asSInt(16.W)
+    resultSInt
+  }
+}
+
 class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   val io = IO(new Bundle {
     val slaveIO = new AxiStreamExternalIf(inputWidth)
@@ -84,14 +117,19 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
 
   val state = RegInit(State.receiving)
   val hiddenLayer0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(32.W))))
+  val sigmoid0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(16.W))))
   var col = RegInit(0.U(9.W))
   val hiddenLayer0 = Module(new HiddenLayer0(theta0, hiddenLayer0_result, col))
+  val sigmoidMemory = SyncReadMem((math.pow(2, 16)).toInt, SInt(8.W))
+  val sigmoid0 = Module(
+    new Sigmoid0(hiddenLayer0_result, sigmoidMemory, sigmoid0_result)
+  )
+  MemoryManager.initSigmoid(sigmoidMemory)
 
   switch(state) {
     is(State.receiving) {
       when(sAxis.data.tvalid) {
         val pixel: SInt = sAxis.data.tdata
-        // printf(p"${pixel}, ")
         hiddenLayer0.handlePixel(pixel)
         when(sAxis.data.tlast) {
           state := State.firstSigmoid
@@ -99,9 +137,8 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
       }
     }
     is(State.firstSigmoid) {
-      for (i <- 0 until 25) {
-        printf(p"${hiddenLayer0_result(i)}, ")
-      }
+      sigmoid0.handleSigmoid()
+
     }
     is(State.secondSigmoid) {}
     is(State.sending) {}

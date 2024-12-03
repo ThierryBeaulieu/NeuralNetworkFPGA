@@ -22,7 +22,7 @@ def compute(imageIndex, w_precision, i_precision):
     theta0_Int8 = np.array([x * 2**weightPrecision0 for x in theta0]).astype(np.int32) # << 2
 
     np.savetxt("theta0_Int8.csv", theta0_Int8.astype(int), fmt='%i', delimiter=",")
-    print(theta0_Int8.astype(np.uint8)[0])
+    # print(theta0_Int8.astype(np.uint8)[0])
 
     ## Step 2. Represent the Images In a Fixed Point Representation
     images = np.load("x.npy")
@@ -41,15 +41,17 @@ def compute(imageIndex, w_precision, i_precision):
     np.save("image_Int8.npy", image_Int8)
 
     ## Step 3. We Make the Dot Product Between Image Int8 and Weight Int8
-    hiddenLayer0_Int8 = np.dot(image_Int8.astype(np.int64), theta0_Int8.T.astype(np.int64)).astype(np.int64)# [4,6]
-
+    # sigmoid input [2, 6] * [2,6] = [4, 12]
+    hiddenLayer0_Int8 = np.dot(image_Int8.astype(np.int32), theta0_Int8.T.astype(np.int32)).astype(np.int32)# [4,6]
+    # print(hiddenLayer0_Int8)
 
     ## Step 4. Apply the Sigmoid To the Result Hidden Layer 0
+    # [4, 6 + 6]
     hiddenLayer0Precision = imagePrecision + weightPrecision0
     hiddenLayer0_Float = np.array([x/2**hiddenLayer0Precision for x in hiddenLayer0_Int8]).astype(float) # << 2
 
     # print(f"hiddenLayer0 {hiddenLayer0_Float}")
-    # [2, 14]
+    # [2, 6]
     sigmoid0Precision = 14
     sig0_Float_tmp = np.array([sigmoid(x) for x in hiddenLayer0_Float]).astype(float) # [0, 1]
     # print(f"sig0Float result {sig0_Float_tmp}")
@@ -60,7 +62,7 @@ def compute(imageIndex, w_precision, i_precision):
 
     ## Step 5. Represent the Theta_1 Weights In a Fixed Point Representation
 
-    # [3, 13]
+    # [3, 5]
     if debug:
         print(f"theta1 min {np.min(theta1)}") # -4.030847
         print(f"theta1 max {np.max(theta1)}") # 3.2115848
@@ -71,6 +73,7 @@ def compute(imageIndex, w_precision, i_precision):
     np.savetxt("theta1_Int8.csv", theta1_Int8.astype(int), fmt='%i', delimiter=",")
 
     ## Step 6. We Make the Dot Product Between Image Int8 and Weight Int8
+    # sigmoid [2, 6] * [3, 5] = [5, 11]
     hiddenLayer1_Int8 = np.dot(sig0_Int8.astype(np.int64), theta1_Int8.T.astype(np.int64)).astype(np.int64) # [5,15]
     # print(f"hiddenLayer1Float {hiddenLayer1_Int8/2**27}")
 
@@ -99,16 +102,18 @@ if __name__ == "__main__":
 
     weights_precision = [4, 6, 8, 10, 12, 14, 16]
     images_precision = [4, 8]
-    compute(1, 8, 8)    
+    weights_precision = [8]
+    images_precision = [8]
+    # compute(1, 8, 8)    
 
-    # for image_precision in images_precision:
-    #     for weight_precision in weights_precision:
-    #         imageMatched = 0
-    #         nb_images = 5000
-    #         for i in range(0, nb_images):
-    #             imageMatched += compute(i, weight_precision, image_precision)
-# 
-    #         result = (imageMatched/float(nb_images)) * 100
-    #         print(f"Weight {weight_precision} Image {image_precision} Precision {result}%")
+    for image_precision in images_precision:
+        for weight_precision in weights_precision:
+            imageMatched = 0
+            nb_images = 5000
+            for i in range(0, nb_images):
+                imageMatched += compute(i, weight_precision, image_precision)
+
+            result = (imageMatched/float(nb_images)) * 100
+            print(f"Weight {weight_precision} Image {image_precision} Precision {result}%")
 
 
