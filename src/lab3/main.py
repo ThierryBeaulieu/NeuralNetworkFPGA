@@ -47,8 +47,10 @@ def compute(imageIndex, w_precision, i_precision):
 
     ## Step 4. Apply the Sigmoid To the Result Hidden Layer 0
     # [4, 6 + 6]
-    hiddenLayer0Precision = imagePrecision + weightPrecision0
-    hiddenLayer0_Float = np.array([x/2**hiddenLayer0Precision for x in hiddenLayer0_Int8]).astype(float) # << 2
+    offset = 9
+    hiddenLayer0Precision = imagePrecision + weightPrecision0 - offset
+    hiddenLayer0_Tronc = (np.copy(hiddenLayer0_Int8) // (2 ** offset)).astype(np.int16)
+    hiddenLayer0_Float = np.array([x/2**hiddenLayer0Precision for x in hiddenLayer0_Tronc]).astype(float) # << 2
 
     # print(f"hiddenLayer0 {hiddenLayer0_Float}")
     # [2, 6]
