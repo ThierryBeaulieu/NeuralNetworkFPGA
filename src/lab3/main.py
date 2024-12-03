@@ -53,7 +53,7 @@ def compute(imageIndex, w_precision, i_precision):
     ).astype(
         np.int32
     )  # [4,6]
-    # print(hiddenLayer0_Int8)
+    # print(hiddenLayer0_Int8.astype(np.uint32))
 
     ## Step 4. Apply the Sigmoid To the Result Hidden Layer 0
     # sigmoid input [3, 5] = 8
@@ -62,20 +62,20 @@ def compute(imageIndex, w_precision, i_precision):
     hiddenLayer0_Tronc = (np.copy(hiddenLayer0_Int8) // (2**7)).astype(
         np.int32
     )  # Decalage de 7 (12-5) bits vers la droite: [13, 5]
-    hiddenLayer0_Float = np.array([x / 2**5 for x in hiddenLayer0_Tronc]).astype(float)
+    # print(hiddenLayer0_Tronc)
 
     # [2, 6]
     sigmoid0Precision = 6
     sig0_Float_tmp = []
-    for x in hiddenLayer0_Float:
-        if x > 3.96875:  # max representé sur [3,5] is 011,11111 = 3.96875
+    for x in hiddenLayer0_Tronc:
+        if x > 128:  # max representé sur [3,5] is 011,11111 = 3.96875
             sig0_Float_tmp.append(1)
-        elif x < -3.96875:
+        elif x < -128:
             sig0_Float_tmp.append(0)
         else:
             sig0_Float_tmp.append(sigmoid(x))
     sig0_Float_tmp = np.array(sig0_Float_tmp).astype(float)  # [0, 1]
-    # print(f"sig0Float result {sig0_Float_tmp}")
+    print(f"sig0Float result {sig0_Float_tmp}")
 
     sig0_Float = np.hstack((1, sig0_Float_tmp))
     sig0_Int8 = np.array([x * 2**sigmoid0Precision for x in sig0_Float]).astype(np.int8)
@@ -157,14 +157,14 @@ if __name__ == "__main__":
     images_precision = [8]
     compute(1, 8, 8)
 
-    for image_precision in images_precision:
-        for weight_precision in weights_precision:
-            imageMatched = 0
-            nb_images = 5000
-            for i in range(0, nb_images):
-                imageMatched += compute(i, weight_precision, image_precision)
+    # for image_precision in images_precision:
+    #     for weight_precision in weights_precision:
+    #         imageMatched = 0
+    #         nb_images = 5000
+    #         for i in range(0, nb_images):
+    #             imageMatched += compute(i, weight_precision, image_precision)
 
-            result = (imageMatched / float(nb_images)) * 100
-            print(
-                f"Weight {weight_precision} Image {image_precision} Precision {result}%"
-            )
+    #         result = (imageMatched / float(nb_images)) * 100
+    #         print(
+    #             f"Weight {weight_precision} Image {image_precision} Precision {result}%"
+    #         )
