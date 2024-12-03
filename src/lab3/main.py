@@ -60,7 +60,7 @@ def compute(imageIndex, w_precision, i_precision):
     
     sig0_Float = np.hstack((1, sig0_Float_tmp))
     sig0_Int8 = np.array([x * 2**sigmoid0Precision for x in sig0_Float]).astype(np.int8)
-    # np.savetxt("testing.csv", sig0_Int8.astype(int), fmt='%i', delimiter=",")
+    np.savetxt("testing.csv", sig0_Int8.astype(int), fmt='%i', delimiter=",")
     # print(f"sig0Int8 result {sig0_Int8}")
 
     ## Step 5. Represent the Theta_1 Weights In a Fixed Point Representation
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     images_precision = [4, 8]
     weights_precision = [8]
     images_precision = [8]
-    # compute(1, 8, 8)    
+    compute(1, 8, 8)    
 
     for image_precision in images_precision:
         for weight_precision in weights_precision:

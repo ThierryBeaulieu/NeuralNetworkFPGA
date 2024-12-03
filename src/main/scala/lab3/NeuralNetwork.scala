@@ -71,7 +71,7 @@ class Sigmoid0(
 ) extends Module {
   def handleSigmoid() = {
     for (i <- 1 until hiddenLayerRes.length) {
-      sigmoidResult(i) := (memory
+      sigmoidResult(i + 1) := (memory
         .read(hiddenLayerRes(i).asUInt(24, 17))) * math.pow(2, 5).toInt.asSInt
     }
   }
@@ -117,7 +117,7 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
 
   val state = RegInit(State.receiving)
   val hiddenLayer0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(32.W))))
-  val sigmoid0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(8.W))))
+  val sigmoid0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(26)(0.S(8.W))))
   sigmoid0_result(0) := (1 * math.pow(2, 6)).toInt.asSInt
   var col = RegInit(0.U(9.W))
   val hiddenLayer0 = Module(new HiddenLayer0(theta0, hiddenLayer0_result, col))
@@ -147,7 +147,7 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
       }
     }
     is(State.secondSigmoid) {
-      for (i <- 0 until 25) {
+      for (i <- 0 until 26) {
         printf(p"${sigmoid0_result(i)}")
       }
     }
