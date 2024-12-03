@@ -75,7 +75,7 @@ def compute(imageIndex, w_precision, i_precision):
             resSigmoid = sigmoid(x)
             sig0_Int8.append(resSigmoid)
 
-    sig0_stacked = np.hstack((1 * (2**7 - 1), sig0_Int8))
+    sig0_stacked = np.hstack((1 * (2**7 - 1), sig0_Int8)).astype(np.int8)
     print(sig0_stacked)
 
     ## Step 5. Represent the Theta_1 Weights In a Fixed Point Representation
@@ -91,7 +91,7 @@ def compute(imageIndex, w_precision, i_precision):
     )  # << 2
     np.savetxt("theta1_Int8.csv", theta1_Int8.astype(int), fmt="%i", delimiter=",")
 
-    ## Step 6. We Make the Dot Product Between Image Int8 and Weight Int8
+    ## Step 6. We Make the Dot Product Between Sigmoid0 and Weights0
     # mul [1, 7] * [4, 4] = [5, 11]
     # add [5,11] + ... + [5,11] = [10, 11]
     hiddenLayer1_Int8 = np.dot(
