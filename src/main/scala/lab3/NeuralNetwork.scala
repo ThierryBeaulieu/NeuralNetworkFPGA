@@ -125,6 +125,7 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   )
   val memoryManager = Module(new MemoryManager())
   memoryManager.initSigmoid(sigmoidMemory)
+  val fetchingData = RegInit(true.B)
 
   switch(state) {
     is(State.receiving) {
@@ -138,7 +139,10 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
     }
     is(State.firstSigmoid) {
       sigmoid0.handleSigmoid()
-      state := State.secondSigmoid
+      fetchingData := false.B
+      when(!fetchingData) {
+        state := State.secondSigmoid
+      }
     }
     is(State.secondSigmoid) {
       for (i <- 0 until 25) {
