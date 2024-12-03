@@ -54,12 +54,12 @@ def compute(imageIndex, w_precision, i_precision):
 
     # print(f"hiddenLayer0 {hiddenLayer0_Float}")
     # [2, 6]
-    sigmoid0Precision = 14
+    sigmoid0Precision = 6
     sig0_Float_tmp = np.array([sigmoid(x) for x in hiddenLayer0_Float]).astype(float) # [0, 1]
     # print(f"sig0Float result {sig0_Float_tmp}")
     
     sig0_Float = np.hstack((1, sig0_Float_tmp))
-    sig0_Int8 = np.array([x * 2**sigmoid0Precision for x in sig0_Float]).astype(np.int32)
+    sig0_Int8 = np.array([x * 2**sigmoid0Precision for x in sig0_Float]).astype(np.int8)
     # print(f"sig0Int8 result {sig0_Int8}")
 
     ## Step 5. Represent the Theta_1 Weights In a Fixed Point Representation
