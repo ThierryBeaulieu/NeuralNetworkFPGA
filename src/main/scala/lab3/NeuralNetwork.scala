@@ -70,8 +70,8 @@ class HiddenLayer1(
 ) extends Module {
 
   def handleDotProduct(row: UInt, col: UInt) = {
-    printf(p"${sigmoidRes(col) * theta1(row)(col)}, ")
-    result(row) := sigmoidRes(col) * theta1(row)(col)
+    val res = (sigmoidRes(col) * theta1(row)(col))
+    result(row) := res
   }
 }
 
@@ -173,10 +173,10 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
     is(State.secondSigmoid) {
       hiddenLayer1.handleDotProduct(hiddenLayerRow, hiddenLayerCol)
       // printf(p"[r${hiddenLayerRow},c${hiddenLayerCol}] ")
-      hiddenLayerCol := hiddenLayerCol + 1.U
+      hiddenLayerCol := (hiddenLayerCol + 1.U)
       when(hiddenLayerCol === (26.U - 1.U)) {
         hiddenLayerCol := 0.U
-        hiddenLayerRow := hiddenLayerRow + 1.U
+        hiddenLayerRow := (hiddenLayerRow + 1.U)
         when(hiddenLayerRow === (10.U - 1.U)) {
           state := State.sending
         }
