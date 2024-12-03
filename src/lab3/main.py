@@ -59,7 +59,7 @@ def compute(imageIndex, w_precision, i_precision):
 
     ## Step 4. Apply the Sigmoid To the Result Hidden Layer 0
     # [13, 12] >> 7 = [13, 5]
-    hiddenLayer0_shifted = (hiddenLayer0_Int8.astype(np.int32) >> 7).astype(np.int32)
+    hiddenLayer0_shifted = ((hiddenLayer0_Int8.astype(np.int32) << 15) >> 22).astype(np.int32)
 
     # print(hiddenLayer0_shifted)
 
@@ -76,7 +76,7 @@ def compute(imageIndex, w_precision, i_precision):
             sig0_Int8.append(resSigmoid)
 
     sig0_stacked = np.hstack((1 * (2**7 - 1), sig0_Int8)).astype(np.int8)
-    # print(sig0_stacked)
+    print(sig0_stacked)
 
     ## Step 5. Represent the Theta_1 Weights In a Fixed Point Representation
     # [4, 4]
@@ -131,14 +131,14 @@ if __name__ == "__main__":
     images_precision = [8]
     compute(1, 8, 8)
 
-    for image_precision in images_precision:
-        for weight_precision in weights_precision:
-            imageMatched = 0
-            nb_images = 5000
-            for i in range(0, nb_images):
-                imageMatched += compute(i, weight_precision, image_precision)
-
-            result = (imageMatched / float(nb_images)) * 100
-            print(
-                f"Weight {weight_precision} Image {image_precision} Precision {result}%"
-            )
+    # for image_precision in images_precision:
+    #     for weight_precision in weights_precision:
+    #         imageMatched = 0
+    #         nb_images = 5000
+    #         for i in range(0, nb_images):
+    #             imageMatched += compute(i, weight_precision, image_precision)
+# 
+    #         result = (imageMatched / float(nb_images)) * 100
+    #         print(
+    #             f"Weight {weight_precision} Image {image_precision} Precision {result}%"
+    #         )
