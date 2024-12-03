@@ -76,7 +76,7 @@ def compute(imageIndex, w_precision, i_precision):
             sig0_Int8.append(resSigmoid)
 
     sig0_stacked = np.hstack((1 * (2**7 - 1), sig0_Int8)).astype(np.int8)
-    print(sig0_stacked)
+    # print(sig0_stacked)
 
     ## Step 5. Represent the Theta_1 Weights In a Fixed Point Representation
     # [4, 4]
@@ -96,48 +96,30 @@ def compute(imageIndex, w_precision, i_precision):
     # add [5,11] + ... + [5,11] = [10, 11]
     hiddenLayer1_Int8 = np.dot(
         sig0_stacked.astype(np.int32), theta1_Int8.T.astype(np.int32)
-    ).astype(
-        np.int32
-    )  # [11,10]
-    # print(f"hiddenLayer1Float {hiddenLayer1_Int8/2**27}")
+    ).astype(np.int32)
+    # print(f"hiddenLayer1Float {hiddenLayer1_Int8/2**11}")
 
     ## Step 7. Apply the Sigmoid To the Result
     ## WEIGHT PRECISION
-    hiddenLayer1_Tronc = (hiddenLayer1_Int8.astype(np.int32) >> 6).astype(np.int32)
 
-    # Decalage de 5 (10-5) bits vers la droite: [11, 5]
-    # hiddenLayer1_Float = np.array([x / 2**5 for x in hiddenLayer1_Tronc]).astype(float)
+    hiddenLayer1_shifted = (hiddenLayer1_Int8.astype(np.int32) >> 6).astype(np.int32)
 
-    # hiddenLayer1Precision = sigmoid0Precision + weightPrecision1
-    # hiddenLayer1_Float = np.array(
-    #     [x / 2**hiddenLayer1Precision for x in hiddenLayer1_Int8]
-    # ).astype(
-    #     float
-    # )  # << 2
-    # print(f"hiddenLayer1Float {hiddenLayer1_Float}")
-    # [2, 6]
-    sigmoid1Precision = 6
-    sig1_Float_tmp = []
-    for x in hiddenLayer0_shifted:
-        if x > 2**7 - 1:  # max representé sur [3,5] is 011,11111 = 3.96875
-            sig1_Float_tmp.append(2**7 - 1)
+    sig1_Int8 = []
+    for i in range(0, len(hiddenLayer1_shifted)):
+        x = hiddenLayer1_shifted[i]
+        if x > 2**7 - 1:
+            sig1_Int8.append(2**7 - 1)
         elif x < -2**7:
-            sig1_Float_tmp.append(0)
+            sig1_Int8.append(0)
         else:
             resSigmoid = sigmoid(x)
-            sig1_Float_tmp.append(resSigmoid)
-    # sig1_Float = np.array([sigmoid(x) for x in hiddenLayer1_Float]).astype(
-    #     float
-    # )  # [0, 1]
-    # print(f"sig1_Float {sig1_Float}")
-
-    # print(f"sig1_Int8 {sig1_Int8}")
+            sig1_Int8.append(resSigmoid)
 
     ## Step 8. Compare the result
     if debug:
-        print("FPGA Output:", sig1_Float_tmp)
+        print("FPGA Output:", sig1_Int8)
 
-    pred = np.array(sig1_Float_tmp).argmax()
+    pred = np.array(sig1_Int8).argmax()
     return pred == y[imageIndex]
 
 
@@ -149,14 +131,14 @@ if __name__ == "__main__":
     images_precision = [8]
     compute(1, 8, 8)
 
-    # for image_precision in images_precision:
-        # for weight_precision in weights_precision:
-            # imageMatched = 0
-            # nb_images = 5000
-            # for i in range(0, nb_images):
-                # imageMatched += compute(i, weight_precision, image_precision)
+    for image_precision in images_precision:
+        for weight_precision in weights_precision:
+            imageMatched = 0
+            nb_images = 5000
+            for i in range(0, nb_images):
+                imageMatched += compute(i, weight_precision, image_precision)
 
-            # result = (imageMatched / float(nb_images)) * 100
-            # print(
-                # f"Weight {weight_precision} Image {image_precision} Precision {result}%"
-            # )
+            result = (imageMatched / float(nb_images)) * 100
+            print(
+                f"Weight {weight_precision} Image {image_precision} Precision {result}%"
+            )
