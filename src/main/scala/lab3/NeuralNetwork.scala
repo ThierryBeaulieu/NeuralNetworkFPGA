@@ -49,10 +49,9 @@ object NetworkHelper {
   }
 }
 
-class HiddenLayer0(theta0: Vec[Vec[SInt]], sum: Vec[SInt], col: UInt)
-    extends Module {
+class HiddenLayer0(theta0: Vec[Vec[SInt]], sum: Vec[SInt]) extends Module {
 
-  def handlePixel(pixel: SInt) = {
+  def handlePixel(pixel: SInt, col: UInt) = {
     for (row <- 0 until 25) {
       sum(row) := (sum(row) + (pixel * theta0(row)(col)))
     }
@@ -61,6 +60,18 @@ class HiddenLayer0(theta0: Vec[Vec[SInt]], sum: Vec[SInt], col: UInt)
     } else {
       col := col + 1.U
     }
+  }
+}
+
+class HiddenLayer1(
+    theta1: Vec[Vec[SInt]],
+    result: Vec[SInt],
+    sigmoidRes: Vec[SInt]
+) extends Module {
+
+  def handleDotProduct(row: UInt, col: UInt) = {
+    printf(p"${sigmoidRes(col) * theta1(row)(col)}, ")
+    result(row) := sigmoidRes(col) * theta1(row)(col)
   }
 }
 
@@ -110,30 +121,43 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   NetworkHelper.connectSlave(io.slaveIO, sAxis)
   NetworkHelper.initializeIO(sAxis, mAxis, outputWidth)
 
-  val theta_Int8_csv = Utility.readCSV("lab3/theta0_Int8.csv")
+  val theta0_Int8_csv = Utility.readCSV("lab3/theta0_Int8.csv")
   val theta0: Vec[Vec[SInt]] = RegInit(VecInit.tabulate(25, 401) { (x, y) =>
-    theta_Int8_csv(x)(y).S(8.W)
+    theta0_Int8_csv(x)(y).S(8.W)
   })
 
+  val theta1_Int8_csv = Utility.readCSV("lab3/theta1_Int8.csv")
+  val theta1: Vec[Vec[SInt]] = RegInit(VecInit.tabulate(10, 26) { (x, y) =>
+    theta1_Int8_csv(x)(y).S(8.W)
+  })
+
+  // HiddenLayer1
   val state = RegInit(State.receiving)
   val hiddenLayer0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(32.W))))
   val sigmoid0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(26)(0.S(8.W))))
   sigmoid0_result(0) := (1 * math.pow(2, 6)).toInt.asSInt
   var col = RegInit(0.U(9.W))
-  val hiddenLayer0 = Module(new HiddenLayer0(theta0, hiddenLayer0_result, col))
+  val hiddenLayer0 = Module(new HiddenLayer0(theta0, hiddenLayer0_result))
   val sigmoidMemory = SyncReadMem((math.pow(2, 8)).toInt, SInt(8.W))
   val sigmoid0 = Module(
     new Sigmoid0(hiddenLayer0_result, sigmoidMemory, sigmoid0_result)
   )
   val memoryManager = Module(new MemoryManager())
   memoryManager.initSigmoid(sigmoidMemory)
+  val hiddenLayer1_result: Vec[SInt] = RegInit(VecInit(Seq.fill(10)(0.S(32.W))))
+  val hiddenLayerRow: UInt = RegInit(0.U(4.W)) // 10
+  val hiddenLayerCol: UInt = RegInit(0.U(5.W)) // 26
+  val hiddenLayer1 = Module(
+    new HiddenLayer1(theta1, hiddenLayer1_result, sigmoid0_result)
+  )
+
   val fetchingData = RegInit(true.B)
 
   switch(state) {
     is(State.receiving) {
       when(sAxis.data.tvalid) {
         val pixel: SInt = sAxis.data.tdata
-        hiddenLayer0.handlePixel(pixel)
+        hiddenLayer0.handlePixel(pixel, col)
         when(sAxis.data.tlast) {
           state := State.firstSigmoid
         }
@@ -147,11 +171,22 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
       }
     }
     is(State.secondSigmoid) {
-      for (i <- 0 until 26) {
-        printf(p"${sigmoid0_result(i)}")
+      hiddenLayer1.handleDotProduct(hiddenLayerRow, hiddenLayerCol)
+      // printf(p"[r${hiddenLayerRow},c${hiddenLayerCol}] ")
+      hiddenLayerCol := hiddenLayerCol + 1.U
+      when(hiddenLayerCol === (26.U - 1.U)) {
+        hiddenLayerCol := 0.U
+        hiddenLayerRow := hiddenLayerRow + 1.U
+        when(hiddenLayerRow === (10.U - 1.U)) {
+          state := State.sending
+        }
       }
     }
-    is(State.sending) {}
+    is(State.sending) {
+      for (i <- 0 until 10) {
+        printf(p"${hiddenLayer1_result(i)}")
+      }
+    }
   }
 
 }
