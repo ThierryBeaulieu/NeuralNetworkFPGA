@@ -20,30 +20,6 @@ object Utility {
 
 }
 
-object NetworkHelper {
-  def initializeIO(
-      sAxis: AxiStreamSlaveIf,
-      mAxis: AxiStreamMasterIf,
-      outputWidth: Int
-  ) = {
-    sAxis.tready := RegInit(true.B)
-    mAxis.data.tvalid := RegInit(false.B)
-    mAxis.data.tlast := RegInit(false.B)
-    mAxis.data.tdata := RegInit(0.S(outputWidth.W))
-    mAxis.data.tkeep := RegInit("b1".U)
-  }
-
-  def connectMaster(masterIO: AxiStreamExternalIf, mAxis: AxiStreamMasterIf) = {
-    masterIO
-      .suggestName("m_axis")
-      .connect(mAxis)
-  }
-
-  def connectSlave(slaveIO: AxiStreamExternalIf, sAxis: AxiStreamSlaveIf) = {
-    slaveIO.suggestName("s_axis").connect(sAxis)
-  }
-}
-
 class HiddenLayer0() extends Module {
 
   def handlePixel(
@@ -151,22 +127,24 @@ class MemoryManager extends Module {
   }
 }
 
-object State extends ChiselEnum {
-  val receiving, firstSigmoid, secondHiddenLayer, secondSigmoid, sending =
-    Value
-}
-class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
-  val io = IO(new Bundle {
-    val slaveIO = new AxiStreamExternalIf(inputWidth)
-    val masterIO = Flipped(new AxiStreamExternalIf(inputWidth))
-  })
+class NeuralNetwork() extends Module {
+  // AXI-Stream Connection
+  val sAxis = Wire(new AxiStreamSlaveIf(8))
+  val slaveIO =
+    IO(new AxiStreamExternalIf(8))
+  slaveIO.suggestName("s_axis").connect(sAxis)
 
-  val sAxis: AxiStreamSlaveIf = Wire(new AxiStreamSlaveIf(outputWidth))
-  val mAxis: AxiStreamMasterIf = Wire(new AxiStreamMasterIf(outputWidth))
+  val mAxis = Wire(new AxiStreamMasterIf(8))
+  val masterIO = IO(Flipped(new AxiStreamExternalIf(8)))
+  masterIO
+    .suggestName("m_axis")
+    .connect(mAxis)
 
-  NetworkHelper.connectMaster(io.masterIO, mAxis)
-  NetworkHelper.connectSlave(io.slaveIO, sAxis)
-  NetworkHelper.initializeIO(sAxis, mAxis, outputWidth)
+  sAxis.tready := RegInit(true.B)
+  mAxis.data.tvalid := RegInit(false.B)
+  mAxis.data.tlast := RegInit(false.B)
+  mAxis.data.tdata := RegInit(0.S(8.W))
+  mAxis.data.tkeep := RegInit("b1".U)
 
   val theta0_Int8_csv = Utility.readCSV("lab3/theta0_Int8.csv")
   val theta0: Vec[Vec[SInt]] = RegInit(VecInit.tabulate(25, 401) { (x, y) =>
@@ -196,6 +174,11 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   val sigmoid1 = Module(new Sigmoid1())
   val sigmoid1_result: Vec[SInt] = RegInit(VecInit(Seq.fill(10)(0.S(8.W))))
   val transferCount: UInt = RegInit(0.U(4.W))
+
+  object State extends ChiselEnum {
+  val receiving, firstSigmoid, secondHiddenLayer, secondSigmoid, sending =
+    Value
+}
 
   switch(state) {
     is(State.receiving) {
@@ -292,7 +275,7 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
 
 object NeuralNetwork extends App {
   ChiselStage.emitSystemVerilogFile(
-    new NeuralNetwork,
+    new NeuralNetwork(),
     args = Array(
       "--target-dir",
       "generated/lab3/"
