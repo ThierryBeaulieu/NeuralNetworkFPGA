@@ -76,11 +76,12 @@ class HiddenLayer1(
 }
 
 class Sigmoid0(
-    hiddenLayerRes: Vec[SInt],
-    memory: SyncReadMem[SInt],
-    sigmoidResult: Vec[SInt]
 ) extends Module {
-  def handleSigmoid() = {
+  def handleSigmoid(
+      hiddenLayerRes: Vec[SInt],
+      memory: SyncReadMem[SInt],
+      sigmoidResult: Vec[SInt]
+  ) = {
     for (i <- 0 until hiddenLayerRes.length) {
       // printf(p"${hiddenLayerRes(i)}")
       when((hiddenLayerRes(i) >> 7) > 128.S) {
@@ -155,7 +156,7 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   val hiddenLayer0 = Module(new HiddenLayer0(theta0, hiddenLayer0_result))
   val sigmoidMemory = SyncReadMem((math.pow(2, 8)).toInt, SInt(8.W))
   val sigmoid0 = Module(
-    new Sigmoid0(hiddenLayer0_result, sigmoidMemory, sigmoid0_result)
+    new Sigmoid0()
   )
   val memoryManager = Module(new MemoryManager())
   memoryManager.initSigmoid(sigmoidMemory)
@@ -180,7 +181,11 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
     }
     is(State.firstSigmoid) {
       // printf(p"Begin Sigmoid")
-      sigmoid0.handleSigmoid()
+      sigmoid0.handleSigmoid(
+        hiddenLayer0_result,
+        sigmoidMemory,
+        sigmoid0_result
+      )
       fetchingData := false.B
       when(!fetchingData) {
         state := State.secondSigmoid
