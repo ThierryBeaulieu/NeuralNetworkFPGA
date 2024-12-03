@@ -49,17 +49,17 @@ object NetworkHelper {
   }
 }
 
-class HiddenLayer0(theta0: Vec[Vec[SInt]], sum: Vec[SInt]) extends Module {
-  var col = 0
+class HiddenLayer0(theta0: Vec[Vec[SInt]], sum: Vec[SInt], col: UInt)
+    extends Module {
 
   def handlePixel(pixel: SInt) = {
     for (row <- 0 until 25) {
       sum(row) := (sum(row) + (pixel * theta0(row)(col)))
     }
-    if (col == (25 - 1)) {
-      col = 0
+    if (col == (401.U - 1.U)) {
+      col := 0.U
     } else {
-      col = col + 1
+      col := col + 1.U
     }
   }
 }
@@ -83,8 +83,9 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   })
 
   val state = RegInit(State.receiving)
-  val hiddenLayer0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(25.W))))
-  val hiddenLayer0 = Module(new HiddenLayer0(theta0, hiddenLayer0_result))
+  val hiddenLayer0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(32.W))))
+  var col = RegInit(0.U(9.W))
+  val hiddenLayer0 = Module(new HiddenLayer0(theta0, hiddenLayer0_result, col))
 
   switch(state) {
     is(State.receiving) {
