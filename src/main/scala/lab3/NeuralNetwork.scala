@@ -44,9 +44,14 @@ object NetworkHelper {
   }
 }
 
-class HiddenLayer0(theta0: Vec[Vec[SInt]], sum: Vec[SInt]) extends Module {
+class HiddenLayer0() extends Module {
 
-  def handlePixel(pixel: SInt, col: UInt) = {
+  def handlePixel(
+      pixel: SInt,
+      col: UInt,
+      theta0: Vec[Vec[SInt]],
+      sum: Vec[SInt]
+  ) = {
     for (row <- 0 until 25) {
       sum(row) := (sum(row) + (pixel * theta0(row)(col)))
     }
@@ -178,8 +183,8 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   val hiddenLayer0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(32.W))))
   val sigmoid0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(26)(0.S(8.W))))
   sigmoid0_result(0) := (math.pow(2, 7).toInt - 1).S
-  var col = RegInit(0.U(9.W))
-  val hiddenLayer0 = Module(new HiddenLayer0(theta0, hiddenLayer0_result))
+  var col1: UInt = RegInit(0.U(9.W))
+  val hiddenLayer0 = Module(new HiddenLayer0())
   val sigmoidMemory = SyncReadMem((math.pow(2, 8)).toInt, SInt(8.W))
   val sigmoid0 = Module(new Sigmoid0())
   val memoryManager = Module(new MemoryManager())
@@ -194,15 +199,18 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
 
   switch(state) {
     is(State.receiving) {
+      printf("receiving, ")
       when(sAxis.data.tvalid) {
+        printf("data is valid, ")
         val pixel: SInt = sAxis.data.tdata
-        hiddenLayer0.handlePixel(pixel, col)
+        hiddenLayer0.handlePixel(pixel, col1, theta0, hiddenLayer0_result)
         when(sAxis.data.tlast) {
           state := State.firstSigmoid
         }
       }
     }
     is(State.firstSigmoid) {
+      printf("first Sigmoid, ")
       // printf(p"Begin Sigmoid")
       sigmoid0.handleSigmoid(
         hiddenLayer0_result,
@@ -216,6 +224,7 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
       }
     }
     is(State.secondHiddenLayer) {
+      printf("second hidden Layer, ")
       // printf(p"\n")
       // for (i <- 0 until 26) {
       //   printf(p"${sigmoid0_result(i)}, ")
@@ -232,6 +241,7 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
       }
     }
     is(State.secondSigmoid) {
+      printf("second sigmoid, ")
       sigmoid1.handleSigmoid(
         hiddenLayer1_result,
         sigmoidMemory,
@@ -249,25 +259,26 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
       }
     }
     is(State.sending) {
-      printf("HHHHEEERREEEEEE")
+      printf("sending, ")
       when(mAxis.tready) {
+        printf("Sending\n")
         when(transferCount === (10.U - 1.U)) {
           mAxis.data.tlast := true.B
           mAxis.data.tvalid := true.B
           mAxis.data.tdata := sigmoid1_result(transferCount)
+
           // reinitialize everything
-          state := State.receiving
           hiddenLayer0_result := VecInit(Seq.fill(25)(0.S(32.W)))
           sigmoid0_result := VecInit(Seq.fill(26)(0.S(8.W)))
           sigmoid0_result(0) := (math.pow(2, 7).toInt - 1).S
-          col := 0.U(9.W)
+          col1 := 0.U(9.W)
           hiddenLayer1_result := VecInit(Seq.fill(10)(0.S(32.W)))
           col2 := 0.U(5.W)
           fetchingData := true.B
           sigmoid1_result := VecInit(Seq.fill(10)(0.S(8.W)))
           transferCount := 0.U(4.W)
-
           state := State.receiving
+
         }.otherwise {
           transferCount := transferCount + 1.U
           mAxis.data.tvalid := true.B
