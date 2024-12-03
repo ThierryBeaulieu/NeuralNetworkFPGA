@@ -58,15 +58,21 @@ class HiddenLayer0(theta0: Vec[Vec[SInt]], sum: Vec[SInt]) extends Module {
   }
 }
 
-class HiddenLayer1(
-    theta1: Vec[Vec[SInt]],
-    result: Vec[SInt],
-    sigmoidRes: Vec[SInt]
-) extends Module {
-
-  def handleDotProduct(row: UInt, col: UInt) = {
-    val res = (sigmoidRes(col) * theta1(row)(col))
-    result(row) := res
+class HiddenLayer1() extends Module {
+  def handleDotProduct(
+      sigmoid0Res: Vec[SInt],
+      theta1: Vec[Vec[SInt]],
+      results: Vec[SInt],
+      col: UInt
+  ) = {
+    for (row <- 0 until results.length) {
+      results(row) := (results(row) + (sigmoid0Res(col) * theta1(row)(col)))
+      if (col == (26.U - 1.U)) {
+        col := 0.U
+      } else {
+        col := col + 1.U
+      }
+    }
   }
 }
 
@@ -80,7 +86,7 @@ class Sigmoid0(
 
     for (i <- 0 until hiddenLayerRes.length) {
       // printf(p"${hiddenLayerRes(i)}")
-      printf("\n")
+      // printf("\n")
       when((hiddenLayerRes(i) >> 7).asSInt > (math.pow(2, 7).toInt - 1).S) {
         sigmoidResult(i + 1) := (math.pow(2, 7).toInt - 1).S
       }.elsewhen((hiddenLayerRes(i) >> 7).asSInt < -(math.pow(2, 7).toInt).S) {
@@ -89,7 +95,32 @@ class Sigmoid0(
         // [3, 5]
         val tmp = memory.read(hiddenLayerRes(i).asUInt(14, 7))
         sigmoidResult(i + 1) := tmp
-        printf(p"[h: ${hiddenLayerRes(i).asUInt(14, 7)}, s : ${tmp.asSInt}], ")
+        // printf(p"[h: ${hiddenLayerRes(i).asUInt(14, 7)}, s : ${tmp.asSInt}], ")
+      }
+    }
+  }
+}
+
+class Sigmoid1(
+) extends Module {
+  def handleSigmoid(
+      hiddenLayerRes: Vec[SInt],
+      memory: SyncReadMem[SInt],
+      sigmoidResult: Vec[SInt]
+  ) = {
+
+    for (i <- 0 until hiddenLayerRes.length) {
+      // printf(p"${hiddenLayerRes(i)}")
+      // printf("\n")
+      when((hiddenLayerRes(i) >> 6).asSInt > (math.pow(2, 7).toInt - 1).S) {
+        sigmoidResult(i) := (math.pow(2, 7).toInt - 1).S
+      }.elsewhen((hiddenLayerRes(i) >> 6).asSInt < -(math.pow(2, 7).toInt).S) {
+        sigmoidResult(i) := 0.S
+      }.otherwise {
+        // [3, 5]
+        val tmp = memory.read(hiddenLayerRes(i).asUInt(14, 7))
+        sigmoidResult(i) := tmp
+        // printf(p"[h: ${hiddenLayerRes(i).asUInt(14, 7)}, s : ${tmp.asSInt}], ")
       }
     }
   }
@@ -116,7 +147,7 @@ class MemoryManager extends Module {
 }
 
 object State extends ChiselEnum {
-  val receiving, firstSigmoid, secondSigmoid, sending =
+  val receiving, firstSigmoid, secondHiddenLayer, secondSigmoid, sending =
     Value
 }
 class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
@@ -153,14 +184,12 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
   val sigmoid0 = Module(new Sigmoid0())
   val memoryManager = Module(new MemoryManager())
   memoryManager.initSigmoid(sigmoidMemory)
+  val hiddenLayer1 = Module(new HiddenLayer1())
   val hiddenLayer1_result: Vec[SInt] = RegInit(VecInit(Seq.fill(10)(0.S(32.W))))
-  val hiddenLayerRow: UInt = RegInit(0.U(4.W)) // 10
-  val hiddenLayerCol: UInt = RegInit(0.U(5.W)) // 26
-  val hiddenLayer1 = Module(
-    new HiddenLayer1(theta1, hiddenLayer1_result, sigmoid0_result)
-  )
-
+  val col2: UInt = RegInit(0.U(5.W))
   val fetchingData = RegInit(true.B)
+  val sigmoid1 = Module(new Sigmoid1())
+  val sigmoid1_result: Vec[SInt] = RegInit(VecInit(Seq.fill(10)(0.S(8.W))))
 
   switch(state) {
     is(State.receiving) {
@@ -181,29 +210,45 @@ class NeuralNetwork(inputWidth: Int = 8, outputWidth: Int = 8) extends Module {
       )
       fetchingData := false.B
       when(!fetchingData) {
+        state := State.secondHiddenLayer
+        fetchingData := true.B
+      }
+    }
+    is(State.secondHiddenLayer) {
+      // printf(p"\n")
+      // for (i <- 0 until 26) {
+      //   printf(p"${sigmoid0_result(i)}, ")
+      // }
+      // printf(p"\n")
+      hiddenLayer1.handleDotProduct(
+        sigmoid0_result,
+        theta1,
+        hiddenLayer1_result,
+        col2
+      )
+      when(col2 === (26.U - 1.U)) {
         state := State.secondSigmoid
       }
     }
     is(State.secondSigmoid) {
-      for (i <- 0 until 26) {
-        printf(p"[${sigmoid0_result(i)}]")
+      sigmoid1.handleSigmoid(
+        hiddenLayer1_result,
+        sigmoidMemory,
+        sigmoid1_result
+      )
+      fetchingData := false.B
+      when(!fetchingData) {
+        state := State.sending
+        fetchingData := true.B
+        printf("\nresult")
+        for (i <- 0 until 10) {
+          printf(p"[${sigmoid1_result(i)}]")
+        }
+        printf("\n")
       }
-      state := State.sending
-      // hiddenLayer1.handleDotProduct(hiddenLayerRow, hiddenLayerCol)
-      // // printf(p"[r${hiddenLayerRow},c${hiddenLayerCol}] ")
-      // hiddenLayerCol := (hiddenLayerCol + 1.U)
-      // when(hiddenLayerCol === (26.U - 1.U)) {
-      //   hiddenLayerCol := 0.U
-      //   hiddenLayerRow := (hiddenLayerRow + 1.U)
-      //   when(hiddenLayerRow === (10.U - 1.U)) {
-      //     state := State.sending
-      //   }
-      // }
     }
     is(State.sending) {
-      // for (i <- 0 until 10) {
-      //   printf(p"${hiddenLayer1_result(i)}")
-      // }
+      // send the data
     }
   }
 
