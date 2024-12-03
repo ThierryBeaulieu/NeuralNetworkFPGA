@@ -52,6 +52,7 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
         dut.clock.step(1)
       }
       dut.clock.step(1)
+
     }
   }
 
