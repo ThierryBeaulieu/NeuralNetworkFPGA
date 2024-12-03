@@ -7,7 +7,7 @@ debug = False
 def sigmoid(x):
     x = x / 2**5
     res = 1 / (1 + np.exp(-x))
-    return res * 2**7 
+    return int(res * 2**7) 
 
 
 y = np.load("y.npy")
@@ -60,38 +60,25 @@ def compute(imageIndex, w_precision, i_precision):
     ## Step 4. Apply the Sigmoid To the Result Hidden Layer 0
     # [13, 12] >> 7 = [13, 5]
     hiddenLayer0_shifted = (hiddenLayer0_Int8.astype(np.int32) >> 7).astype(np.int32)
-    # hiddenLayer0_Tronc = ((hiddenLayer0_Int8.astype(np.uint32) << 7) >> 14).astype(np.int8)
 
     # print(hiddenLayer0_shifted)
 
     # [1, 7]
-    sig0_Float_tmp = []
+    sig0_Int8 = []
     for i in range(0, len(hiddenLayer0_shifted)):
         x = hiddenLayer0_shifted[i]
         if x > 2**7 - 1:
-            sig0_Float_tmp.append(2**7 - 1)
-            print(f"too big {x}")
+            sig0_Int8.append(2**7 - 1)
         elif x < -2**7:
-            sig0_Float_tmp.append(0)
-            print(f"too small {x}")
+            sig0_Int8.append(0)
         else:
             resSigmoid = sigmoid(x)
-            sig0_Float_tmp.append(resSigmoid)
-            # print(f"[{x.astype(np.uint8)},{resSigmoid}]")
-    # print(sig0_Float_tmp)
+            sig0_Int8.append(resSigmoid)
 
-    # sig0_Float_tmp = np.array(sig0_Float_tmp).astype(float)  # [0, 1]
-    # print(f"sig0Float result {sig0_Float_tmp}")
-
-    sig0_Float = np.hstack((1 * (2**7 - 1), sig0_Float_tmp))
-    print(sig0_Float.astype(int))
-    sig0_Int8 = np.array([x / (2**7 -1) for x in sig0_Float]).astype(float)
-    # print(sig0_Int8)
-    # np.savetxt("testing.csv", sig0_Float.astype(int), fmt="%i", delimiter=",")
-    # print(f"sig0Int8 result {sig0_Int8}")
+    sig0_stacked = np.hstack((1 * (2**7 - 1), sig0_Int8))
+    print(sig0_stacked)
 
     ## Step 5. Represent the Theta_1 Weights In a Fixed Point Representation
-
     # [4, 4]
     if debug:
         print(f"theta1 min {np.min(theta1)}")  # -4.030847
@@ -108,7 +95,7 @@ def compute(imageIndex, w_precision, i_precision):
     # mul [1, 7] * [4, 4] = [5, 11]
     # add [5,11] + ... + [5,11] = [10, 11]
     hiddenLayer1_Int8 = np.dot(
-        sig0_Float.astype(np.int32), theta1_Int8.T.astype(np.int32)
+        sig0_stacked.astype(np.int32), theta1_Int8.T.astype(np.int32)
     ).astype(
         np.int32
     )  # [11,10]
