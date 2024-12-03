@@ -21,8 +21,8 @@ a = sigmoid(tmp) # Sortie de la couche 1
 # print(f"sigmoid0 {a}")
 
 ap = np.hstack((1, a)) # Ajouter 1 pour le biais
-sig0_Int8 = np.array([x * 2**14 for x in ap]).astype(np.int16)
-# print(f"sig0 {sig0_Int8}")
+sig0_Int8 = np.array([x * 2**7 for x in ap]).astype(np.int16)
+print(f"sig0 {sig0_Int8}")
 
 tmp2 = np.dot(ap,theta_1.T)
 
