@@ -3,41 +3,9 @@ package lab3
 import chisel3._
 import _root_.circt.stage.ChiselStage
 import scala.io.Source
-import scala.math._
 import chisel3.util._
 
-class NeuralNetwork extends Module {
-  // val io = IO(new Bundle {
-  //   val outputState = Output(UInt(3.W))
-  //   val outputMultiplication = Output(SInt(25.W))
-  //   val outputUMultiplication = Output(UInt(25.W))
-  //   val outputWeight = Output(SInt(8.W))
-  //   val outputSigmoid0 = Output(UInt(8.W))
-  //   val outputSigmoid1 = Output(UInt(8.W))
-  //   val outputSigmoid2 = Output(UInt(8.W))
-  //   val outputSigmoid3 = Output(UInt(8.W))
-  //   val outputSigmoid4 = Output(UInt(8.W))
-  //   val outputSigmoid5 = Output(UInt(8.W))
-  //   val outputSigmoid6 = Output(UInt(8.W))
-  //   val outputSigmoid7 = Output(UInt(8.W))
-  //   val outputSigmoid8 = Output(UInt(8.W))
-  //   val outputSigmoid9 = Output(UInt(8.W))
-  //   val outputHiddenSum2 = Output(SInt(21.W))
-  //   val sigHiddenLayer1 = Output(UInt(8.W))
-  // })
-
-  // AXI-Stream Connection
-  val sAxis = Wire(new AxiStreamSlaveIf(8))
-  val slaveIO =
-    IO(new AxiStreamExternalIf(8))
-  slaveIO.suggestName("s_axis").connect(sAxis)
-
-  val mAxis = Wire(new AxiStreamMasterIf(8))
-  val masterIO = IO(Flipped(new AxiStreamExternalIf(8)))
-  masterIO
-    .suggestName("m_axis")
-    .connect(mAxis)
-
+object Utility {
   def readCSV(filePath: String): Array[Array[Int]] = {
     val source = Source.fromResource(filePath)
     val data = source
@@ -50,204 +18,254 @@ class NeuralNetwork extends Module {
     data
   }
 
-  def initSigmoidMemory(memory: SyncReadMem[UInt]) = {
-    for (i <- -128 until 128) {
+}
+
+class HiddenLayer0() extends Module {
+
+  def handlePixel(
+      pixel: SInt,
+      col: UInt,
+      theta0: Vec[Vec[SInt]],
+      sum: Vec[SInt]
+  ) = {
+    for (row <- 0 until 25) {
+      sum(row) := (sum(row) + (pixel * theta0(row)(col)))
+    }
+    if (col == (401.U - 1.U)) {
+      col := 0.U
+    } else {
+      col := col + 1.U
+    }
+  }
+}
+
+class HiddenLayer1() extends Module {
+  def handleDotProduct(
+      sigmoid0Res: Vec[SInt],
+      theta1: Vec[Vec[SInt]],
+      results: Vec[SInt],
+      col: UInt
+  ) = {
+    for (row <- 0 until results.length) {
+      results(row) := (results(row) + (sigmoid0Res(col) * theta1(row)(col)))
+      if (col == (26.U - 1.U)) {
+        col := 0.U
+      } else {
+        col := col + 1.U
+      }
+    }
+  }
+}
+
+class Sigmoid0(
+) extends Module {
+  def handleSigmoid(
+      hiddenLayerRes: Vec[SInt],
+      memory: SyncReadMem[SInt],
+      sigmoidResult: Vec[SInt]
+  ) = {
+
+    for (i <- 0 until hiddenLayerRes.length) {
+      // printf(p"${hiddenLayerRes(i)}")
+      // printf("\n")
+      when((hiddenLayerRes(i) >> 7).asSInt > (math.pow(2, 7).toInt - 1).S) {
+        sigmoidResult(i + 1) := (math.pow(2, 7).toInt - 1).S
+      }.elsewhen((hiddenLayerRes(i) >> 7).asSInt < -(math.pow(2, 7).toInt).S) {
+        sigmoidResult(i + 1) := 0.S
+      }.otherwise {
+        // [3, 5]
+        val tmp = memory.read(hiddenLayerRes(i).asUInt(14, 7))
+        sigmoidResult(i + 1) := tmp
+        // printf(p"[h: ${hiddenLayerRes(i).asUInt(14, 7)}, s : ${tmp.asSInt}], ")
+      }
+    }
+  }
+}
+
+class Sigmoid1(
+) extends Module {
+  def handleSigmoid(
+      hiddenLayerRes: Vec[SInt],
+      memory: SyncReadMem[SInt],
+      sigmoidResult: Vec[SInt]
+  ) = {
+
+    for (i <- 0 until hiddenLayerRes.length) {
+      // printf(p"${hiddenLayerRes(i)}")
+      // printf("\n")
+      when((hiddenLayerRes(i) >> 6).asSInt > (math.pow(2, 7).toInt - 1).S) {
+        sigmoidResult(i) := (math.pow(2, 7).toInt - 1).S
+      }.elsewhen((hiddenLayerRes(i) >> 6).asSInt < -(math.pow(2, 7).toInt).S) {
+        sigmoidResult(i) := 0.S
+      }.otherwise {
+        // [3, 5]
+        val tmp = memory.read(hiddenLayerRes(i).asUInt(14, 7))
+        sigmoidResult(i) := tmp
+        // printf(p"[h: ${hiddenLayerRes(i).asUInt(14, 7)}, s : ${tmp.asSInt}], ")
+      }
+    }
+  }
+}
+
+class MemoryManager extends Module {
+  def initSigmoid(memory: SyncReadMem[SInt]) = {
+    val baseMax = (math.pow(2, 8)).toInt
+    memory.write(0.U, 1.S)
+    for (i <- -(baseMax / 2) until (baseMax / 2).toInt) {
+      val x: Double = (i / math.pow(2, 5).toDouble)
       memory.write(
         (i.S).asUInt,
-        scalaSigmoid(i / 32.0)
+        sigmoid(x)
       )
     }
   }
 
-  def scalaSigmoid(x: Double): UInt = {
-    val result = (pow(E, x) / (1 + pow(E, x)))
-    val resultSInt = (result * pow(2, 7)).toInt.asUInt(8.W)
+  def sigmoid(x: Double): SInt = {
+    val result = (1 / (1 + math.exp(-x)))
+    val resultSInt = (result * math.pow(2, 7)).toInt.asSInt(8.W)
     resultSInt
   }
+}
 
-  val sigmoidMemory = SyncReadMem(256, UInt(8.W))
-  initSigmoidMemory(sigmoidMemory)
+class NeuralNetwork() extends Module {
+  // AXI-Stream Connection
+  val sAxis = Wire(new AxiStreamSlaveIf(8))
+  val slaveIO =
+    IO(new AxiStreamExternalIf(8))
+  slaveIO.suggestName("s_axis").connect(sAxis)
 
-  val hiddenLayer1Data = readCSV("lab3/theta_0_int8.csv")
-  val weights_hidden_layer1 = RegInit(
-    VecInit.tabulate(25, 401) { (x, y) =>
-      hiddenLayer1Data(x)(y).S(8.W)
-    }
-  )
-
-  val hiddenLayer2Data = readCSV("lab3/theta_1_int8.csv")
-  val weights_hidden_layer2 = RegInit(
-    VecInit.tabulate(10, 25) { (x, y) =>
-      hiddenLayer2Data(x)(y).S(8.W)
-    }
-  )
-
-  // io.sigHiddenLayer1 := 0.U
-  // io.outputHiddenSum2 := 0.S
-  // io.outputSigmoid0 := 0.U
-  // io.outputSigmoid1 := 0.U
-  // io.outputSigmoid2 := 0.U
-  // io.outputSigmoid3 := 0.U
-  // io.outputSigmoid4 := 0.U
-  // io.outputSigmoid5 := 0.U
-  // io.outputSigmoid6 := 0.U
-  // io.outputSigmoid7 := 0.U
-  // io.outputSigmoid8 := 0.U
-  // io.outputSigmoid9 := 0.U
-
-  // io.outputWeight := weights_hidden_layer1(0)(0)
-  // io.outputUMultiplication := 0.U
-  // io.outputMultiplication := 0.S
-  // io.outputState := 0.U
+  val mAxis = Wire(new AxiStreamMasterIf(8))
+  val masterIO = IO(Flipped(new AxiStreamExternalIf(8)))
+  masterIO
+    .suggestName("m_axis")
+    .connect(mAxis)
 
   sAxis.tready := RegInit(true.B)
   mAxis.data.tvalid := RegInit(false.B)
   mAxis.data.tlast := RegInit(false.B)
-  mAxis.data.tdata := RegInit(0.U(8.W))
+  mAxis.data.tdata := RegInit(0.S(8.W))
   mAxis.data.tkeep := RegInit("b1".U)
 
-  object State extends ChiselEnum {
-    val receiving, firstHiddenLayer, firstSigmoid, secondHiddenLayer,
-        secondSigmoid, sending =
-      Value
-  }
+  val theta0_Int8_csv = Utility.readCSV("lab3/theta0_Int8.csv")
+  val theta0: Vec[Vec[SInt]] = RegInit(VecInit.tabulate(25, 401) { (x, y) =>
+    theta0_Int8_csv(x)(y).S(8.W)
+  })
 
+  val theta1_Int8_csv = Utility.readCSV("lab3/theta1_Int8.csv")
+  val theta1: Vec[Vec[SInt]] = RegInit(VecInit.tabulate(10, 26) { (x, y) =>
+    theta1_Int8_csv(x)(y).S(8.W)
+  })
+
+  // HiddenLayer1
   val state = RegInit(State.receiving)
+  val hiddenLayer0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(25)(0.S(32.W))))
+  val sigmoid0_result: Vec[SInt] = RegInit(VecInit(Seq.fill(26)(0.S(8.W))))
+  sigmoid0_result(0) := (math.pow(2, 7).toInt - 1).S
+  var col1: UInt = RegInit(0.U(9.W))
+  val hiddenLayer0 = Module(new HiddenLayer0())
+  val sigmoidMemory = SyncReadMem((math.pow(2, 8)).toInt, SInt(8.W))
+  val sigmoid0 = Module(new Sigmoid0())
+  val memoryManager = Module(new MemoryManager())
+  memoryManager.initSigmoid(sigmoidMemory)
+  val hiddenLayer1 = Module(new HiddenLayer1())
+  val hiddenLayer1_result: Vec[SInt] = RegInit(VecInit(Seq.fill(10)(0.S(32.W))))
+  val col2: UInt = RegInit(0.U(5.W))
+  val fetchingData = RegInit(true.B)
+  val sigmoid1 = Module(new Sigmoid1())
+  val sigmoid1_result: Vec[SInt] = RegInit(VecInit(Seq.fill(10)(0.S(8.W))))
+  val transferCount: UInt = RegInit(0.U(4.W))
 
-  val image = RegInit(VecInit(Seq.fill(401)(0.S(8.W))))
-  val index = RegInit(0.U(9.W))
-
-  val hiddenLayer1 = RegInit(VecInit(Seq.fill(25)(0.S(25.W))))
-  val pixelIndex = RegInit(0.U(9.W))
-  val row1 = RegInit(0.U(5.W))
-  val sigHiddenLayer1 = RegInit(VecInit(Seq.fill(26)(1.U(8.W))))
-  val firstSigmoidLoaded = RegInit(false.B)
-
-  val hiddenLayer2 = RegInit(VecInit(Seq.fill(10)(0.S(21.W))))
-  val sigmoidIndex = RegInit(0.U(5.W))
-  val row2 = RegInit(0.U(4.W))
-  val sigHiddenLayer2 = RegInit(VecInit(Seq.fill(10)(0.U(8.W))))
-  val secondSigmoidLoaded = RegInit(false.B)
-
-  val transferCount = RegInit(0.U(4.W))
+  object State extends ChiselEnum {
+  val receiving, firstSigmoid, secondHiddenLayer, secondSigmoid, sending =
+    Value
+}
 
   switch(state) {
     is(State.receiving) {
-      // io.outputState := 1.U
+      printf("receiving, ")
       when(sAxis.data.tvalid) {
-        image(index) := (sAxis.data.tdata).asSInt
-        index := index + 1.U
+        printf("data is valid, ")
+        val pixel: SInt = sAxis.data.tdata
+        hiddenLayer0.handlePixel(pixel, col1, theta0, hiddenLayer0_result)
         when(sAxis.data.tlast) {
-          state := State.firstHiddenLayer
-          sAxis.tready := false.B
+          state := State.firstSigmoid
         }
       }
     }
-    is(State.firstHiddenLayer) {
-      // io.outputState := 2.U
-
-      hiddenLayer1(row1) := (hiddenLayer1(row1) + (weights_hidden_layer1(row1)(
-        pixelIndex
-      ) * image(pixelIndex)))
-
-      pixelIndex := (pixelIndex + 1.U)
-
-      when(pixelIndex === (401.U - 1.U)) {
-        row1 := (row1 + 1.U)
-        pixelIndex := 0.U
-      }
-
-      when(row1 === 24.U && pixelIndex === (401.U - 1.U)) {
-        state := State.firstSigmoid
-        row1 := 0.U
-        pixelIndex := 0.U
-      }
-    }
     is(State.firstSigmoid) {
-      // io.outputState := 3.U
-
-      for (i <- 1 until hiddenLayer1.length) {
-        val addr = (hiddenLayer1(i - 1)(16, 9)).asUInt
-        sigHiddenLayer1(i) := sigmoidMemory.read(addr)
-      }
-      firstSigmoidLoaded := true.B
-      when(firstSigmoidLoaded === true.B) {
+      printf("first Sigmoid, ")
+      // printf(p"Begin Sigmoid")
+      sigmoid0.handleSigmoid(
+        hiddenLayer0_result,
+        sigmoidMemory,
+        sigmoid0_result
+      )
+      fetchingData := false.B
+      when(!fetchingData) {
         state := State.secondHiddenLayer
+        fetchingData := true.B
       }
     }
     is(State.secondHiddenLayer) {
-      // io.outputState := 4.U
-      // io.sigHiddenLayer1 := sigHiddenLayer1(5)
-
-      hiddenLayer2(row2) := (hiddenLayer2(row2) + (weights_hidden_layer2(row2)(
-        sigmoidIndex
-      ) * sigHiddenLayer1(sigmoidIndex)))
-
-      sigmoidIndex := (sigmoidIndex + 1.U)
-
-      when(sigmoidIndex === (26.U - 1.U)) {
-        row2 := (row2 + 1.U)
-        sigmoidIndex := 0.U
-      }
-
-      when(row2 === 9.U && sigmoidIndex === (26.U - 1.U)) {
+      printf("second hidden Layer, ")
+      // printf(p"\n")
+      // for (i <- 0 until 26) {
+      //   printf(p"${sigmoid0_result(i)}, ")
+      // }
+      // printf(p"\n")
+      hiddenLayer1.handleDotProduct(
+        sigmoid0_result,
+        theta1,
+        hiddenLayer1_result,
+        col2
+      )
+      when(col2 === (26.U - 1.U)) {
         state := State.secondSigmoid
-        row2 := 0.U
-        sigmoidIndex := 0.U
       }
     }
     is(State.secondSigmoid) {
-      // io.outputState := 5.U
-      // io.outputHiddenSum2 := (weights_hidden_layer2(5)(5) * sigHiddenLayer1(5))
-
-      for (i <- 0 until hiddenLayer2.length) {
-        val addr = (hiddenLayer2(i)(14, 7)).asUInt
-        sigHiddenLayer2(i) := sigmoidMemory.read(addr)
-      }
-
-      secondSigmoidLoaded := true.B
-      when(secondSigmoidLoaded === true.B) {
+      printf("second sigmoid, ")
+      sigmoid1.handleSigmoid(
+        hiddenLayer1_result,
+        sigmoidMemory,
+        sigmoid1_result
+      )
+      fetchingData := false.B
+      when(!fetchingData) {
         state := State.sending
+        fetchingData := true.B
+        // printf("\nresult")
+        // for (i <- 0 until 10) {
+        //   printf(p"[${sigmoid1_result(i)}]")
+        // }
+        // printf("\n")
       }
     }
     is(State.sending) {
-      // io.outputSigmoid0 := sigHiddenLayer2(0)
-      // io.outputSigmoid1 := sigHiddenLayer2(1)
-      // io.outputSigmoid2 := sigHiddenLayer2(2)
-      // io.outputSigmoid3 := sigHiddenLayer2(3)
-      // io.outputSigmoid4 := sigHiddenLayer2(4)
-      // io.outputSigmoid5 := sigHiddenLayer2(5)
-      // io.outputSigmoid6 := sigHiddenLayer2(6)
-      // io.outputSigmoid7 := sigHiddenLayer2(7)
-      // io.outputSigmoid8 := sigHiddenLayer2(8)
-      // io.outputSigmoid9 := sigHiddenLayer2(9)
-
+      printf("sending, ")
       when(mAxis.tready) {
-        when(transferCount === sigHiddenLayer2.length.U) {
+        printf("Sending\n")
+        when(transferCount === (10.U - 1.U)) {
           mAxis.data.tlast := true.B
-          mAxis.data.tvalid := false.B
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := sigmoid1_result(transferCount)
+
           // reinitialize everything
-          image := VecInit(Seq.fill(401)(0.S(8.W)))
-          index := 0.U
-          hiddenLayer1 := VecInit(Seq.fill(25)(0.S(25.W)))
-          pixelIndex := 0.U
-          row1 := 0.U
-          sigHiddenLayer1 := VecInit(Seq.fill(26)(1.U(8.W)))
-          firstSigmoidLoaded := false.B
-
-          hiddenLayer2 := VecInit(Seq.fill(10)(0.S(21.W)))
-          sigmoidIndex := 0.U
-          row2 := 0.U
-          sigHiddenLayer2 := VecInit(Seq.fill(10)(0.U(8.W)))
-          secondSigmoidLoaded := false.B
-
+          hiddenLayer0_result := VecInit(Seq.fill(25)(0.S(32.W)))
+          sigmoid0_result := VecInit(Seq.fill(26)(0.S(8.W)))
+          sigmoid0_result(0) := (math.pow(2, 7).toInt - 1).S
+          col1 := 0.U(9.W)
+          hiddenLayer1_result := VecInit(Seq.fill(10)(0.S(32.W)))
+          col2 := 0.U(5.W)
+          fetchingData := true.B
+          sigmoid1_result := VecInit(Seq.fill(10)(0.S(8.W)))
+          transferCount := 0.U(4.W)
           state := State.receiving
 
         }.otherwise {
-          mAxis.data.tlast := false.B
-          mAxis.data.tvalid := true.B
-          mAxis.data.tdata := sigHiddenLayer2(transferCount)
           transferCount := transferCount + 1.U
+          mAxis.data.tvalid := true.B
+          mAxis.data.tdata := sigmoid1_result(transferCount)
         }
       }
     }
@@ -257,7 +275,7 @@ class NeuralNetwork extends Module {
 
 object NeuralNetwork extends App {
   ChiselStage.emitSystemVerilogFile(
-    new NeuralNetwork,
+    new NeuralNetwork(),
     args = Array(
       "--target-dir",
       "generated/lab3/"

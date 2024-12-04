@@ -1,36 +1,14 @@
 import numpy as np
 
-sigmoidValues = []
-
 def sigmoid(x):
-    res = 1 / (1 + np.exp(-x))
-    resultInt8 = int(res * 2**7)  # Ensure this is an integer
-    return resultInt8
+    return 1 / (1 + np.exp(-x))
 
-def initSigmoid():
-    for i in range(0, 256):
-        j = i - 128
-        sigmoidValues.append(sigmoid(j / 32))
 
-initSigmoid()
+# Deux sigmoid à produire
+# sigmoid 1 [5, 11]
+# sigmoid 2 [4, 12]
 
-# Convert to hexadecimal and write to a text file
-with open('sigmoid_chisel.txt', 'w') as f:
-    for value in sigmoidValues:
-        f.write(f"{value & 0xFF:02X}\n")  # Format as 2-digit hexadecimal
-
-# def scalaSigmoid(x: Double): UInt = {
-# val result = (pow(E, x) / (1 + pow(E, x)))
-# val resultSInt = (result * pow(2, 7)).toInt.asUInt(8.W)
-# resultSInt
-# }
-# 
-# def initSigmoid(sigMemory: SyncReadMem[UInt]) = {
-# // [4:4] [-4.0, 3.9375] = 8 / (2*8)
-# for (i <- -128 until 128) {
-#     sigMemory.write(
-#     (i.S).asUInt,
-#     scalaSigmoid(i / 32.0)
-#     )
-# }
-# }
+# On n'a qu'à générer les 65536 possible outcome pour la sigmoid1
+# et pour la sigmoid 2, en théorie, c'est juste 128Kb que ça va demander.
+# à moins que j'utilisation la même sigmoide [5, 11] je pense que c'est ça que je vais faire,
+# Il va juste falloir que je divise par deux les éléments avant la sigmoide 2.
