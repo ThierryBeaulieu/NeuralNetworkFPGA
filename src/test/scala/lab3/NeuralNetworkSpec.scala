@@ -44,13 +44,13 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
 
       for (_ <- 0 until 2) {
         // println(f"processing ${j}")
-        dut.io.slaveIO.tready.expect(true.B)
+        dut.slaveIO.tready.expect(true.B)
         for (i <- 0 until 401) {
           print("poking ")
-          dut.io.slaveIO.tvalid.poke(true.B)
-          dut.io.slaveIO.tdata.poke(imageTest(i))
+          dut.slaveIO.tvalid.poke(true.B)
+          dut.slaveIO.tdata.poke(imageTest(i))
           if (i == 400) {
-            dut.io.slaveIO.tlast.poke(true.B)
+            dut.slaveIO.tlast.poke(true.B)
           }
           dut.clock.step(1)
         }
@@ -59,10 +59,10 @@ class NeuralNetworkSpec extends AnyFreeSpec with Matchers {
 
         val expectedValues = Seq(0, 0, 0, 0, 0, 0, 0, 0, 0, 127)
 
-        dut.io.masterIO.tready.poke(true.B)
+        dut.masterIO.tready.poke(true.B)
         for (i <- 0 until 10) {
-          dut.io.masterIO.tvalid.expect(true.B)
-          dut.io.masterIO.tdata.expect(expectedValues(i))
+          dut.masterIO.tvalid.expect(true.B)
+          dut.masterIO.tdata.expect(expectedValues(i))
           dut.clock.step(1)
         }
       }
